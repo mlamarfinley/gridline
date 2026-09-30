@@ -427,10 +427,54 @@ export function parseGamelog(g) {
 // ---------- Player props (ESPN relays DraftKings lines; no prices in this feed) ----------
 const PROP_TYPES = {
   8: 'pass_yds', 9: 'completions', 10: 'pass_td', 11: 'carries', 12: 'rush_yds', 13: 'rec_yds', 14: 'receptions', 15: 'ints', 16: 'pass_att',
+  17: 'long_cmp', 19: 'long_rec', 21: 'long_rush', 23: 'xp_made', 24: 'fg_made',
 };
 export async function getProps(lg, eventId) {
   return fetchCached(url.props(lg, eventId), { ttl: 600, label: 'Player prop lines' });
 }
+/**
+ * Some providers (e.g. ESPN BET) return the main line plus whole-number "milestone"/alternate
+ * lines for the same player+stat. The MAIN line is the one quoted with over/under prices; when
+ * several are priced, the most balanced (over vs under implied probability) wins. Unpriced feeds
+ * (DraftKings via ESPN) carry one line per player+stat and are handled as before.
+ */
+export function parsePropsMain(p, provider = null) {
+  const groups = new Map();
+  for (const it of p?.items || []) {
+    const stat = PROP_TYPES[it.type?.id];
+    const aid = (it.athlete?.$ref || '').match(/athletes\/(\d+)/)?.[1];
+    const line = it.current?.target?.value;
+    if (!stat || !aid || line == null) continue;
+    const k = `${aid}|${stat}`;
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(it);
+  }
+  const am = (x) => (x == null ? null : Number(String(x).replace('+', '')));
+  const imp = (o) => (o == null ? null : o < 0 ? -o / (-o + 100) : 100 / (o + 100));
+  const out = {};
+  for (const [k, items] of groups) {
+    const [aid, stat] = k.split('|');
+    const byLine = new Map();
+    for (const it of items) {
+      const v = Number(it.current.target.value);
+      const e = byLine.get(v) || { line: v, open: it.open?.target?.value ?? null, over: null, under: null, updated: it.lastUpdated || null, priced: false };
+      if (it.current.over?.american != null) { e.over = am(it.current.over.american); e.priced = true; }
+      if (it.current.under?.american != null) { e.under = am(it.current.under.american); e.priced = true; }
+      if (it.lastUpdated && (!e.updated || it.lastUpdated > e.updated)) e.updated = it.lastUpdated;
+      byLine.set(v, e);
+    }
+    const lines = [...byLine.values()];
+    const priced = lines.filter((e) => e.priced);
+    let main;
+    if (priced.length) main = priced.sort((a, b) => Math.abs((imp(a.over) ?? 0.5) - (imp(a.under) ?? 0.5)) - Math.abs((imp(b.over) ?? 0.5) - (imp(b.under) ?? 0.5)))[0];
+    else if (lines.length === 1) main = lines[0];
+    else continue; // several unpriced alternates and no way to tell which is the main line: skip, don't guess
+    out[aid] = out[aid] || {};
+    out[aid][stat] = { line: main.line, open: main.open, overPrice: main.over, underPrice: main.under, updated: main.updated, source: provider || 'ESPN core API', alternates: lines.length - 1 };
+  }
+  return out;
+}
+
 export function parseProps(p) {
   const out = {};
   for (const it of p?.items || []) {

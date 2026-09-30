@@ -13,6 +13,7 @@ import { loadSnaps, snapsFor, normName } from './snaps.js';
 import { oddsApiProps, cfbdLineYards } from './optional.js';
 import { STAT_DEFS, STAT_LISTS, COMPACT } from './stats.js';
 import { selectOutlier } from './outlier.js';
+import { calibrationFor, calibrateSample } from './calibrate.js';
 import { FIT, loadPriorSeason, priorPoints, blendTeam } from './priors.js';
 import { lineAgg, gradeTeam, leagueBaseline, METHOD as LINE_METHOD } from './linegrades.js';
 
@@ -496,14 +497,17 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       const stats = {};
       for (const k of statKeys) {
         let s;
+        // v1.3: learned output calibration (centre shift + range width) applied to the simulated sample.
+        const cal = calibrationFor(lg, pos, k);
+        const arrK = simStats[k] && !STAT_DEFS[k].ratio ? calibrateSample(simStats[k], cal) : simStats[k];
         if (k === 'ypc') s = ratioSummary(simStats.rush_yds, simStats.carries);
         else if (k === 'ypr') s = ratioSummary(simStats.rec_yds, simStats.receptions);
-        else s = simStats[k] ? summarize(simStats[k]) : null;
+        else s = arrK ? summarize(arrK) : null;
         const hist = rowsCur.map((x) => x.stats[k]).filter((v) => v != null);
         const seasonAvg = STAT_DEFS[k].ratio ? ratioAvg(rowsCur, k) : (hist.length ? avg(hist) : null);
         const book = oaLines[k] || propLines[k] || null;
         const threshold = book?.line ?? (seasonAvg != null && !STAT_DEFS[k].ratio ? Math.floor(seasonAvg) + 0.5 : null);
-        const arr = k === 'ypc' || k === 'ypr' ? null : simStats[k];
+        const arr = k === 'ypc' || k === 'ypr' ? null : arrK;
         const pOver = arr && threshold != null ? probOver(arr, threshold) : null;
         const bookImp = book?.overPrice != null ? { over: americanToProb(book.overPrice), under: americanToProb(book.underPrice), noVigOver: book.underPrice != null ? noVig(book.overPrice, book.underPrice)?.a : null } : null;
         stats[k] = {

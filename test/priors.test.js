@@ -17,3 +17,13 @@ test('blendTeam: no current games => regressed prior; many games => current mean
   assert.ok(Math.abs(many - 35) < 0.5);
   assert.equal(blendTeam('pf', null, 0, null, L), L, 'missing prior falls back to league, never 0');
 });
+
+test('v1.3 calibration shifts the median by a and scales spread by s, never below 0', async () => {
+  const { calibrateSample } = await import('../src/calibrate.js');
+  const arr = Float64Array.from([0, 10, 20, 30, 40]);
+  const out = calibrateSample(arr, { a: -5, s: 2 });
+  assert.equal(out[2], 15);           // median 20 shifted by -5
+  assert.equal(out[4], 15 + 2 * 20);  // spread doubled around the new median
+  assert.equal(out[0], 0);            // clipped at 0
+  assert.equal(calibrateSample(arr, null), arr);
+});

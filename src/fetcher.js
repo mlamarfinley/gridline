@@ -89,18 +89,28 @@ export async function fetchCached(url, opts = {}) {
       if (transport) {
         body = await transport(url);
       } else {
-        const ctrl = new AbortController();
-        const t = setTimeout(() => ctrl.abort(), 20000);
-        let res;
-        try {
-          res = await fetch(url, { headers: { 'user-agent': 'football-dashboard/1.0 (local research tool)', ...headers }, signal: ctrl.signal, redirect: 'follow' });
-        } finally { clearTimeout(t); }
-        if (!res.ok) {
-          const err = new Error(`HTTP ${res.status}`);
-          err.status = res.status;
-          throw err;
+        // Retry transient failures (timeouts, connection resets, 429, 5xx) with backoff; a 404 is final.
+        for (let attempt = 0; ; attempt++) {
+          try {
+            const ctrl = new AbortController();
+            const t = setTimeout(() => ctrl.abort(), 25000);
+            let res;
+            try {
+              res = await fetch(url, { headers: { 'user-agent': 'football-dashboard/1.0 (local research tool)', ...headers }, signal: ctrl.signal, redirect: 'follow' });
+            } finally { clearTimeout(t); }
+            if (!res.ok) {
+              const err = new Error(`HTTP ${res.status}`);
+              err.status = res.status;
+              throw err;
+            }
+            body = as === 'text' ? await res.text() : await res.json();
+            break;
+          } catch (e) {
+            const transient = !e.status || e.status === 429 || e.status >= 500;
+            if (!transient || attempt >= 3) throw e;
+            await new Promise((r) => setTimeout(r, 1000 * 3 ** attempt));
+          }
         }
-        body = as === 'text' ? await res.text() : await res.json();
       }
       const entry = { fetchedAt: Date.now(), body, permanent: !!opts.permanent };
       writeCache(url, entry);

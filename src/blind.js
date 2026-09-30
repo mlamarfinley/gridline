@@ -32,7 +32,15 @@ export const BLIND_MODE = 'market-blind';
 // v2: prior games admitted only if their own play wallclock shows they ENDED before kickoff.
 export const CUTOFF_FILTER_VERSION = 'cutoff-v2-wallclock-verified';
 // Weeks already inspected (tuning or earlier held-out review) — never "fresh" validation.
-export const INSPECTED = { nfl: [2, 3], cfb: [4] };
+export const INSPECTED = { nfl: [2, 3], cfb: [4] }; // 2026 weeks inspected before
+export const INSPECTED_SEASON = 2026;
+// How each season relates to the model's development (reported next to every metric).
+export function seasonStatus(lg, season, week) {
+  if (season === INSPECTED_SEASON && (INSPECTED[lg] || []).includes(week)) return 'inspected (not independent)';
+  if (lg === 'nfl' && season === 2025) return 'in-sample: v1.2 constants were fitted on 2025 outcomes';
+  if (lg === 'nfl' && season === 2024) return 'out-of-sample for fitted constants (2024 used only as prior season in the fit)';
+  return 'untouched';
+}
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS blind_batches (
@@ -62,11 +70,21 @@ CREATE TABLE IF NOT EXISTS blind_lines (
   line REAL, open_line REAL, line_updated TEXT, updated_before_kickoff INTEGER, source TEXT, retrieved_at TEXT,
   tier TEXT NOT NULL, PRIMARY KEY (batch_id, game_id, player_id, stat)
 );
+CREATE TABLE IF NOT EXISTS blind_pred_context (
+  batch_id INTEGER NOT NULL, game_id TEXT NOT NULL, player_id TEXT NOT NULL, context_json TEXT, PRIMARY KEY (batch_id, game_id, player_id)
+);
+CREATE TABLE IF NOT EXISTS blind_actual_context (
+  batch_id INTEGER NOT NULL, game_id TEXT NOT NULL, player_id TEXT NOT NULL, context_json TEXT, PRIMARY KEY (batch_id, game_id, player_id)
+);
+CREATE TABLE IF NOT EXISTS blind_line_prices (
+  batch_id INTEGER NOT NULL, game_id TEXT NOT NULL, player_id TEXT NOT NULL, stat TEXT NOT NULL,
+  over_price INTEGER, under_price INTEGER, provider TEXT, alternates INTEGER, PRIMARY KEY (batch_id, game_id, player_id, stat)
+);
 CREATE TABLE IF NOT EXISTS blind_line_coverage (
   batch_id INTEGER NOT NULL, game_id TEXT NOT NULL, league TEXT, status TEXT, lines INTEGER, retrieved_at TEXT, PRIMARY KEY (batch_id, game_id)
 );
 `;
-const IMMUTABLE = ['blind_batches', 'blind_events', 'blind_manifests', 'blind_predictions', 'blind_scores', 'blind_lines', 'blind_line_coverage'];
+const IMMUTABLE = ['blind_batches', 'blind_events', 'blind_manifests', 'blind_predictions', 'blind_scores', 'blind_lines', 'blind_line_coverage', 'blind_pred_context', 'blind_actual_context', 'blind_line_prices'];
 
 export function openBlind(d = openLedger()) {
   d.exec(SCHEMA);
@@ -78,6 +96,12 @@ export function openBlind(d = openLedger()) {
   d.exec(`CREATE TRIGGER IF NOT EXISTS blind_pred_after_seal BEFORE INSERT ON blind_predictions
     WHEN EXISTS (SELECT 1 FROM blind_events WHERE batch_id = NEW.batch_id AND event = 'predictions_frozen')
     BEGIN SELECT RAISE(ABORT, 'batch is sealed: predictions are frozen'); END;`);
+  d.exec(`CREATE TRIGGER IF NOT EXISTS blind_ctx_after_seal BEFORE INSERT ON blind_pred_context
+    WHEN EXISTS (SELECT 1 FROM blind_events WHERE batch_id = NEW.batch_id AND event = 'predictions_frozen')
+    BEGIN SELECT RAISE(ABORT, 'batch is sealed: prediction context is frozen'); END;`);
+  for (const t of ['blind_actual_context', 'blind_line_prices']) d.exec(`CREATE TRIGGER IF NOT EXISTS ${t}_before_seal BEFORE INSERT ON ${t}
+    WHEN NOT EXISTS (SELECT 1 FROM blind_events WHERE batch_id = NEW.batch_id AND event = 'predictions_frozen')
+    BEGIN SELECT RAISE(ABORT, 'actuals/lines before predictions are frozen are not allowed'); END;`);
   d.exec(`CREATE TRIGGER IF NOT EXISTS blind_score_before_seal BEFORE INSERT ON blind_scores
     WHEN NOT EXISTS (SELECT 1 FROM blind_events WHERE batch_id = NEW.batch_id AND event = 'predictions_frozen')
     BEGIN SELECT RAISE(ABORT, 'scoring before predictions are frozen is not allowed'); END;`);
@@ -91,7 +115,7 @@ const nowISO = () => new Date().toISOString();
 const n = (x) => (x == null || !Number.isFinite(Number(x)) ? null : Number(x));
 
 // ---------- Freeze ----------
-const CODE_FILES = ['priors.js', 'fitted_v12.json', 'model.js', 'matchup.js', 'history.js', 'roles.js', 'espn.js', 'linegrades.js', 'baselines.js', 'blind.js', 'config.js', 'stats.js'];
+const CODE_FILES = ['calibrate.js', 'fitted_v13.json', 'priors.js', 'fitted_v12.json', 'model.js', 'matchup.js', 'history.js', 'roles.js', 'espn.js', 'linegrades.js', 'baselines.js', 'blind.js', 'config.js', 'stats.js'];
 export function freezeParams() {
   const params = { MODEL_VERSION, mode: BLIND_MODE, cutoffFilter: CUTOFF_FILTER_VERSION, PRIORS, SHRINK, SIMS, WORKLOAD_K, PLAYS_CV, PASS_RATE_SD };
   const code = CODE_FILES.map((f) => { try { return fs.readFileSync(path.join(ROOT, 'src', f), 'utf8'); } catch { return ''; } }).join('\n/*--*/\n');
@@ -104,9 +128,12 @@ export function sanitizeEvent(e, lg) {
   return { id: String(g.id), league: lg, season: g.season, week: g.week, kickoff: new Date(g.date).toISOString(), completed: g.status.completed,
     home: { id: String(g.home.id), abbr: g.home.abbr, name: g.home.name }, away: { id: String(g.away.id), abbr: g.away.abbr, name: g.away.name } };
 }
-export async function listSeasonGames(lg, log = () => {}) {
-  const cur = espn.parseScoreboard((await espn.getScoreboard(lg, {})).data);
-  const season = cur.season;
+export async function listSeasonGames(lg, log = () => {}, { season: want = null } = {}) {
+  const cur = want
+    ? espn.parseScoreboard((await fetchCached(espn.url.scoreboard(lg, { week: 1, seasontype: 2, season: want }), { ttl: 86400, label: `Schedule ${want}` })).data)
+    : espn.parseScoreboard((await espn.getScoreboard(lg, {})).data);
+  const season = want || cur.season;
+  if (want) cur.week = 99; // past season: walk every regular-season week
   const weeks = cur.calendar.filter((c) => c.seasontype === 2).map((c) => c.week);
   const out = [];
   for (const w of weeks) {
@@ -198,19 +225,20 @@ export async function predictGame(lg, game, allGames, { positionsFor }) {
   return { m, prior };
 }
 
-export async function runBlindPredictions({ leagues = ['nfl', 'cfb'], log = () => {}, limit = Infinity, d = openBlind() } = {}) {
+export async function runBlindPredictions({ leagues = ['nfl', 'cfb'], seasons = [null], log = () => {}, limit = Infinity, d = openBlind() } = {}) {
   const fr = freezeParams();
   const created = nowISO();
   const batchId = Number(d.prepare('INSERT INTO blind_batches (created_at, mode, model_version, params_hash, code_hash, params_json, leagues) VALUES (?,?,?,?,?,?,?)')
-    .run(created, BLIND_MODE, MODEL_VERSION, fr.paramsHash, fr.codeHash, JSON.stringify(fr.params), leagues.join(',')).lastInsertRowid);
+    .run(created, BLIND_MODE, MODEL_VERSION, fr.paramsHash, fr.codeHash, JSON.stringify({ ...fr.params, seasons }), `${leagues.join(',')}${seasons[0] ? ` ${seasons.join(',')}` : ''}`).lastInsertRowid);
   d.prepare('INSERT INTO blind_events (batch_id, event, at, detail) VALUES (?,?,?,?)').run(batchId, 'parameters_frozen', created, `params ${fr.paramsHash.slice(0, 12)} code ${fr.codeHash.slice(0, 12)}`);
   log(`batch ${batchId}: parameters frozen (params ${fr.paramsHash.slice(0, 12)}, code ${fr.codeHash.slice(0, 12)})`);
   const insM = d.prepare('INSERT INTO blind_manifests (batch_id, game_id, league, season, week, kickoff, home, away, status, skip_reason, created_at, manifest_json, manifest_hash) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)');
   const insP = d.prepare(`INSERT INTO blind_predictions (batch_id, game_id, league, season, week, kickoff, team, opponent, player_id, player_name, position, role, stat, projection, p10, p50, p90, quantiles_json, created_at, manifest_hash)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+  const insC = d.prepare('INSERT INTO blind_pred_context (batch_id, game_id, player_id, context_json) VALUES (?,?,?,?)');
   let done = 0;
-  for (const lg of leagues) {
-    const { season, games } = await listSeasonGames(lg, log);
+  for (const lg of leagues) for (const wantSeason of seasons) {
+    const { season, games } = await listSeasonGames(lg, log, { season: wantSeason });
     const completed = games.filter((g) => g.completed);
     const nflTables = lg === 'nfl' ? { cur: await nflPositionTable(season), prev: await nflPositionTable(season - 1) } : null;
     for (const game of completed) {
@@ -242,6 +270,15 @@ export async function runBlindPredictions({ leagues = ['nfl', 'cfb'], log = () =
           const q = card?.stats?.[p.stat]?.quantiles || null;
           insP.run(batchId, game.id, lg, season, game.week, game.kickoff, p.team, p.opponent, p.playerId, p.playerName, p.position, p.role, p.stat, n(p.projection), n(p.p10), n(p.p50), n(p.p90), q ? JSON.stringify(q) : null, t0, mh);
         }
+        // Why the model expected what it did (frozen with the predictions; used to explain misses).
+        for (const t of [m.home, m.away]) for (const c of [...t.cards, ...(t.kicker ? [t.kicker] : [])]) {
+          const o = c.opportunity || {}, e = c.efficiency;
+          insC.run(batchId, game.id, c.id, JSON.stringify({
+            team: t.abbr, pos: c.pos, role: c.role, carries: o.carries ?? null, targets: o.targets ?? null, attempts: o.dropbacks ?? null,
+            carryShare: o.carryShare ?? null, targetShare: o.targetShare ?? null, ypc: e?.ypc?.final ?? null, catchRate: e?.catchRate?.final ?? null, ypCatch: e?.ypCatch?.final ?? null,
+            teamPlays: t.params.plays, teamAtt: t.v12?.volume?.attTarget ?? null, expMargin: t.expMargin, teamPts: t.impliedPts, qbYpa: t.v12?.qb?.ypaTarget ?? null, notes: c.notes || [],
+          }));
+        }
         d.exec('COMMIT');
       } catch (e) { d.exec('ROLLBACK'); log(`${game.id}: insert failed ${e.message}`); continue; }
       done++;
@@ -261,28 +298,57 @@ export async function scoreBlind(batchId, { log = () => {}, d = openBlind() } = 
   const games = d.prepare("SELECT * FROM blind_manifests WHERE batch_id=? AND status='predicted'").all(batchId);
   const insS = d.prepare('INSERT OR IGNORE INTO blind_scores (batch_id, game_id, player_id, stat, actual, status, scored_at) VALUES (?,?,?,?,?,?,?)');
   const insL = d.prepare('INSERT OR IGNORE INTO blind_lines (batch_id, game_id, player_id, stat, line, open_line, line_updated, updated_before_kickoff, source, retrieved_at, tier) VALUES (?,?,?,?,?,?,?,?,?,?,?)');
+  const insAC = d.prepare('INSERT OR IGNORE INTO blind_actual_context (batch_id, game_id, player_id, context_json) VALUES (?,?,?,?)');
+  const insPr = d.prepare('INSERT OR IGNORE INTO blind_line_prices (batch_id, game_id, player_id, stat, over_price, under_price, provider, alternates) VALUES (?,?,?,?,?,?,?,?)');
   const insC = d.prepare('INSERT OR IGNORE INTO blind_line_coverage (batch_id, game_id, league, status, lines, retrieved_at) VALUES (?,?,?,?,?,?)');
   for (const g of games) {
     const preds = d.prepare('SELECT player_id, stat FROM blind_predictions WHERE batch_id=? AND game_id=?').all(batchId, g.game_id);
     const s = await espn.getSummary(g.league, g.game_id, { final: true });
     const at = nowISO();
     const lines = s.data ? actualLinesFromSummary(s.data) : null;
+    // A failed fetch is not a result: record nothing so a later --score-only run can fill it in.
+    if (!lines) { log(`score skipped ${g.league} ${g.away}@${g.home}: summary unavailable (${s.meta.error}) — rerun with --score-only ${batchId}`); continue; }
     for (const p of preds) {
-      if (!lines) { insS.run(batchId, g.game_id, p.player_id, p.stat, null, 'unavailable', at); continue; }
       const st = lines.get(p.player_id);
       if (!st) { insS.run(batchId, g.game_id, p.player_id, p.stat, null, 'no_box_row', at); continue; }
       const v = actualValue(st, p.stat);
       insS.run(batchId, g.game_id, p.player_id, p.stat, n(v), v == null ? 'unknown' : 'scored', at);
     }
-    // Historical prop lines (retained by ESPN after the game).
-    const pr = await espn.getProps(g.league, g.game_id);
-    const props = pr.data?.items ? espn.parseProps(pr.data) : null;
-    insC.run(batchId, g.game_id, g.league, props ? 'retrieved' : (pr.meta.status === 404 ? 'none posted in feed' : `error: ${pr.meta.error}`), props ? Object.values(props).reduce((a, x) => a + Object.keys(x).length, 0) : 0, pr.meta.fetchedAt || at);
+    // Actual context (what really happened) for explaining misses: team volume, margin, long plays.
+    if (s.data && lines) {
+      const plays = espn.extractPlays(s.data), hdr = espn.summaryTeams(s.data);
+      const tctx = {};
+      for (const side of [hdr.home, hdr.away]) {
+        const opp = side === hdr.home ? hdr.away : hdr.home;
+        const off = plays.filter((p) => p.offenseId === side.id);
+        tctx[side.abbr] = { plays: off.length, passAtt: off.filter((p) => p.kind === 'pass').length, rushes: off.filter((p) => p.kind === 'rush').length, pts: side.score, margin: side.score - opp.score };
+      }
+      const box = espn.parseBoxscore(s.data);
+      const seen = new Set();
+      for (const p of preds) {
+        if (seen.has(p.player_id)) continue; seen.add(p.player_id);
+        const st = lines.get(p.player_id);
+        const teamAbbr = box.get(p.player_id)?.teamAbbr;
+        insAC.run(batchId, g.game_id, p.player_id, JSON.stringify({ stats: st || null, team: teamAbbr ? tctx[teamAbbr] : null, teams: tctx }));
+      }
+    }
+    // Historical prop lines retained by ESPN after the game: DraftKings first, else ESPN BET
+    // (main line only, alternates ignored). Post-game retrieval => unverified reconstruction.
+    let props = null, provider = null, prMeta = null, transientErr = false;
+    for (const [pid, name] of [[100, 'DraftKings via ESPN'], [58, 'ESPN BET via ESPN']]) {
+      const pr = await fetchCached(espn.url.props(g.league, g.game_id, pid), { ttl: 30 * 86400, label: `Retained props (${name})` });
+      prMeta = pr.meta;
+      if (pr.meta.error && pr.meta.status !== 404) transientErr = true;
+      if (pr.data?.items?.length) { const pm = espn.parsePropsMain(pr.data, name); if (Object.keys(pm).length) { props = pm; provider = name; break; } }
+    }
+    if (!props && transientErr) log(`lines skipped ${g.away}@${g.home}: transient error — rerun --score-only ${batchId}`);
+    else insC.run(batchId, g.game_id, g.league, props ? `retrieved (${provider})` : 'none posted in feed', props ? Object.values(props).reduce((a, x) => a + Object.keys(x).length, 0) : 0, prMeta?.fetchedAt || at);
     if (props) for (const p of preds) {
       const L = props[p.player_id]?.[p.stat];
       if (!L) continue;
       const before = L.updated ? (Date.parse(L.updated) < Date.parse(g.kickoff) ? 1 : 0) : null;
-      insL.run(batchId, g.game_id, p.player_id, p.stat, L.line, n(L.open), L.updated, before, 'DraftKings via ESPN core API (retained post-game)', pr.meta.fetchedAt, 'reconstructed');
+      insL.run(batchId, g.game_id, p.player_id, p.stat, L.line, n(L.open), L.updated, before, `${provider} (retained post-game)`, prMeta?.fetchedAt || at, 'reconstructed');
+      insPr.run(batchId, g.game_id, p.player_id, p.stat, n(L.overPrice), n(L.underPrice), provider, L.alternates ?? 0);
     }
     log(`scored ${g.league} ${g.away}@${g.home}: ${preds.length} predictions, ${props ? 'lines retrieved' : 'no lines'}`);
   }

@@ -29,7 +29,8 @@ export const CFBD_API_KEY = process.env.CFBD_API_KEY || '';
 // silently mixes model generations.
 // History: 1.0.0 initial; 1.1.0 wider workload variance, share floors, rushing-TD play fix;
 // 1.2.0 NFL: prior-season team/QB/share priors + fitted shrinkage (src/fitted_v12.json).
-export const MODEL_VERSION = 'fbm-1.2.0';
+// 1.3.0 NFL: output calibration learned walk-forward from every 2024+2025 pick (src/fitted_v13.json).
+export const MODEL_VERSION = 'fbm-1.3.0';
 
 // Weeks inspected while tuning each model version. Results on these weeks are IN-SAMPLE
 // (development) and must never be presented as independent validation.
@@ -39,6 +40,7 @@ export const DEV_WEEKS = {
   // v1.2 constants were fitted on 2024->2025 history, but weeks 2-3 of 2026 were inspected in the
   // diagnosis that motivated its design, so they stay in-sample.
   'fbm-1.2.0': { nfl: [2, 3], cfb: [4] },
+  'fbm-1.3.0': { nfl: [2, 3], cfb: [4] },
 };
 
 export const LEAGUES = {

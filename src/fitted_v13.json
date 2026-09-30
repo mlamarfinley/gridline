@@ -1,0 +1,978 @@
+{
+ "batch": 6,
+ "learnedAt": "2026-09-30T23:09:09.420Z",
+ "note": "Walk-forward. Fold 1 learns on 2024 only and is scored on 2025 and 2026. Final learns on 2024+2025 and is scored on 2026 (weeks 2–3 inspected earlier). 2025 outcomes were also the fit targets for the v1.2 constants, so 2025 is in-sample for v1.2 itself.",
+ "fold1": {
+  "test2025": {
+   "before": {
+    "pickRules": null,
+    "rmse": 16.602,
+    "n": 23289,
+    "mae": 6.651,
+    "bias": -0.268,
+    "coverage": 0.849,
+    "picks": 7470,
+    "wins": 3807,
+    "losses": 3663,
+    "winRate": 0.5096,
+    "gapBins": [
+     {
+      "gap": "0-0.25",
+      "w": 2132,
+      "l": 2049,
+      "rate": 0.51
+     },
+     {
+      "gap": "0.25-0.5",
+      "w": 1110,
+      "l": 1085,
+      "rate": 0.506
+     },
+     {
+      "gap": "0.5-1",
+      "w": 497,
+      "l": 461,
+      "rate": 0.519
+     },
+     {
+      "gap": "1-inf",
+      "w": 67,
+      "l": 66,
+      "rate": 0.504
+     }
+    ],
+    "maeOnLineRows": 11.464,
+    "lineMae": 10.786
+   },
+   "after": {
+    "pickRules": {
+     "onlyStatsThatBeat524InTraining": {
+      "stats": [
+       "WR|long_rec",
+       "WR|rec_yds",
+       "RB|carries",
+       "QB|pass_td",
+       "TE|long_rec",
+       "TE|rec_yds",
+       "TE|receptions"
+      ],
+      "w": 1254,
+      "l": 1348,
+      "rate": 0.4819
+     },
+     "fadeModelIfTrainingBetaNegative": {
+      "beta": 0.118,
+      "w": 3844,
+      "l": 3793,
+      "rate": 0.5033
+     }
+    },
+    "rmse": 16.575,
+    "n": 23289,
+    "mae": 6.575,
+    "bias": -0.887,
+    "coverage": 0.843,
+    "picks": 7637,
+    "wins": 3844,
+    "losses": 3793,
+    "winRate": 0.5033,
+    "gapBins": [
+     {
+      "gap": "0-0.25",
+      "w": 2405,
+      "l": 2432,
+      "rate": 0.497
+     },
+     {
+      "gap": "0.25-0.5",
+      "w": 1011,
+      "l": 978,
+      "rate": 0.508
+     },
+     {
+      "gap": "0.5-1",
+      "w": 372,
+      "l": 323,
+      "rate": 0.535
+     },
+     {
+      "gap": "1-inf",
+      "w": 55,
+      "l": 58,
+      "rate": 0.487
+     }
+    ],
+    "maeOnLineRows": 11.403,
+    "lineMae": 10.786
+   }
+  },
+  "test2026": {
+   "before": {
+    "pickRules": null,
+    "rmse": 15.471,
+    "n": 3014,
+    "mae": 6.425,
+    "bias": -0.075,
+    "coverage": 0.86,
+    "picks": 1425,
+    "wins": 659,
+    "losses": 766,
+    "winRate": 0.4625,
+    "gapBins": [
+     {
+      "gap": "0-0.25",
+      "w": 380,
+      "l": 424,
+      "rate": 0.473
+     },
+     {
+      "gap": "0.25-0.5",
+      "w": 176,
+      "l": 232,
+      "rate": 0.431
+     },
+     {
+      "gap": "0.5-1",
+      "w": 90,
+      "l": 103,
+      "rate": 0.466
+     },
+     {
+      "gap": "1-inf",
+      "w": 13,
+      "l": 7,
+      "rate": 0.65
+     }
+    ],
+    "maeOnLineRows": 11.121,
+    "lineMae": 10.297
+   },
+   "after": {
+    "pickRules": {
+     "onlyStatsThatBeat524InTraining": {
+      "stats": [
+       "WR|long_rec",
+       "WR|rec_yds",
+       "RB|carries",
+       "QB|pass_td",
+       "TE|long_rec",
+       "TE|rec_yds",
+       "TE|receptions"
+      ],
+      "w": 247,
+      "l": 238,
+      "rate": 0.5093
+     },
+     "fadeModelIfTrainingBetaNegative": {
+      "beta": 0.118,
+      "w": 705,
+      "l": 751,
+      "rate": 0.4842
+     }
+    },
+    "rmse": 15.493,
+    "n": 3014,
+    "mae": 6.352,
+    "bias": -0.691,
+    "coverage": 0.858,
+    "picks": 1456,
+    "wins": 705,
+    "losses": 751,
+    "winRate": 0.4842,
+    "gapBins": [
+     {
+      "gap": "0-0.25",
+      "w": 463,
+      "l": 454,
+      "rate": 0.505
+     },
+     {
+      "gap": "0.25-0.5",
+      "w": 166,
+      "l": 219,
+      "rate": 0.431
+     },
+     {
+      "gap": "0.5-1",
+      "w": 65,
+      "l": 74,
+      "rate": 0.468
+     },
+     {
+      "gap": "1-inf",
+      "w": 11,
+      "l": 4,
+      "rate": 0.733
+     }
+    ],
+    "maeOnLineRows": 11.037,
+    "lineMae": 10.297
+   }
+  }
+ },
+ "final": {
+  "test2026": {
+   "before": {
+    "pickRules": null,
+    "rmse": 15.471,
+    "n": 3014,
+    "mae": 6.425,
+    "bias": -0.075,
+    "coverage": 0.86,
+    "picks": 1425,
+    "wins": 659,
+    "losses": 766,
+    "winRate": 0.4625,
+    "gapBins": [
+     {
+      "gap": "0-0.25",
+      "w": 380,
+      "l": 424,
+      "rate": 0.473
+     },
+     {
+      "gap": "0.25-0.5",
+      "w": 176,
+      "l": 232,
+      "rate": 0.431
+     },
+     {
+      "gap": "0.5-1",
+      "w": 90,
+      "l": 103,
+      "rate": 0.466
+     },
+     {
+      "gap": "1-inf",
+      "w": 13,
+      "l": 7,
+      "rate": 0.65
+     }
+    ],
+    "maeOnLineRows": 11.121,
+    "lineMae": 10.297
+   },
+   "after": {
+    "pickRules": {
+     "onlyStatsThatBeat524InTraining": {
+      "stats": [
+       "RB|carries",
+       "QB|pass_td",
+       "TE|long_rec"
+      ],
+      "w": 94,
+      "l": 78,
+      "rate": 0.5465
+     },
+     "fadeModelIfTrainingBetaNegative": {
+      "beta": 0.0229,
+      "w": 709,
+      "l": 747,
+      "rate": 0.487
+     }
+    },
+    "rmse": 15.536,
+    "n": 3014,
+    "mae": 6.344,
+    "bias": -0.911,
+    "coverage": 0.86,
+    "picks": 1456,
+    "wins": 709,
+    "losses": 747,
+    "winRate": 0.487,
+    "gapBins": [
+     {
+      "gap": "0-0.25",
+      "w": 457,
+      "l": 442,
+      "rate": 0.508
+     },
+     {
+      "gap": "0.25-0.5",
+      "w": 176,
+      "l": 222,
+      "rate": 0.442
+     },
+     {
+      "gap": "0.5-1",
+      "w": 62,
+      "l": 78,
+      "rate": 0.443
+     },
+     {
+      "gap": "1-inf",
+      "w": 14,
+      "l": 5,
+      "rate": 0.737
+     }
+    ],
+    "maeOnLineRows": 11.023,
+    "lineMae": 10.297
+   }
+  }
+ },
+ "byStat": {
+  "WR|long_rec": {
+   "n": 1806,
+   "a": -2.0545,
+   "b": 1,
+   "s": 1,
+   "trainCoverage": 0.817,
+   "trainPicks": 1329,
+   "trainWinRate": 0.5147
+  },
+  "WR|rec_td": {
+   "n": 1806,
+   "a": -0.2446,
+   "b": 1,
+   "s": 1.35,
+   "trainCoverage": 0.96,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "WR|rec_yds": {
+   "n": 1806,
+   "a": -3.4242,
+   "b": 1,
+   "s": 1,
+   "trainCoverage": 0.815,
+   "trainPicks": 1416,
+   "trainWinRate": 0.5049
+  },
+  "WR|receptions": {
+   "n": 1806,
+   "a": -0.1957,
+   "b": 1,
+   "s": 1.1,
+   "trainCoverage": 0.853,
+   "trainPicks": 1255,
+   "trainWinRate": 0.5195
+  },
+  "WR|targets": {
+   "n": 1792,
+   "a": -0.1956,
+   "b": 1,
+   "s": 1.05,
+   "trainCoverage": 0.829,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "WR|ypr": {
+   "n": 1735,
+   "a": -0.3323,
+   "b": 1,
+   "s": 1.05,
+   "trainCoverage": 0.8,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "K|fg_made": {
+   "n": 933,
+   "a": -0.2014,
+   "b": 1,
+   "s": 1,
+   "trainCoverage": 0.821,
+   "trainPicks": 527,
+   "trainWinRate": 0.5104
+  },
+  "K|k_pts": {
+   "n": 933,
+   "a": -0.4794,
+   "b": 1,
+   "s": 0.95,
+   "trainCoverage": 0.846,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "K|xp_made": {
+   "n": 933,
+   "a": -0.2493,
+   "b": 1,
+   "s": 1,
+   "trainCoverage": 0.823,
+   "trainPicks": 736,
+   "trainWinRate": 0.5204
+  },
+  "RB|carries": {
+   "n": 1881,
+   "a": 0.5875,
+   "b": 1,
+   "s": 1.3,
+   "trainCoverage": 0.803,
+   "trainPicks": 998,
+   "trainWinRate": 0.5311
+  },
+  "RB|fumbles_lost": {
+   "n": 1881,
+   "a": -0.0294,
+   "b": 1,
+   "s": 0.5,
+   "trainCoverage": 0.945,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "RB|long_rush": {
+   "n": 1881,
+   "a": -1.7625,
+   "b": 1,
+   "s": 1.1,
+   "trainCoverage": 0.809,
+   "trainPicks": 1209,
+   "trainWinRate": 0.5194
+  },
+  "RB|rec_td": {
+   "n": 1881,
+   "a": -0.049,
+   "b": 1,
+   "s": 0.5,
+   "trainCoverage": 0.928,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "RB|rec_yds": {
+   "n": 1881,
+   "a": -3.3292,
+   "b": 1,
+   "s": 1,
+   "trainCoverage": 0.81,
+   "trainPicks": 748,
+   "trainWinRate": 0.5067
+  },
+  "RB|receptions": {
+   "n": 1881,
+   "a": -0.1958,
+   "b": 1,
+   "s": 1.1,
+   "trainCoverage": 0.839,
+   "trainPicks": 906,
+   "trainWinRate": 0.5044
+  },
+  "RB|rush_td": {
+   "n": 1881,
+   "a": -0.1469,
+   "b": 1,
+   "s": 1.2,
+   "trainCoverage": 0.939,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "RB|rush_yds": {
+   "n": 1881,
+   "a": 0.9792,
+   "b": 1,
+   "s": 1.3,
+   "trainCoverage": 0.803,
+   "trainPicks": 1207,
+   "trainWinRate": 0.5037
+  },
+  "RB|targets": {
+   "n": 1518,
+   "a": 0.1949,
+   "b": 1,
+   "s": 1.1,
+   "trainCoverage": 0.855,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "RB|ypc": {
+   "n": 1815,
+   "a": -0.3068,
+   "b": 1,
+   "s": 1,
+   "trainCoverage": 0.801,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "RB|ypr": {
+   "n": 1412,
+   "a": -0.7358,
+   "b": 1,
+   "s": 1.15,
+   "trainCoverage": 0.815,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "QB|completions": {
+   "n": 908,
+   "a": -1.0536,
+   "b": 1,
+   "s": 1.2,
+   "trainCoverage": 0.828,
+   "trainPicks": 673,
+   "trainWinRate": 0.4844
+  },
+  "QB|fumbles": {
+   "n": 908,
+   "a": -0.2203,
+   "b": 1,
+   "s": 1.3,
+   "trainCoverage": 0.925,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "QB|fumbles_lost": {
+   "n": 908,
+   "a": -0.1245,
+   "b": 1,
+   "s": 0.5,
+   "trainCoverage": 0.838,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "QB|ints": {
+   "n": 908,
+   "a": -0.4214,
+   "b": 1,
+   "s": 1,
+   "trainCoverage": 0.82,
+   "trainPicks": 299,
+   "trainWinRate": 0.5184
+  },
+  "QB|long_cmp": {
+   "n": 907,
+   "a": -3.7353,
+   "b": 1,
+   "s": 1.1,
+   "trainCoverage": 0.81,
+   "trainPicks": 675,
+   "trainWinRate": 0.5081
+  },
+  "QB|pass_att": {
+   "n": 908,
+   "a": -0.6705,
+   "b": 1,
+   "s": 1.3,
+   "trainCoverage": 0.803,
+   "trainPicks": 674,
+   "trainWinRate": 0.4955
+  },
+  "QB|pass_td": {
+   "n": 908,
+   "a": -0.2011,
+   "b": 1,
+   "s": 1,
+   "trainCoverage": 0.848,
+   "trainPicks": 636,
+   "trainWinRate": 0.5519
+  },
+  "QB|pass_yds": {
+   "n": 908,
+   "a": -7.0878,
+   "b": 1,
+   "s": 1.05,
+   "trainCoverage": 0.803,
+   "trainPicks": 742,
+   "trainWinRate": 0.5054
+  },
+  "QB|rush_td": {
+   "n": 908,
+   "a": -0.1054,
+   "b": 1,
+   "s": 0.5,
+   "trainCoverage": 0.847,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "QB|rush_yds": {
+   "n": 908,
+   "a": -1.7241,
+   "b": 1,
+   "s": 1.25,
+   "trainCoverage": 0.803,
+   "trainPicks": 472,
+   "trainWinRate": 0.5169
+  },
+  "TE|long_rec": {
+   "n": 638,
+   "a": -1.1292,
+   "b": 1,
+   "s": 1.05,
+   "trainCoverage": 0.831,
+   "trainPicks": 464,
+   "trainWinRate": 0.5259
+  },
+  "TE|rec_td": {
+   "n": 638,
+   "a": -0.1882,
+   "b": 1,
+   "s": 1.25,
+   "trainCoverage": 0.961,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "TE|rec_yds": {
+   "n": 638,
+   "a": -3.5758,
+   "b": 1,
+   "s": 1,
+   "trainCoverage": 0.803,
+   "trainPicks": 477,
+   "trainWinRate": 0.5073
+  },
+  "TE|receptions": {
+   "n": 638,
+   "a": -0.2823,
+   "b": 1,
+   "s": 1.1,
+   "trainCoverage": 0.84,
+   "trainPicks": 437,
+   "trainWinRate": 0.524
+  },
+  "TE|targets": {
+   "n": 635,
+   "a": -0.2822,
+   "b": 1,
+   "s": 1.1,
+   "trainCoverage": 0.825,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "TE|ypr": {
+   "n": 617,
+   "a": -0.1878,
+   "b": 1,
+   "s": 1.05,
+   "trainCoverage": 0.807,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "__market": {
+   "beta": 0.0229,
+   "se": 0.0219,
+   "t": 1.04,
+   "n": 16192
+  }
+ },
+ "fold1ByStat": {
+  "WR|long_rec": {
+   "n": 914,
+   "a": -1.5329,
+   "b": 1,
+   "s": 1,
+   "trainCoverage": 0.819,
+   "trainPicks": 734,
+   "trainWinRate": 0.5259
+  },
+  "WR|rec_td": {
+   "n": 914,
+   "a": -0.2299,
+   "b": 1,
+   "s": 1.3,
+   "trainCoverage": 0.955,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "WR|rec_yds": {
+   "n": 914,
+   "a": -0.6706,
+   "b": 1,
+   "s": 1,
+   "trainCoverage": 0.811,
+   "trainPicks": 822,
+   "trainWinRate": 0.5255
+  },
+  "WR|receptions": {
+   "n": 914,
+   "a": -0.0958,
+   "b": 1,
+   "s": 1.05,
+   "trainCoverage": 0.847,
+   "trainPicks": 693,
+   "trainWinRate": 0.518
+  },
+  "WR|targets": {
+   "n": 908,
+   "a": -0.0958,
+   "b": 1,
+   "s": 1.05,
+   "trainCoverage": 0.845,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "WR|ypr": {
+   "n": 884,
+   "a": -0.3253,
+   "b": 1,
+   "s": 1.1,
+   "trainCoverage": 0.812,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "K|fg_made": {
+   "n": 471,
+   "a": -0.1936,
+   "b": 1,
+   "s": 1,
+   "trainCoverage": 0.824,
+   "trainPicks": 214,
+   "trainWinRate": 0.4907
+  },
+  "K|k_pts": {
+   "n": 471,
+   "a": -0.4609,
+   "b": 1,
+   "s": 0.95,
+   "trainCoverage": 0.854,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "K|xp_made": {
+   "n": 471,
+   "a": -0.1936,
+   "b": 1,
+   "s": 1,
+   "trainCoverage": 0.815,
+   "trainPicks": 426,
+   "trainWinRate": 0.5211
+  },
+  "RB|carries": {
+   "n": 928,
+   "a": 0.5752,
+   "b": 1,
+   "s": 1.4,
+   "trainCoverage": 0.817,
+   "trainPicks": 576,
+   "trainWinRate": 0.533
+  },
+  "RB|fumbles_lost": {
+   "n": 928,
+   "a": -0.0383,
+   "b": 1,
+   "s": 0.5,
+   "trainCoverage": 0.944,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "RB|long_rush": {
+   "n": 928,
+   "a": -1.8215,
+   "b": 1,
+   "s": 1.15,
+   "trainCoverage": 0.814,
+   "trainPicks": 640,
+   "trainWinRate": 0.5141
+  },
+  "RB|rec_td": {
+   "n": 928,
+   "a": -0.0575,
+   "b": 1,
+   "s": 0.5,
+   "trainCoverage": 0.934,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "RB|rec_yds": {
+   "n": 928,
+   "a": -3.2595,
+   "b": 1,
+   "s": 1,
+   "trainCoverage": 0.819,
+   "trainPicks": 335,
+   "trainWinRate": 0.4985
+  },
+  "RB|receptions": {
+   "n": 928,
+   "a": -0.1917,
+   "b": 1,
+   "s": 1.1,
+   "trainCoverage": 0.836,
+   "trainPicks": 505,
+   "trainWinRate": 0.4812
+  },
+  "RB|rush_td": {
+   "n": 928,
+   "a": -0.1342,
+   "b": 1,
+   "s": 1.15,
+   "trainCoverage": 0.804,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "RB|rush_yds": {
+   "n": 928,
+   "a": 0.6711,
+   "b": 1,
+   "s": 1.3,
+   "trainCoverage": 0.803,
+   "trainPicks": 641,
+   "trainWinRate": 0.507
+  },
+  "RB|targets": {
+   "n": 741,
+   "a": 0.2846,
+   "b": 1,
+   "s": 1.1,
+   "trainCoverage": 0.814,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "RB|ypc": {
+   "n": 894,
+   "a": -0.3127,
+   "b": 1,
+   "s": 1,
+   "trainCoverage": 0.812,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "RB|ypr": {
+   "n": 697,
+   "a": -0.7282,
+   "b": 1,
+   "s": 1.15,
+   "trainCoverage": 0.816,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "QB|completions": {
+   "n": 458,
+   "a": -0.7357,
+   "b": 1,
+   "s": 1.25,
+   "trainCoverage": 0.838,
+   "trainPicks": 374,
+   "trainWinRate": 0.4893
+  },
+  "QB|fumbles": {
+   "n": 458,
+   "a": -0.2207,
+   "b": 1,
+   "s": 1.3,
+   "trainCoverage": 0.924,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "QB|fumbles_lost": {
+   "n": 458,
+   "a": -0.1196,
+   "b": 1,
+   "s": 0.5,
+   "trainCoverage": 0.843,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "QB|ints": {
+   "n": 458,
+   "a": -0.4231,
+   "b": 1,
+   "s": 1.3,
+   "trainCoverage": 0.847,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "QB|long_cmp": {
+   "n": 458,
+   "a": -4.0466,
+   "b": 1,
+   "s": 1.1,
+   "trainCoverage": 0.803,
+   "trainPicks": 376,
+   "trainWinRate": 0.5
+  },
+  "QB|pass_att": {
+   "n": 458,
+   "a": -0.1839,
+   "b": 1,
+   "s": 1.4,
+   "trainCoverage": 0.834,
+   "trainPicks": 377,
+   "trainWinRate": 0.4748
+  },
+  "QB|pass_td": {
+   "n": 458,
+   "a": -0.1012,
+   "b": 1,
+   "s": 1,
+   "trainCoverage": 0.854,
+   "trainPicks": 340,
+   "trainWinRate": 0.5735
+  },
+  "QB|pass_yds": {
+   "n": 458,
+   "a": -5.0582,
+   "b": 1,
+   "s": 1.1,
+   "trainCoverage": 0.814,
+   "trainPicks": 442,
+   "trainWinRate": 0.5226
+  },
+  "QB|rush_td": {
+   "n": 458,
+   "a": -0.1012,
+   "b": 1,
+   "s": 0.5,
+   "trainCoverage": 0.843,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "QB|rush_yds": {
+   "n": 458,
+   "a": -1.2876,
+   "b": 1,
+   "s": 1.3,
+   "trainCoverage": 0.81,
+   "trainPicks": 186,
+   "trainWinRate": 0.4785
+  },
+  "TE|long_rec": {
+   "n": 292,
+   "a": -1.1434,
+   "b": 1,
+   "s": 1.05,
+   "trainCoverage": 0.818,
+   "trainPicks": 249,
+   "trainWinRate": 0.5582
+  },
+  "TE|rec_td": {
+   "n": 292,
+   "a": -0.1671,
+   "b": 1,
+   "s": 1.25,
+   "trainCoverage": 0.973,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "TE|rec_yds": {
+   "n": 292,
+   "a": -2.1108,
+   "b": 1,
+   "s": 1.05,
+   "trainCoverage": 0.805,
+   "trainPicks": 255,
+   "trainWinRate": 0.5569
+  },
+  "TE|receptions": {
+   "n": 292,
+   "a": -0.2639,
+   "b": 1,
+   "s": 1.1,
+   "trainCoverage": 0.812,
+   "trainPicks": 225,
+   "trainWinRate": 0.5333
+  },
+  "TE|targets": {
+   "n": 291,
+   "a": 0,
+   "b": 1,
+   "s": 1.25,
+   "trainCoverage": 0.832,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "TE|ypr": {
+   "n": 281,
+   "a": -0.1663,
+   "b": 1,
+   "s": 1.05,
+   "trainCoverage": 0.819,
+   "trainPicks": 0,
+   "trainWinRate": null
+  },
+  "__market": {
+   "beta": 0.118,
+   "se": 0.0298,
+   "t": 3.97,
+   "n": 8555
+  }
+ }
+}
