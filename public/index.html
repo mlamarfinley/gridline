@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gridline — Football Projections Ledger</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,300..800;1,100,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230d1015'/%3E%3Cpath d='M6 10h20M6 16h20M6 22h20' stroke='%23d8f36a' stroke-width='2'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <header class="topbar">
+    <nav class="histnav" aria-label="Page history">
+      <button type="button" id="navBack" aria-label="Back" disabled><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" /></svg></button>
+      <button type="button" id="navFwd" aria-label="Forward" disabled><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5" /></svg></button>
+    </nav>
+    <a class="brand" href="#/nfl">GRIDLINE<span>projections ledger</span></a>
+    <nav class="league" role="tablist" aria-label="League">
+      <a data-league="nfl" href="#/nfl">NFL</a>
+      <a data-league="cfb" href="#/cfb">College</a>
+    </nav>
+    <div class="week"><label for="week">Week</label><select id="week" aria-label="Week"></select></div>
+    <nav class="views">
+      <a data-view="slate" href="#/nfl">Slate</a>
+      <a data-view="ledger" href="#/ledger">Ledger</a>
+    </nav>
+    <div class="status" id="status" title="Data status"></div>
+  </header>
+  <main id="app" tabindex="-1"></main>
+  <footer class="foot">
+    Data: ESPN public endpoints · nflverse · Open-Meteo. Projections are model outputs, not advice. Model probabilities are uncalibrated unless the Ledger shows otherwise.
+  </footer>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

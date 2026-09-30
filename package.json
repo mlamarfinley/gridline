@@ -1,0 +1,21 @@
+{
+  "name": "football-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local NFL + college football analytics dashboard with an immutable SQLite prediction ledger.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node --no-warnings server.js",
+    "test": "node --no-warnings --test \"test/*.test.js\"",
+    "snapshot": "node --no-warnings scripts/snapshot.js",
+    "settle": "node --no-warnings scripts/settle.js",
+    "backtest": "node --no-warnings scripts/backtest.js",
+    "gapscan": "node --no-warnings scripts/gapscan.js",
+    "blind": "node --no-warnings scripts/blind.js",
+    "export:ledger": "node --no-warnings scripts/export-site.js --ledger",
+    "export:site": "node --no-warnings scripts/export-site.js --out site"
+  }
+}

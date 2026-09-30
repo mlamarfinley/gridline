@@ -1,0 +1,47 @@
+# Builds the READ-ONLY public snapshot and deploys it to GitHub Pages.
+# Slates + matchups are rebuilt from fresh ESPN data on every run; ledger/backtest pages come from
+# static-data/ (exported locally with `npm run export:ledger` and committed — the SQLite ledger
+# itself never leaves your machine).
+name: Deploy read-only site
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 */6 * * *'   # about every 6 hours
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Restore HTTP cache (final-game summaries are immutable)
+        uses: actions/cache@v4
+        with:
+          path: data/cache
+          key: espn-cache-${{ github.run_id }}
+          restore-keys: espn-cache-
+      - run: npm test
+      - run: npm run export:site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
