@@ -1,0 +1,221 @@
+{
+ "fittedAt": "2026-09-30T21:28:29.104Z",
+ "fitSet": "NFL 2025 regular season, weeks 2–18 (walk-forward: only 2024 + 2025 weeks < w). No 2026 data used.",
+ "team": {
+  "plays": {
+   "key": "plays",
+   "league": 62.154411764705884,
+   "best": {
+    "k": 12,
+    "r": 0,
+    "b": 0.5,
+    "rmse": 8.503062351070753,
+    "n": 512
+   },
+   "v11Rmse": 8.49950242176428,
+   "naiveLeagueRmse": 8.629988962405536
+  },
+  "att": {
+   "key": "att",
+   "league": 32.74080882352941,
+   "best": {
+    "k": 8,
+    "r": 0.25,
+    "b": 0.75,
+    "rmse": 7.5847458499947935,
+    "n": 512
+   },
+   "v11Rmse": 7.63260577710529,
+   "naiveLeagueRmse": 7.926832407947128
+  },
+  "passYds": {
+   "key": "passYds",
+   "league": 233.5,
+   "best": {
+    "k": 8,
+    "r": 0.25,
+    "b": 1,
+    "rmse": 68.39565975382915,
+    "n": 512
+   },
+   "v11Rmse": 69.05790891062118,
+   "naiveLeagueRmse": 71.80110331673184
+  },
+  "rushYds": {
+   "key": "rushYds",
+   "league": 119.80514705882354,
+   "best": {
+    "k": 12,
+    "r": 0.25,
+    "b": 0.75,
+    "rmse": 48.66395552891031,
+    "n": 512
+   },
+   "v11Rmse": 48.77441406787195,
+   "naiveLeagueRmse": 49.807935738179765
+  },
+  "pf": {
+   "key": "pf",
+   "league": 22.91176470588235,
+   "best": {
+    "k": 12,
+    "r": 0.4,
+    "b": 1,
+    "rmse": 9.47430686092108,
+    "n": 512
+   },
+   "v11Rmse": 9.602836303162544,
+   "naiveLeagueRmse": 9.986754582184087
+  },
+  "carries": {
+   "key": "carries",
+   "league": 26.998161764705884,
+   "best": {
+    "k": 12,
+    "r": 0.25,
+    "b": 0.75,
+    "rmse": 7.307737982964209,
+    "n": 512
+   },
+   "v11Rmse": 7.314300886832638,
+   "naiveLeagueRmse": 7.446525178706196
+  }
+ },
+ "market": {
+  "passYds": {
+   "key": "passYds",
+   "perImpliedPoint": 5.36540824142777,
+   "atMean": 229.26194852941177,
+   "meanImplied": 22.305606617647058,
+   "n": 1088,
+   "note": "fit on 2024+2025 archived closing lines (nflverse schedules)"
+  },
+  "rushYds": {
+   "key": "rushYds",
+   "perImpliedPoint": 3.5051187201695058,
+   "atMean": 118.375,
+   "meanImplied": 22.305606617647058,
+   "n": 1088,
+   "note": "fit on 2024+2025 archived closing lines (nflverse schedules)"
+  },
+  "plays": {
+   "key": "plays",
+   "perImpliedPoint": 0.316284978281434,
+   "atMean": 61.708639705882355,
+   "meanImplied": 22.305606617647058,
+   "n": 1088,
+   "note": "fit on 2024+2025 archived closing lines (nflverse schedules)"
+  },
+  "att": {
+   "key": "att",
+   "perImpliedPoint": 0.0008430440695413477,
+   "atMean": 32.39889705882353,
+   "meanImplied": 22.305606617647058,
+   "n": 1088,
+   "note": "fit on 2024+2025 archived closing lines (nflverse schedules)"
+  }
+ },
+ "qbYpa": {
+  "league": 7.206862522902044,
+  "best": {
+   "m": 800,
+   "k": 200,
+   "wrmse": 1.7921714106709297
+  },
+  "worst": {
+   "m": 800,
+   "k": 25,
+   "wrmse": 1.8532981238743818
+  }
+ },
+ "share": {
+  "target": {
+   "k": 3,
+   "rmse": 0.06389506992416437,
+   "currentOnlyRmse": 0.06603738480977268,
+   "n": 4820
+  },
+  "carry": {
+   "k": 1,
+   "rmse": 0.14277304122819415,
+   "currentOnlyRmse": 0.14426962070564894,
+   "n": 1417
+  }
+ },
+ "eff": {
+  "ypc": {
+   "league": 4.1578205624041225,
+   "best": {
+    "k": 400,
+    "wrmse": 1.887509251513584
+   },
+   "grid": [
+    {
+     "k": 400,
+     "wrmse": 1.887509251513584
+    },
+    {
+     "k": 250,
+     "wrmse": 1.8907209288746711
+    },
+    {
+     "k": 150,
+     "wrmse": 1.8984236757643627
+    },
+    {
+     "k": 100,
+     "wrmse": 1.9080072133463861
+    },
+    {
+     "k": 60,
+     "wrmse": 1.9249334644652958
+    },
+    {
+     "k": 40,
+     "wrmse": 1.9424114917590638
+    },
+    {
+     "k": 20,
+     "wrmse": 1.9796992353477154
+    }
+   ]
+  },
+  "ypt": {
+   "league": 7.531725660237709,
+   "best": {
+    "k": 100,
+    "wrmse": 3.9725726635956993
+   },
+   "grid": [
+    {
+     "k": 100,
+     "wrmse": 3.9725726635956993
+    },
+    {
+     "k": 150,
+     "wrmse": 3.972687560063034
+    },
+    {
+     "k": 250,
+     "wrmse": 3.980016481696109
+    },
+    {
+     "k": 60,
+     "wrmse": 3.98177044940095
+    },
+    {
+     "k": 400,
+     "wrmse": 3.9906695210400036
+    },
+    {
+     "k": 40,
+     "wrmse": 3.9971021959930586
+    },
+    {
+     "k": 20,
+     "wrmse": 4.039985067994392
+    }
+   ]
+  }
+ }
+}

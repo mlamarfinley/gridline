@@ -78,7 +78,8 @@ for (const g of games) {
           effYpc: c.efficiency?.ypc?.final, effCatch: c.efficiency?.catchRate?.final, effYpCatch: c.efficiency?.ypCatch?.final,
           actCar: a?.carries ?? 0, actTgt: a?.targets ?? null, actRec: a?.receptions ?? 0, actRushYds: a?.rush_yds ?? 0, actRecYds: a?.rec_yds ?? 0, actAtt: a?.pass_att ?? 0, actPassYds: a?.pass_yds ?? 0,
           actCarShare: teamCar ? (a?.carries || 0) / teamCar : null, actTgtShare: teamTgt ? (a?.targets || 0) / teamTgt : null,
-          teamActPlays: rushes + db, teamProjPlays: t.params.plays,
+          teamActPlays: rushes + db, teamProjPlays: t.params.plays, actLongRush: a?.long_rush ?? null, actLongRec: a?.long_rec ?? null, actLongCmp: a?.long_cmp ?? null,
+          teamExpMargin: t.expMargin, teamActMargin: me.score - op.score, teamProjAtt: t.v12?.volume?.attTarget ?? null, teamActAtt: off.filter((p) => p.kind === 'pass').length,
         });
       }
     }

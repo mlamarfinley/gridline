@@ -91,7 +91,7 @@ const nowISO = () => new Date().toISOString();
 const n = (x) => (x == null || !Number.isFinite(Number(x)) ? null : Number(x));
 
 // ---------- Freeze ----------
-const CODE_FILES = ['model.js', 'matchup.js', 'history.js', 'roles.js', 'espn.js', 'linegrades.js', 'baselines.js', 'blind.js', 'config.js', 'stats.js'];
+const CODE_FILES = ['priors.js', 'fitted_v12.json', 'model.js', 'matchup.js', 'history.js', 'roles.js', 'espn.js', 'linegrades.js', 'baselines.js', 'blind.js', 'config.js', 'stats.js'];
 export function freezeParams() {
   const params = { MODEL_VERSION, mode: BLIND_MODE, cutoffFilter: CUTOFF_FILTER_VERSION, PRIORS, SHRINK, SIMS, WORKLOAD_K, PLAYS_CV, PASS_RATE_SD };
   const code = CODE_FILES.map((f) => { try { return fs.readFileSync(path.join(ROOT, 'src', f), 'utf8'); } catch { return ''; } }).join('\n/*--*/\n');

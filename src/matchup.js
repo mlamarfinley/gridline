@@ -13,6 +13,7 @@ import { loadSnaps, snapsFor, normName } from './snaps.js';
 import { oddsApiProps, cfbdLineYards } from './optional.js';
 import { STAT_DEFS, STAT_LISTS, COMPACT } from './stats.js';
 import { selectOutlier } from './outlier.js';
+import { FIT, loadPriorSeason, priorPoints, blendTeam } from './priors.js';
 import { lineAgg, gradeTeam, leagueBaseline, METHOD as LINE_METHOD } from './linegrades.js';
 
 const SCRIPT_LABEL = { blowTrail: 'Trailing big', trail: 'Trailing', close: 'Close', lead: 'Leading', blowLead: 'Leading big' };
@@ -185,6 +186,12 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
   else propsMeta.reason = pr.meta.status === 404 ? 'No player props posted for this game in the ESPN feed' : (pr.meta.error || 'unavailable');
   const oddsApi = pregame ? await oddsApiProps(lg, home, away, kickoff, prov) : { enabled: false };
 
+  // ---------- fbm-1.2.0 NFL priors (prior season only; fitted constants in src/fitted_v12.json) ----------
+  const V12 = lg === 'nfl';
+  const prior = V12 ? await loadPriorSeason(season - 1, prov) : null;
+  const priorPts = {};
+  if (V12) for (const t of [home, away]) priorPts[t.id] = await priorPoints(t.id, season - 1, prov);
+
   // ---------- Per-team modelling ----------
   const teams = {};
   const flat = [];
@@ -216,8 +223,19 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
     const simIds = [...displayIds, ...supporting];
 
     // Implied points & script
-    const teamPtsModel = 0.5 * (cx.offense.pointsShrunk + ox.defense.pointsAllowedShrunk);
-    const oppPtsModel = 0.5 * (ox.offense.pointsShrunk + cx.defense.pointsAllowedShrunk);
+    let teamPtsModel = 0.5 * (cx.offense.pointsShrunk + ox.defense.pointsAllowedShrunk);
+    let oppPtsModel = 0.5 * (ox.offense.pointsShrunk + cx.defense.pointsAllowedShrunk);
+    const v12 = {};
+    if (V12 && prior) {
+      // Points: current season blended with the REGRESSED prior season (fitted k/r), plus the
+      // opponent's points-allowed estimate (fitted b). This restores a real team-strength signal.
+      const F = FIT.team.pf, L = F.league;
+      const off = (tm, n, ppg) => blendTeam('pf', ppg, n, priorPts[tm.id]?.pf, L);
+      const def = (tm, n, papg) => blendTeam('pf', papg, n, priorPts[tm.id]?.pa, L);
+      teamPtsModel = off(t, cx.games, cx.offense.pointsPerGame) + F.best.b * (def(opp, ox.games, ox.defense.pointsAllowedPerGame) - L);
+      oppPtsModel = off(opp, ox.games, ox.offense.pointsPerGame) + F.best.b * (def(t, cx.games, cx.defense.pointsAllowedPerGame) - L);
+      v12.points = { team: teamPtsModel, opp: oppPtsModel, priorPf: priorPts[t.id]?.pf, priorPaOpp: priorPts[opp.id]?.pa };
+    }
     const impliedPts = implied ? (t.id === home.id ? implied.home : implied.away) : teamPtsModel;
     const expMargin = expMarginHome != null ? (t.id === home.id ? expMarginHome : -expMarginHome) : teamPtsModel - oppPtsModel;
     const weights = scenarioWeights(expMargin, lg);
@@ -226,7 +244,22 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
     // Team parameters
     const pace = clamp(Math.pow(((odds?.total ?? (teamPtsModel + oppPtsModel)) / (2 * P.pointsPerTeamGame)), 0.25), 0.9, 1.1);
     // Offense controls most of its own snap volume; opponent pace contributes less.
-    const plays = (0.65 * cx.offense.playsPerGameShrunk + 0.35 * ox.defense.playsFacedShrunk) * pace;
+    let plays = (0.65 * cx.offense.playsPerGameShrunk + 0.35 * ox.defense.playsFacedShrunk) * pace;
+    let attTarget = null;
+    if (V12 && prior) {
+      // Volume: fitted estimators (history shows plays are near-unpredictable, so these stay close
+      // to league average; attempts get a small prior-season + opponent signal).
+      const Fp = FIT.team.plays, Fa = FIT.team.att;
+      const offP = blendTeam('plays', cx.offense.playsPerGame, cx.games, prior.team(t.abbr, 'plays'), Fp.league);
+      const defP = blendTeam('plays', ox.defense.playsFacedPerGame, ox.games, prior.allowed(opp.abbr, 'plays'), Fp.league);
+      plays = offP + Fp.best.b * (defP - Fp.league);
+      const curAtt = cx.games ? (cx.offense.dropbacks * (1 - (cx.offense.sackRate || 0))) / cx.games : null;
+      const oppAtt = ox.games ? ox.defense.attFaced / ox.games : null;
+      const offA = blendTeam('att', curAtt, cx.games, prior.team(t.abbr, 'att'), Fa.league);
+      const defA = blendTeam('att', oppAtt, ox.games, prior.allowed(opp.abbr, 'att'), Fa.league);
+      attTarget = offA + Fa.best.b * (defA - Fa.league);
+      v12.volume = { plays, attTarget };
+    }
     const passRate = {};
     for (const s of STATES) passRate[s] = clamp(cx.offense.passRates[s].shrunk + wx.passRate, 0.2, 0.85);
     const sackRate = Math.sqrt(cx.offense.sackRateShrunk * ox.defense.sackRateShrunk);
@@ -241,6 +274,13 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       run: makeRunDist(P.ypc.RB, P.run10, P.run20), catchRate: 0.66, catch: makeCatchDist(11.2 * wx.passEff, 0.15, 0.022),
       rushTd: P.rushTdPerCarry.RB, recTd: 0.07,
     };
+    if (attTarget != null) {
+      // Scale script pass rates so expected attempts match the fitted attempts estimate.
+      const eff = 0.4 * passRate.close + 0.6 * STATES.reduce((a, s2) => a + (weights[s2] || 0) * passRate[s2], 0);
+      const f = clamp(attTarget / Math.max(1, plays * eff * (1 - sackRate)), 0.85, 1.15);
+      for (const s2 of STATES) passRate[s2] = clamp(passRate[s2] * f, 0.2, 0.85);
+      v12.passRateScale = f;
+    }
     const team = { plays, passRate, sackRate, intRate, tdScale: 1, blowFactor: P.starterShareInBlowout, other, qbFumblePerSack: 0.1 * wx.fumble };
 
     // Vacated usage from unavailable key players (pregame only).
@@ -272,6 +312,15 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       const nEff = sw2 > 0 ? (sw * sw) / sw2 : 0;
       let carryShare = wtc > 0 ? wc / wtc : 0;
       let targetShare = wtt > 0 ? wt / wtt : 0;
+      if (V12 && prior) {
+        // Prior-season same-team share as a prior (fitted weight in games).
+        const ps = prior.share(nameMap.get(id), t.abbr);
+        if (ps.games >= 4) {
+          const n = played.length;
+          if (ps.target != null) targetShare = (n * targetShare + FIT.share.target.k * ps.target) / (n + FIT.share.target.k);
+          if (ps.carry != null && pos === 'RB') carryShare = (n * carryShare + FIT.share.carry.k * ps.carry) / (n + FIT.share.carry.k);
+        }
+      }
       // Small floors: a rostered RB/receiver with no recent targets still has a non-zero chance
       // of one (the week-3 backtest showed 0–0 ranges were falsely certain). QBs get no targets.
       if (pos === 'RB') { carryShare = Math.max(carryShare, 0.03); targetShare = Math.max(targetShare, 0.025); }
@@ -358,8 +407,9 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       const prev = sumStats((prevLogs.get(pl.id) || []).filter((x) => /Regular/i.test(x.seasonLabel)).map((x) => x.stats));
       const pos = info.pos;
       const lgYpc = pos === 'QB' ? P.ypc.QB : (P.ypc[pos] ?? P.ypc.RB);
-      const ypcPrior = shrink(prev.carries ? prev.rush_yds / prev.carries : null, (prev.carries || 0) * 0.5, lgYpc, SHRINK.ypc);
-      const ypcPlayer = shrink(info.cur.carries ? info.cur.rush_yds / info.cur.carries : null, info.cur.carries || 0, ypcPrior, SHRINK.ypc);
+      const kY = V12 ? FIT.eff.ypc.best.k : SHRINK.ypc, wPrev = V12 ? 1 : 0.5;
+      const ypcPrior = shrink(prev.carries ? prev.rush_yds / prev.carries : null, (prev.carries || 0) * wPrev, lgYpc, kY);
+      const ypcPlayer = shrink(info.cur.carries ? info.cur.rush_yds / info.cur.carries : null, info.cur.carries || 0, ypcPrior, kY);
       const oppYpcMult = clamp(ox.defense.rbYpcAllowedShrunk / P.ypc.RB, 0.8, 1.25);
       const ypcMult = Math.pow(oppYpcMult, pos === 'QB' ? 0.5 : 0.8);
       const ypc = ypcPlayer * ypcMult;
@@ -372,13 +422,16 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       pl.run = makeRunDist(ypc, r10p * m10, r20p * m20);
 
       const cp = pos === 'QB' ? 'RB' : pos;
-      const crPrior = shrink(prev.targets ? prev.receptions / prev.targets : null, (prev.targets || 0) * 0.5, P.catchRate[cp], SHRINK.catchRate);
-      const crPlayer = shrink(info.cur.targets ? info.cur.receptions / info.cur.targets : null, info.cur.targets || 0, crPrior, SHRINK.catchRate);
+      // v1.2: yards/target shrinkage fitted at FIT.eff.ypt.best.k targets; split between catch rate
+      // (targets) and yards/catch (≈ 65% of targets are catches).
+      const kCr = V12 ? FIT.eff.ypt.best.k : SHRINK.catchRate, kYp = V12 ? FIT.eff.ypt.best.k * 0.65 : SHRINK.ypcatch, wP = V12 ? 1 : 0.5;
+      const crPrior = shrink(prev.targets ? prev.receptions / prev.targets : null, (prev.targets || 0) * wP, P.catchRate[cp], kCr);
+      const crPlayer = shrink(info.cur.targets ? info.cur.receptions / info.cur.targets : null, info.cur.targets || 0, crPrior, kCr);
       const oppPos = ox.defense.byPos[cp];
       const crMult = clamp(oppPos.catchRateShrunk / P.catchRate[cp], 0.88, 1.12) * wx.catchRate;
       pl.catchRate = clamp(crPlayer * crMult, 0.3, 0.95);
-      const ypPrior = shrink(prev.receptions ? prev.rec_yds / prev.receptions : null, (prev.receptions || 0) * 0.5, P.yardsPerCatch[cp], SHRINK.ypcatch);
-      const ypPlayer = shrink(info.cur.receptions ? info.cur.rec_yds / info.cur.receptions : null, info.cur.receptions || 0, ypPrior, SHRINK.ypcatch);
+      const ypPrior = shrink(prev.receptions ? prev.rec_yds / prev.receptions : null, (prev.receptions || 0) * wP, P.yardsPerCatch[cp], kYp);
+      const ypPlayer = shrink(info.cur.receptions ? info.cur.rec_yds / info.cur.receptions : null, info.cur.receptions || 0, ypPrior, kYp);
       const ypMult = Math.pow(clamp(oppPos.ypCatchShrunk / P.yardsPerCatch[cp], 0.8, 1.25), 0.8) * wx.passEff;
       const c20p = shrink(info.pbp.rec ? info.pbp.c20 / info.pbp.rec : null, info.pbp.rec || 0, P.catch20[cp], SHRINK.explosiveCatch);
       const c40p = shrink(info.pbp.rec ? info.pbp.c40 / info.pbp.rec : null, info.pbp.rec || 0, P.catch40[cp], SHRINK.explosiveCatch * 1.5);
@@ -398,6 +451,29 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
 
     // Calibrate TD rates to the implied team total (pilot run), then full simulation.
     const seed = seedFrom(`${eventId}|${t.id}|${MODEL_VERSION}`);
+    if (V12 && prior && roles.qb) {
+      // QB efficiency anchor: team passing yards/attempt = QB YPA (prior season any team, heavily
+      // shrunk; fitted m/k), blended 50/50 with the market-implied passing yards when a line exists.
+      const Q = FIT.qbYpa, L = Q.league, qp = prior.qb(nameMap.get(roles.qb));
+      const priorYpa = (qp.yds + Q.best.m * L) / (qp.att + Q.best.m);
+      const qr = rows.get(roles.qb) || [];
+      const ca = qr.reduce((a, r) => a + (r.stats.pass_att || 0), 0), cy = qr.reduce((a, r) => a + (r.stats.pass_yds || 0), 0);
+      let ypaTarget = (cy + Q.best.k * priorYpa) / (ca + Q.best.k);
+      if (implied && attTarget) {
+        const M = FIT.market.passYds;
+        const mktYds = M.atMean + M.perImpliedPoint * (impliedPts - M.meanImplied);
+        ypaTarget = 0.5 * ypaTarget + 0.5 * (mktYds / attTarget);
+      }
+      const probe = simulateTeam(team, players, weights, { sims: 600, seed: seed ^ 0x5a5a });
+      const qbOut = probe.out[roles.qb]?.stats;
+      const simYpa = qbOut ? avg(qbOut.pass_yds) / Math.max(1, avg(qbOut.pass_att)) : null;
+      if (simYpa) {
+        const f = clamp(ypaTarget / simYpa, 0.75, 1.3);
+        for (const pl of players) pl.catch = makeCatchDist(pl.catch.ypCatch * f, pl.catch.c20, pl.catch.c40);
+        team.other.catch = makeCatchDist(team.other.catch.ypCatch * f, team.other.catch.c20, team.other.catch.c40);
+        v12.qb = { priorAtt: qp.att, priorYpa: qp.att ? qp.yds / qp.att : null, curAtt: ca, ypaTarget, simYpaBefore: simYpa, scale: f };
+      }
+    }
     const pilot = simulateTeam(team, players, weights, { sims: 600, seed: seed ^ 0x9e37 });
     const pilotTd = avg(pilot.teamTds);
     const targetTd = Math.max(0.4, (impliedPts - 3 * fgPerGame) / 6.95);
@@ -471,7 +547,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
 
     teams[t.id] = {
       ...t, opponent: opp.abbr, impliedPts, expMargin, scriptWeights: weights, scriptSource,
-      params: { plays: team.plays, passRate: team.passRate, sackRate: team.sackRate, intRate: team.intRate, tdScale: team.tdScale, pace, fgPerGame },
+      params: { plays: team.plays, passRate: team.passRate, sackRate: team.sackRate, intRate: team.intRate, tdScale: team.tdScale, pace, fgPerGame }, v12: V12 ? v12 : null,
       context: slimContext(cx), roles: { qbSource: roles.qbSource, notes: roles.notes, excluded: roles.excluded.map((e) => ({ ...e, name: nameMap.get(e.id) || e.id })) },
       cards, kicker: kCard, gamesUsed: teamTotals.map((g) => ({ eventId: g.eventId, date: g.date, opp: g.oppAbbr, week: g.week })),
       injuries: [...injMap.values()].filter((i) => (i.teamId || t.id) === t.id).map((i) => ({ ...i, severity: espn.injurySeverity(i.status), relevant: ['QB', 'RB', 'WR', 'TE', 'K', 'PK'].includes(i.pos) })),

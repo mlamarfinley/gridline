@@ -85,3 +85,9 @@ The evidence for each item is in `NFL_BACKCHECK_REPORT.md`. Injuries and in-game
 | 7 | **Real test:** 2026 week 4+ pregame snapshots and new blind batches, scored against the pre-registered criteria | 2026 week 4 onward |
 
 Nothing in this plan tunes against the 2026 weeks already inspected. If `fbm-1.2.0` misses the criteria on week 4+, the report says so. Weeks are not re-cut to make it pass.
+
+## Status (2026-09-30)
+
+- **Done in `fbm-1.2.0`:** P1 (team strength and volume from fitted estimators, market scaling of passing yards), P2 (QB YPA anchor), P3 (prior-season share priors), P4 (fitted efficiency shrinkage). All constants were fitted on 2024→2025 history (`src/fitted_v12.json`).
+- **Results:** see `NFL_V12_REPORT.md`. v1.2 beats v1.1 on every NFL stat, on the same in-sample weeks. It does not yet match the opening lines, and β is still negative.
+- **Still to do:** snap-share priors, opponent pass-defense adjustment on QB YPA, variance refit, kicker simplification, RB carry-leak audit. The acceptance test is still 2026 week 4+ pregame snapshots.
