@@ -2,7 +2,7 @@
 // role selection, player projections with explanations, and provenance.
 import * as espn from './espn.js';
 import { Provenance, fetchCached } from './fetcher.js';
-import { LEAGUES, MODEL_VERSION, SHRINK, SIMS } from './config.js';
+import { LEAGUES, MODEL_VERSION, SHRINK, SIMS, RB1_CARRY_SHIFT } from './config.js';
 import { getBaselines } from './baselines.js';
 import { loadTeamGames, teamContext, playerGameRows, STATES, normPos, finalizeDerived } from './history.js';
 import { selectRoles, keyPlayers, contextWeights, availability } from './roles.js';
@@ -577,6 +577,8 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
         } else {
           const cal = calibrationFor(lg, pos, k);
           arrK = simStats[k] && !STAT_DEFS[k].ratio ? calibrateSample(simStats[k], cal) : simStats[k];
+          // Lead backs: the pooled RB calibration leaves them ~0.8 carries short (learned on RB1s + RB2s together).
+          if (lg === 'nfl' && pos === 'RB' && role === 'RB1' && k === 'carries' && arrK?.length && cal) arrK = Float64Array.from(arrK, (v) => Math.max(0, v + RB1_CARRY_SHIFT));
         }
         if (qbRecAdj < 1 && !isK && id !== roles.qb && k === 'rec_yds' && arrK?.length) arrK = Float64Array.from(arrK, (v) => v * qbRecAdj);
         // "Who he is" anchor (src/fitted_anchor.json): blend toward his own season average where that beat the model
@@ -636,7 +638,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
         opportunity: id === roles.k ? { fgPerGame, xpRate: P.xpPerTd, impliedPts } : {
           carries: avg(sim.out[id].stats.carries), targets: avg(sim.out[id].stats.targets), dropbacks: id === roles.qb ? avg(sim.out[id].stats.pass_att) : null,
           carryShare: info.carryShare, targetShare: info.targetShare, carryByState: info.carryByState, targetByState: info.targetByState,
-          teamPlays: team.plays, teamPassRate: weighted(team.passRate, weights), effectiveGames: info.nEff,
+          teamPlays: team.plays, teamPassRate: weighted(team.passRate, effectiveWeights(weights)), effectiveGames: info.nEff,
         },
         efficiency: effOut[id] || null,
         byScript, withWithout, shareTrend: info?.shareTrend || null, snapTrend, usageTrend14: id === roles.k ? null : usage14p,
@@ -971,11 +973,11 @@ function explain({ lg, pos, id, info, eff, team, weights, sim, simStats, kick, f
   const car = avg(simStats.carries), tgt = avg(simStats.targets);
   const e = eff;
   const oppAbbr = opp.abbr;
-  const rush = `Opportunity: ${car.toFixed(1)} carries (${fmtPct(info.carryShare)} share of ~${(team.plays * (1 - weighted(team.passRate, weights))).toFixed(0)} team rushes). Efficiency: ${e.ypc.final.toFixed(2)} YPC (player ${e.ypc.player.toFixed(2)} after shrinkage on ${e.ypc.sample} carries; ${oppAbbr} run D ×${e.ypc.oppMult.toFixed(2)}). Script mix: ${scriptTxt}. Explosive 10+/20+ per carry ${fmtPct(e.explosive.run10)}/${fmtPct(e.explosive.run20)} (opp. allowed ×${e.explosive.oppRun10Mult.toFixed(2)}/×${e.explosive.oppRun20Mult.toFixed(2)} — shapes the range, not the mean).`;
+  const rush = `Opportunity: ${car.toFixed(1)} carries (${fmtPct(info.carryShare)} share of ~${(team.plays * (1 - weighted(team.passRate, effectiveWeights(weights)))).toFixed(0)} team rushes). Efficiency: ${e.ypc.final.toFixed(2)} YPC (player ${e.ypc.player.toFixed(2)} after shrinkage on ${e.ypc.sample} carries; ${oppAbbr} run D ×${e.ypc.oppMult.toFixed(2)}). Script mix: ${scriptTxt}. Explosive 10+/20+ per carry ${fmtPct(e.explosive.run10)}/${fmtPct(e.explosive.run20)} (opp. allowed ×${e.explosive.oppRun10Mult.toFixed(2)}/×${e.explosive.oppRun20Mult.toFixed(2)} — shapes the range, not the mean).`;
   const rec = `Opportunity: ${tgt.toFixed(1)} targets (${fmtPct(info.targetShare)} target share). Efficiency: ${fmtPct(e.catchRate.final)} catch rate, ${e.ypCatch.final.toFixed(1)} yds/catch (player ${e.ypCatch.player.toFixed(1)} shrunk on ${e.ypCatch.sample} catches; ${oppAbbr} vs ${pos === 'QB' ? 'RB' : pos} ×${e.ypCatch.oppMult.toFixed(2)}). 20+/40+ per catch ${fmtPct(e.explosive.catch20)}/${fmtPct(e.explosive.catch40)}. Script mix: ${scriptTxt}.${wxTxt}`;
   if (pos === 'QB') {
     const att = avg(simStats.pass_att);
-    const pass = `Opportunity: ${att.toFixed(1)} attempts = ${team.plays.toFixed(0)} plays × ${fmtPct(weighted(team.passRate, weights))} pass rate (script-weighted) × (1 − ${fmtPct(team.sackRate)} sack rate). Efficiency comes from the simulated receivers (catch rates × yds/catch vs ${oppAbbr}); INT rate ${fmtPct(team.intRate)} per attempt. Script mix: ${scriptTxt}.${wxTxt}`;
+    const pass = `Opportunity: ${att.toFixed(1)} attempts = ${team.plays.toFixed(0)} plays × ${fmtPct(weighted(team.passRate, effectiveWeights(weights)))} pass rate (script-weighted) × (1 − ${fmtPct(team.sackRate)} sack rate). Efficiency comes from the simulated receivers (catch rates × yds/catch vs ${oppAbbr}); INT rate ${fmtPct(team.intRate)} per attempt. Script mix: ${scriptTxt}.${wxTxt}`;
     return { pass_yds: pass, completions: pass, pass_att: pass, pass_td: `${pass} TD rates calibrated so simulated team TDs match the book-implied ${impliedPts.toFixed(1)} points.`, ints: pass, long_cmp: pass, rush_yds: rush, rush_td: rush, fumbles: `Sack-fumble (model prior 10%/sack) and carry fumble rates; ${fmtPct(team.sackRate)} sack rate vs ${oppAbbr}.`, fumbles_lost: 'Fumble rates shrunk to league; ~45% of QB fumbles lost (model prior).' };
   }
   return { rush_yds: rush, carries: rush, long_rush: rush, ypc: rush, rush_td: `${rush} TD rate calibrated to implied ${impliedPts.toFixed(1)} team points.`, rec_yds: rec, targets: rec, receptions: rec, long_rec: rec, ypr: rec, rec_td: `${rec} TD rate calibrated to implied team points.`, tds: `Rush + receiving TDs; team TD rate calibrated to implied ${impliedPts.toFixed(1)} points.`, fumbles_lost: 'Per-touch fumble-lost rate shrunk heavily toward league average.' };

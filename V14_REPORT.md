@@ -130,3 +130,32 @@ The question: are lead backs under-projected, especially on favorites? Every tes
 **Explanations:**
 - Every pick now cites what the last 5 players in the same slot (RB1, WR1, …) did against this defense, compared with the line.
 - The backup-carries-in-blowouts note appears only when the blowout-lead chance is ≥ 12%.
+
+## fbm-1.4.4: lead-back carries (2026-10-01)
+
+Lead backs' projected carries fell from 15.2 to 13.7 (week 4 average) between fbm-1.4.1 and 1.4.3. The blowout logic was not the cause. Two calibration changes were:
+- the old v1.4 corrections (+1 to +2 carries) did not survive re-learning on the fixed model;
+- the pooled RB calibration shift moved from +0.59 to −0.29.
+
+**Blowout check** (`scripts/blowout_share.mjs`, 2022–25): a lead back's share of designed runs vs his share in close play of the same games.
+
+| Team's situation | Share ratio |
+|---|---|
+| Leading by 17+ | 0.63 |
+| Leading by 8–16 | 0.95 |
+| Trailing by 8–16 | 0.96 |
+| Trailing by 17+ | 0.75 |
+
+The model's 0.85 blowout cut is milder than reality, so it was kept.
+
+**Fix:** the pooled shift is learned on RB1s and RB2s together and leaves RB1s about 0.8 carries short. An RB1-only +0.78 was tested walk-forward:
+
+| Learned on → tested on | Miss (MAE) |
+|---|---|
+| 2024 → 2025–26 | 4.264 → 4.249 |
+| 2025 → 2024 | 4.633 → 4.641 |
+| 2024–25 → 2026 | 4.48 → 4.36 |
+
+The same shift for RB2s was worse, so it applies to lead backs only. Week 4 RB1 average: 13.7 → 14.5 carries.
+
+Also fixed: the displayed team pass rate (and the skeptic's team-rush estimate) now uses the simulator's effective game-state weights.
