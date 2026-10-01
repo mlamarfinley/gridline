@@ -356,3 +356,21 @@ details.why .expl, details.why p { margin: 6px 0 0; font-size: 12px; color: var(
 .vspos td { padding: 2px 6px 2px 0; white-space: nowrap; }
 .vspos td:nth-child(3) { white-space: normal; width: 100%; }
 .vspos td.num { text-align: right; font-variant-numeric: tabular-nums; padding-right: 0; }
+
+/* Stat leaders */
+.leaders { max-width: 1180px; margin: 0 auto; padding: 8px 16px 48px; }
+.leaders h1 { font-size: 22px; margin: 6px 0 4px; letter-spacing: .01em; }
+.leaders h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 28px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--rule-2); }
+.ljump { display: flex; flex-wrap: wrap; gap: 14px; margin: 10px 0 0; font-size: 13px; }
+.ljump a { color: var(--muted); text-decoration: none; border-bottom: 1px solid transparent; }
+.ljump a:hover { color: inherit; border-bottom-color: currentColor; }
+.lgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 28px; }
+.lboard { padding: 8px 0 10px; border-bottom: 1px solid var(--rule-2); }
+.lboard .lh { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.lboard ol { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+.lboard li { display: grid; grid-template-columns: 22px 1fr auto; gap: 6px; padding: 3px 0; align-items: baseline; }
+.lboard li:first-child .nm, .lboard li:first-child .v { font-weight: 600; }
+.lboard .rk { color: var(--muted); font-variant-numeric: tabular-nums; }
+.lboard .nm { min-width: 0; overflow-wrap: anywhere; }
+.lboard .sub { display: block; font-size: 11px; color: var(--muted); }
+.lboard .v { font-variant-numeric: tabular-nums; text-align: right; }

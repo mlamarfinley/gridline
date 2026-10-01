@@ -6,6 +6,7 @@ import { PORT, ROOT, MODEL_VERSION, ODDS_API_KEY, CFBD_API_KEY, DB_PATH, LEAGUES
 import { getSlate, getMatchup, snapshotGame, snapshotSlate, backtestWeek, settle, ledger } from './src/services.js';
 import { openLedger } from './src/ledger.js';
 import { requestAllowed } from './src/security.js';
+import { statLeaders } from './src/leaders.js';
 import { blindReport, latestBatch, runBlindPredictions, scoreBlind, saveReport, openBlind } from './src/blind.js';
 
 const PUBLIC = path.join(ROOT, 'public');
@@ -38,6 +39,11 @@ async function api(req, res, url) {
   if (p === '/api/slate') {
     const week = q.get('week') ? Number(q.get('week')) : undefined;
     return send(res, 200, await getSlate(league(q), { week, seasontype: q.get('seasontype') ? Number(q.get('seasontype')) : undefined }));
+  }
+  if (p === '/api/leaders') {
+    const lg = league(q);
+    const season = (await getSlate(lg)).season;
+    return send(res, 200, await statLeaders(lg, season));
   }
   if (p === '/api/matchup') {
     const id = q.get('id');

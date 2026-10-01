@@ -27,6 +27,7 @@ function staticPath(p) {
     case '/api/matchup': return `api/matchup/${q.get('league')}/${q.get('id')}.json`;
     case '/api/ledger': return `api/ledger/${q.get('kind') || 'pregame'}-${q.get('model') || ''}.json`;
     case '/api/blind': return `api/blind${q.get('batch') ? `-${q.get('batch')}` : ''}.json`;
+    case '/api/leaders': return `api/leaders/${q.get('league') || 'nfl'}.json`;
     default: return null;
   }
 }
@@ -54,6 +55,7 @@ function parseHash() {
   const parts = path.split('/').filter(Boolean);
   const q = new URLSearchParams(qs || '');
   if (parts[0] === 'ledger') return { view: 'ledger' };
+  if (parts[1] === 'leaders') return { view: 'leaders', league: parts[0] === 'cfb' ? 'cfb' : 'nfl' };
   const league = parts[0] === 'cfb' ? 'cfb' : 'nfl';
   if (parts[1] === 'game' && parts[2]) return { view: 'game', league, id: parts[2] };
   return { view: 'slate', league, week: q.get('week') ? Number(q.get('week')) : null };
@@ -80,11 +82,15 @@ async function route() {
   const r = parseHash();
   if (r.league) state.league = r.league;
   document.querySelectorAll('.league a').forEach((a) => a.classList.toggle('on', a.dataset.league === state.league && r.view !== 'ledger'));
-  document.querySelectorAll('.views a').forEach((a) => a.classList.toggle('on', a.dataset.view === (r.view === 'ledger' ? 'ledger' : 'slate')));
+  document.querySelectorAll('.views a').forEach((a) => a.classList.toggle('on', a.dataset.view === (r.view === 'ledger' || r.view === 'leaders' ? r.view : 'slate')));
   $('.views a[data-view=slate]').href = `#/${state.league}`;
+  $('.views a[data-view=leaders]').href = `#/${state.league}/leaders`;
+  // League tabs keep you on the leaders page when you're on it.
+  document.querySelectorAll('.league a').forEach((a) => { a.href = r.view === 'leaders' ? `#/${a.dataset.league}/leaders` : `#/${a.dataset.league}`; });
   $('.week').style.visibility = r.view === 'slate' ? 'visible' : 'hidden';
   window.scrollTo(0, 0);
   if (r.view === 'ledger') return renderLedger();
+  if (r.view === 'leaders') return renderLeaders(r.league);
   if (r.view === 'game') return renderGame(r.league, r.id);
   return renderSlate(r.league, r.week);
 }
@@ -573,6 +579,26 @@ function wireCards() {
       for (const t of targets) if (t === el || t.querySelector(`.statsel button[data-stat="${b.dataset.stat}"]`)) setCardStat(t, b.dataset.stat);
     }));
   });
+}
+
+// ---------------- Stat leaders ----------------
+async function renderLeaders(lg) {
+  const my = state.routeSeq;
+  loading('Loading stat leaders…');
+  let d;
+  try { d = await api(`/api/leaders?league=${lg}`); } catch (e) { if (my === state.routeSeq) fail(e); return; }
+  if (my !== state.routeSeq) return;
+  setTitle(`${lg === 'cfb' ? 'College' : 'NFL'} stat leaders`);
+  const fmt = (v, dec) => (v == null ? '—' : dec ? (Math.round(v * 10 ** dec) / 10 ** dec).toFixed(dec) : Math.round(v).toLocaleString('en-US'));
+  const boardHtml = (b) => `<div class="lboard"><div class="lh">${esc(b.label)}${b.qualified ? ' <span class="faint" title="Minimum attempts per team game, as ESPN qualifies">· qualified</span>' : ''}</div>
+    ${b.error ? `<p class="faint">Unavailable: ${esc(b.error)}</p>` : `<ol>${b.rows.map((x) => `<li><span class="rk">${x.rank}</span><span class="nm">${esc(x.name)} <span class="faint">${esc(x.team)}${x.pos ? ` · ${esc(x.pos)}` : ''}</span>${x.sub ? `<span class="sub">${esc(x.sub)}</span>` : ''}</span><span class="v">${fmt(x.value, b.decimals)}</span></li>`).join('')}</ol>`}</div>`;
+  app.innerHTML = `<section class="leaders">
+    <div class="lhead"><h1>${lg === 'cfb' ? 'College (FBS)' : 'NFL'} stat leaders · ${d.season}</h1>
+      <p class="faint">Top 10 in each category, regular season. Source: ${esc(d.source)}${d.retrievedAt ? ` · retrieved ${etStamp(d.retrievedAt)}` : ''}.</p>
+      <nav class="ljump">${d.sections.map((s) => `<a href="#" data-sec="${esc(s.title)}">${esc(s.title)}</a>`).join('')}</nav></div>
+    ${d.sections.map((s) => `<div class="lsec" id="sec-${esc(s.title)}"><h2>${esc(s.title)}</h2><div class="lgrid">${s.boards.map(boardHtml).join('')}</div></div>`).join('')}
+  </section>`;
+  app.querySelectorAll('.ljump a').forEach((a) => { a.onclick = (e) => { e.preventDefault(); document.getElementById(`sec-${a.dataset.sec}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }; });
 }
 
 // ---------------- Ledger ----------------
