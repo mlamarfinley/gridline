@@ -71,3 +71,21 @@ Average absolute miss on rows that had a book line, in yards/units:
 - **UNDERs are unchanged:** minor-role UNDERs won 55.8% of 274.
 
 **Bug fixed in the same release:** when an RB was out, his carries were spread over RBs *and QBs*. In week 4 that gave Geno Smith +25% carry share (39.7 projected rushing yards; 15.3 after the fix). An absent RB's carries now go to the other RBs only. Blind backtests don't redistribute for absences, so the backtest and v1.4 learning are unaffected.
+
+## fbm-1.4.1 — injuries, questionable players, run/pass mix (2026-10-01)
+
+Measured from nflverse 2022–25, then built in:
+
+| Situation | Measured | What the model now does |
+|---|---|---|
+| Player listed questionable | Played: QB 43%, RB 68%, WR 72%, TE 75%. Usage when active: 107% / 93% / 92% / 89% | His own projection assumes he plays (props are void otherwise), at that usage. Teammates absorb the expected vacated share (1 − P(play) × usage). |
+| Starting QB questionable | Backup QB games: team pass yds ×0.911, attempts ≈ same, carries ×0.985 | Teammates' receiving yards ×(0.43 + 0.57 × 0.911) ≈ 0.949. |
+| Lead RB out | −1.6 team rushes, +1.3 attempts, +1.3 pts pass rate over expected (z≈1.4–2.0) | Team pass rate +1.3 pts (× chance he's missing). The backup's own YPC already carries his lower efficiency. |
+| WR1 out | −2.7 pts pass rate over expected (z 2.9), YPA −0.43 | Team pass rate −2.7 pts (× chance he's missing). |
+| TE1 out | Not significant | Ignored. |
+
+`scripts/absence_effects.mjs` reproduces the absence table.
+
+**Tested and not shipped:**
+- **Context-aware run/pass engine.** `src/volume.js` builds situation-adjusted pass rate over expected, opponent-adjusted defensive pass rate, and a clock/plays model where run-heavy teams hold the ball longer. Its team-volume misses were no smaller than the current estimator's: rushes 5.66 → 5.72 and 5.50 → 5.49, attempts about equal. The plays coefficients flipped between folds.
+- **Carries bias by role × game-script bucket for backups on big favorites.** Walk-forward miss improved only 4.074 → 4.064, so it wasn't shipped. The game-script model already captures favorites running more; favorites' rush bias was about 0.

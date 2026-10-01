@@ -63,15 +63,15 @@ export async function loadPlays(season) {
   } catch { /* build */ }
   const file = await download(`${NV}/pbp/play_by_play_${season}.csv.gz`, path.join(RAW, `play_by_play_${season}.csv.gz`), cur ? CURRENT_TTL_MS : null);
   const COLS = ['game_id', 'play_id', 'week', 'season_type', 'posteam', 'defteam', 'play_type', 'pass_location', 'air_yards', 'yards_after_catch', 'complete_pass', 'yards_gained',
-    'receiver_player_id', 'rusher_player_id', 'passer_player_id', 'run_location', 'run_gap', 'sack', 'qb_hit', 'qb_scramble', 'interception', 'epa', 'down', 'ydstogo', 'two_point_attempt'];
+    'receiver_player_id', 'rusher_player_id', 'passer_player_id', 'run_location', 'run_gap', 'sack', 'qb_hit', 'qb_scramble', 'interception', 'epa', 'down', 'ydstogo', 'two_point_attempt', 'score_differential', 'qb_kneel', 'qb_spike'];
   const plays = [];
   await streamRows(file, true, COLS, (r) => {
-    const [gid, pid, week, st, pos, def, pt, ploc, air, yac, comp, yds, rec, rush, passer, rloc, rgap, sack, hit, scr, int, epa, down, togo, twopt] = r;
+    const [gid, pid, week, st, pos, def, pt, ploc, air, yac, comp, yds, rec, rush, passer, rloc, rgap, sack, hit, scr, int, epa, down, togo, twopt, sdiff, kneel, spike] = r;
     if (pt !== 'pass' && pt !== 'run') return;
-    if (twopt === '1') return;
+    if (twopt === '1' || kneel === '1' || spike === '1') return;
     plays.push({ g: gid, p: Number(pid), w: Number(week), post: st === 'POST' ? 1 : 0, o: pos, d: def, t: pt === 'pass' ? 'P' : 'R',
       pl: ploc || null, ay: num(air), yac: num(yac), c: comp === '1' ? 1 : 0, y: num(yds) ?? 0, rec: rec || null, ru: rush || null, qb: passer || null,
-      rl: rloc || null, rg: rgap || null, sk: sack === '1' ? 1 : 0, hit: hit === '1' ? 1 : 0, scr: scr === '1' ? 1 : 0, int: int === '1' ? 1 : 0, epa: num(epa), dn: num(down), tg: num(togo) });
+      rl: rloc || null, rg: rgap || null, sk: sack === '1' ? 1 : 0, hit: hit === '1' ? 1 : 0, scr: scr === '1' ? 1 : 0, int: int === '1' ? 1 : 0, epa: num(epa), dn: num(down), tg: num(togo), sd: num(sdiff) });
   });
   fs.mkdirSync(DERIVED, { recursive: true });
   fs.writeFileSync(derived, JSON.stringify(plays));

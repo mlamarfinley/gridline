@@ -112,8 +112,9 @@ test('OVER on a stat that is not the player\'s role (WR rushing) is ineligible',
 });
 
 test('outliers: a significant gap is stat-specific (10 rush yds on 97.5 yes; 10 pass yds on 239 no; 6 vs 6.5 catches no)', async () => {
-  const { sigThreshold } = await import('../src/outlier.js');
-  const strength = (stat, line, proj) => Math.abs(proj - line) / sigThreshold(stat, line);
+  const { sigStrengthOf } = await import('../src/outlier.js');
+  const strength = sigStrengthOf;
+  assert.ok(strength('rush_yds', 32.5, 40) >= 1); // 7.5 yds is under 9, but 23% of the line → outlier (OR rule)
   assert.ok(strength('rush_yds', 97.5, 86.8) >= 1);
   assert.ok(strength('pass_yds', 239.5, 249) < 1);
   assert.ok(strength('receptions', 6.5, 6.0) < 1);

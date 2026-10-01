@@ -295,7 +295,31 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
     // designation (NFL). Inferred absences never trigger redistribution.
     const outKeys = pregame && lg === 'nfl' ? [...keys].filter((k) => !expectedPresent(k) && (roles.usage.get(k)?.touches || 0) > 0) : [];
     // Share of team carries/targets held by regulars who are OUT this week (big-miss feature: volume freed up).
-    const freedShare = { carry: outKeys.reduce((a, k) => a + avgShare((rows.get(k) || []).slice(-3), 'carry'), 0), target: outKeys.reduce((a, k) => a + avgShare((rows.get(k) || []).slice(-3), 'target'), 0) };
+    // Questionable regulars, from 2023–25 injury reports: they played 68% (RB) / 72% (WR) / 75% (TE) / 43% (QB) of the
+    // time and, when active, got 93% / 92% / 89% / 107% of their usual usage. Teammates absorb the expected vacated share.
+    const Q_PLAY = { QB: 0.43, RB: 0.68, WR: 0.72, TE: 0.75 }, Q_USE = { QB: 1, RB: 0.93, WR: 0.92, TE: 0.89 };
+    const isQ = (k) => pregame && lg === 'nfl' && availability(k, { injuries: injMap, roster: teamRoster, rosterCheck }).severity === 'questionable';
+    const qKeys = pregame && lg === 'nfl' ? [...keys].filter((k) => expectedPresent(k) && isQ(k) && (roles.usage.get(k)?.touches || 0) > 0) : [];
+    const vacate = new Map([...outKeys.map((k) => [k, 1]), ...qKeys.map((k) => { const ps = normPos(posOf(k)); return [k, 1 - (Q_PLAY[ps] ?? 0.7) * (Q_USE[ps] ?? 0.92)]; })]);
+    const freedShare = { carry: [...vacate].reduce((a, [k, v]) => a + v * avgShare((rows.get(k) || []).slice(-3), 'carry'), 0), target: [...vacate].reduce((a, [k, v]) => a + v * avgShare((rows.get(k) || []).slice(-3), 'target'), 0) };
+    // A questionable starting QB: backups averaged 9% fewer team passing yards (2023–25), so receivers' expected
+    // yards scale by P(he plays) + P(he sits) × 0.911. His own props are void if he sits, so his projection is unchanged.
+    const qbQ = roles.qb && isQ(roles.qb);
+    const qbRecAdj = qbQ ? Q_PLAY.QB + (1 - Q_PLAY.QB) * 0.911 : 1;
+    // Run/pass mix when a lead skill player is missing (scripts/absence_effects.mjs, nflverse 2022–25, situation-adjusted
+    // pass rate vs the team's prior 3 games, minus the same change when he played): lead RB out → +1.3 pts pass rate
+    // (−1.6 rushes, +1.3 attempts); WR1 out → −2.7 pts (they lean on the run). TE1 out wasn't significant, so it's ignored.
+    // Weighted by the chance he's missing (1 if out, 1 − P(plays) × usage if questionable).
+    const lead = (posK, kind) => [...keys].filter((k) => normPos(posOf(k)) === posK).map((k) => [k, avgShare((rows.get(k) || []).slice(-3), kind)]).sort((a, b) => b[1] - a[1])[0];
+    const mixShift = [];
+    if (pregame && lg === 'nfl') {
+      for (const [posK, kind, eff, min] of [['RB', 'carry', 0.013, 0.35], ['WR', 'target', -0.027, 0.18]]) {
+        const L = lead(posK, kind), w = L ? vacate.get(L[0]) || 0 : 0;
+        if (L && L[1] >= min && w > 0) mixShift.push({ who: nameMap.get(L[0]) || posK + '1', pos: posK, delta: eff * w, weight: w });
+      }
+      const d = mixShift.reduce((a, m) => a + m.delta, 0);
+      if (d) for (const s2 of STATES) passRate[s2] = clamp(passRate[s2] + d, 0.2, 0.85);
+    }
 
     const players = [];
     const pInfo = {};
@@ -343,7 +367,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       const redistribution = []; // structured record of usage moved from absent teammates (audited by src/skeptic.js)
       // Redistribute usage vacated by unavailable key teammates (to the extent the sample does
       // not already reflect their absence).
-      for (const k of outKeys) {
+      for (const [k, vw] of vacate) {
         if (k === id) continue;
         const kr = rows.get(k) || [];
         const kc = avgShare(kr.slice(-3), 'carry'), kt = avgShare(kr.slice(-3), 'target');
@@ -363,10 +387,13 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
         let addC = 0, addT = 0;
         if (kc > 0.03 && carryPool.includes(pos) && sumC > 0) addC = kc * remaining * (avgShare(r.slice(-3), 'carry') / sumC) * (posK === 'QB' ? 0.3 : 1);
         if (kt > 0.03 && sumT > 0) addT = kt * remaining * (avgShare(r.slice(-3), 'target') / sumT);
+        addC *= vw; addT *= vw;
         if (addC + addT > 0.005) {
           carryShare += addC; targetShare += addT;
-          redistribution.push({ fromId: k, from: nm, fromPos: posK, toPos: pos, addCarryShare: addC, addTargetShare: addT });
-          notes.push(`+${fmtPct(addC)} carry / +${fmtPct(addT)} target share from ${nm}'s absence (pro-rata redistribution; ${Math.round(measured * 100)}% of sample already without ${nm}).`);
+          redistribution.push({ fromId: k, from: nm, fromPos: posK, toPos: pos, addCarryShare: addC, addTargetShare: addT, questionable: vw < 1 || undefined });
+          notes.push(vw < 1
+            ? `+${fmtPct(addC)} carry / +${fmtPct(addT)} target share because ${nm} is questionable (${posK}s listed questionable sat ${Math.round((1 - (Q_PLAY[posK] ?? 0.7)) * 100)}% of the time in 2023–25 and played at ~${Math.round((Q_USE[posK] ?? 0.92) * 100)}% usage when active).`
+            : `+${fmtPct(addC)} carry / +${fmtPct(addT)} target share from ${nm}'s absence (pro-rata redistribution; ${Math.round(measured * 100)}% of sample already without ${nm}).`);
         }
       }
       // State-specific shares, shrunk toward the overall share.
@@ -385,7 +412,16 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       const av = pregame ? availability(id, { injuries: injMap, roster: teamRoster, rosterCheck }) : { available: true, injury: null, severity: null };
       let dispersion = 1 * wx.dispersion;
       if (played.length <= 2) { dispersion *= 1.2; notes.push(`Small sample (${played.length} game${played.length === 1 ? '' : 's'} this season) — range widened.`); }
-      if (av.severity === 'questionable') { dispersion *= 1.2; notes.push(`Listed ${av.injury.status}${av.injury.type ? ` (${av.injury.type})` : ''} — projection assumes he plays; range widened.`); }
+      if (av.severity === 'questionable') {
+        dispersion *= 1.2;
+        const use = lg === 'nfl' ? (Q_USE[pos] ?? 0.92) : 1;
+        if (use < 1) { carryShare *= use; targetShare *= use; for (const s2 of STATES) { carryByState[s2] *= use; targetByState[s2] *= use; } }
+        notes.push(lg === 'nfl' && Q_PLAY[pos] != null
+          ? `Listed ${av.injury.status}${av.injury.type ? ` (${av.injury.type})` : ''}: ${pos}s listed questionable played ${Math.round(Q_PLAY[pos] * 100)}% of the time in 2023–25 and got ~${Math.round(Q_USE[pos] * 100)}% of their usual usage when active. Projection assumes he plays (props are void if he doesn't), at ${Math.round(use * 100)}% usage; range widened.`
+          : `Listed ${av.injury.status}${av.injury.type ? ` (${av.injury.type})` : ''} — projection assumes he plays; range widened.`);
+      }
+      for (const m of mixShift) notes.push(`Team run/pass mix: lead ${m.pos} ${m.who} is ${m.weight >= 1 ? 'out' : 'questionable'}, so ${t.abbr}'s pass rate is ${m.delta > 0 ? 'raised' : 'lowered'} ${Math.abs(m.delta * 100).toFixed(1)} pts (teams without their ${m.pos === 'RB' ? 'lead RB ran 1.6 fewer times and threw 1.3 more' : 'WR1 passed 2.7 pts less than expected'}, 2022–25).`);
+      if (qbQ && id !== roles.qb && lg === 'nfl') notes.push(`QB ${nameMap.get(roles.qb) || 'starter'} is questionable: QBs listed questionable played 43% of the time (2023–25), and backups averaged 9% fewer team passing yards, so his expected receiving yards are scaled ×${qbRecAdj.toFixed(3)}.`);
       const returning = lastGame && !lastGame.appeared.has(id) && played.length > 0 && expectedPresent(id);
       if (returning) {
         const ev2 = av.injury ? espn.restrictionEvidence(av.injury) : null;
@@ -536,6 +572,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
           const cal = calibrationFor(lg, pos, k);
           arrK = simStats[k] && !STAT_DEFS[k].ratio ? calibrateSample(simStats[k], cal) : simStats[k];
         }
+        if (qbRecAdj < 1 && !isK && id !== roles.qb && k === 'rec_yds' && arrK?.length) arrK = Float64Array.from(arrK, (v) => v * qbRecAdj);
         if (k === 'ypc') s = ratioSummary(simStats.rush_yds, simStats.carries);
         else if (k === 'ypr') s = ratioSummary(simStats.rec_yds, simStats.receptions);
         else s = arrK ? summarize(arrK) : null;

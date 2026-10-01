@@ -52,9 +52,16 @@ export function whyPick(c) {
       const r = teamP / teamH - 1;
       add(`Team volume: his team is projected for ${f1(teamP)} ${vk === 'carries' ? 'carries' : 'targets'}, vs ${f1(teamH)} per game so far.`, Math.abs(r) >= 0.08 ? (r > 0 ? 1 : -1) : 0);
     }
-    for (const r of card.redistribution || []) { const a = vk === 'carries' ? r.addCarryShare : r.addTargetShare; if (a >= 0.01) add(`Injury: ${r.from} is out, adding ${pct(a)} ${vk === 'carries' ? 'carry' : 'target'} share.`, 1); }
+    for (const r of card.redistribution || []) { const a = vk === 'carries' ? r.addCarryShare : r.addTargetShare; if (a >= 0.01) add(`Injury: ${r.from} is ${r.questionable ? 'questionable (expected share of what he\'d leave)' : 'out'}, adding ${pct(a)} ${vk === 'carries' ? 'carry' : 'target'} share.`, 1); }
   }
-  for (const n of card.notes || []) if (/partial game/.test(n)) add(`Injury context: ${n}`);
+  for (const n of card.notes || []) {
+    if (/partial game/.test(n)) add(`Injury context: ${n}`);
+    // His own questionable tag: lower usage when active.
+    else if (/^Listed .*questionable played/i.test(n)) add(`Injury: ${n}`, /at 100% usage/.test(n) ? 0 : -1);
+    // A teammate's absence changing the team's run/pass mix: more passing helps pass stats, hurts run stats.
+    else if (/^Team run\/pass mix/.test(n) && vk) { const up = /raised/.test(n); add(n, (vk === 'carries') === up ? -1 : 1); }
+    else if (/^QB .* is questionable/.test(n) && /rec_yds|pass_yds/.test(c.stat)) add(`Injury: ${n}`, -1);
+  }
 
   // 2. Game script
   if (c.expMargin != null && c.scriptWeights) {

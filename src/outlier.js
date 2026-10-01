@@ -10,16 +10,19 @@
 // Nothing qualifies => no pick (stated plainly).
 import { BIG, MIN_LINE, threshold } from './bigmiss.js';
 
-// OUTLIERS (model vs line): a gap is "significant" when it clears a per-stat bar — max(units, share of line):
-// 10 yds on a 97.5 rushing line is an outlier; 10 yds on a 239 passing line (one throw) is not; 6 vs 6.5
-// receptions is a coin flip, not an outlier. Strength = |model − line| / bar (≥ 1 = outlier, 0.6–1 = lean).
-export const SIGNIFICANCE = { pass_yds: [20, 0.08], rush_yds: [9, 0.10], rec_yds: [9, 0.12], receptions: [1.0, 0.15], carries: [2.5, 0.12], completions: [2.5, 0.10] };
-export const sigThreshold = (stat, line) => (SIGNIFICANCE[stat] ? Math.max(SIGNIFICANCE[stat][0], SIGNIFICANCE[stat][1] * line) : null);
+// OUTLIERS (model vs line): a gap is "significant" when it clears EITHER bar for that stat — enough units OR
+// enough of the line. 10 yds on a 97.5 rushing line is an outlier (units); 40 vs a 32 line is too (25%); 10 yds
+// on a 239 passing line (one throw, 4%) is not; 6 vs 6.5 receptions (0.5, 8%) is a coin flip, not an outlier.
+// Strength = the larger of |gap| / units and |gap| / (share × line): ≥ 1 = outlier, 0.6–1 = lean.
+export const SIGNIFICANCE = { pass_yds: [20, 0.08], rush_yds: [9, 0.15], rec_yds: [9, 0.15], receptions: [1.0, 0.25], carries: [2.5, 0.15], completions: [2.5, 0.10] };
+export const sigStrengthOf = (stat, line, proj) => { const s = SIGNIFICANCE[stat]; if (!s) return 0; const g = Math.abs(proj - line); return Math.max(g / s[0], g / Math.max(1e-9, s[1] * line)); };
+/** The gap that counts as significant for this line (the smaller of the two bars). */
+export const sigThreshold = (stat, line) => (SIGNIFICANCE[stat] ? Math.min(SIGNIFICANCE[stat][0], SIGNIFICANCE[stat][1] * line) : null);
 // How picks with gaps this size actually did against the line, 2024–25 blind backtest (raw projections).
 export const TIER_RECORD = {
-  '1–1.5×': { all: [1410, 0.511], OVER: [643, 0.501], UNDER: [767, 0.520] },
-  '1.5–2×': { all: [644, 0.502], OVER: [294, 0.473], UNDER: [350, 0.526] },
-  '2×+': { all: [487, 0.495], OVER: [195, 0.456], UNDER: [292, 0.521] },
+  '1–1.5×': { all: [1549, 0.511], OVER: [665, 0.490], UNDER: [884, 0.526] },
+  '1.5–2×': { all: [984, 0.506], OVER: [481, 0.489], UNDER: [503, 0.523] },
+  '2×+': { all: [1544, 0.512], OVER: [951, 0.498], UNDER: [593, 0.535] },
 };
 export const tierOf = (strength) => (strength >= 2 ? '2×+' : strength >= 1.5 ? '1.5–2×' : strength >= 1 ? '1–1.5×' : strength >= 0.6 ? 'lean' : null);
 
@@ -83,7 +86,7 @@ export function scoreCandidate(c, now = Date.now()) {
   const bigProb = direction === 'OVER' ? bm.boom : bm.bust, baseProb = direction === 'OVER' ? bm.baseBoom : bm.baseBust, lift = direction === 'OVER' ? liftOver : liftUnder;
   const againstProb = direction === 'OVER' ? bm.bust : bm.boom; // chance the line misses big the OTHER way
   const T = threshold(c.stat, c.line);
-  const sigT = sigThreshold(c.stat, c.line), sigStrength = sigT ? Math.abs(gap) / sigT : 0, gapDir = gap >= 0 ? 'OVER' : 'UNDER';
+  const sigT = sigThreshold(c.stat, c.line), sigStrength = sigStrengthOf(c.stat, c.line, c.proj), gapDir = gap >= 0 ? 'OVER' : 'UNDER';
   const sideProb = c.probOver == null ? null : direction === 'OVER' ? c.probOver : 1 - c.probOver;
   let quality = 1, roleQuality = 1;
   if (direction === 'OVER') {

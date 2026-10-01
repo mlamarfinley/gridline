@@ -30,7 +30,10 @@ export const CFBD_API_KEY = process.env.CFBD_API_KEY || '';
 // History: 1.0.0 initial; 1.1.0 wider workload variance, share floors, rushing-TD play fix;
 // 1.2.0 NFL: prior-season team/QB/share priors + fitted shrinkage (src/fitted_v12.json).
 // 1.3.0 NFL: output calibration learned walk-forward from every 2024+2025 pick (src/fitted_v13.json).
-export const MODEL_VERSION = 'fbm-1.4.0';
+// 1.4.0 NFL: v1.4 correction learned from every miss (src/fitted_v14.json); partial-game exclusion.
+// 1.4.1 NFL: questionable players (own usage, expected share to teammates, questionable-QB receiving yards) and
+//            the run/pass mix shift when a lead RB / WR1 is missing — rates measured from 2022–25 nflverse data.
+export const MODEL_VERSION = 'fbm-1.4.1';
 
 // Weeks inspected while tuning each model version. Results on these weeks are IN-SAMPLE
 // (development) and must never be presented as independent validation.
@@ -43,6 +46,7 @@ export const DEV_WEEKS = {
   'fbm-1.3.0': { nfl: [2, 3], cfb: [4] },
   // v1.4 corrections were learned from every scored 2024+2025 pick; 2026 weeks 2-3 were inspected earlier.
   'fbm-1.4.0': { nfl: [2, 3], cfb: [4] },
+  'fbm-1.4.1': { nfl: [2, 3, 4], cfb: [4] },
 };
 
 export const LEAGUES = {

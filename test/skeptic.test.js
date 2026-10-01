@@ -88,3 +88,19 @@ test('partial games: an early exit (16% of snaps vs usual 71%) is detected; a no
   assert.deepEqual([...byTouches.keys()], ['e2']);
   assert.equal(partialGames([g(1, 15), g(2, 13), g(3, 16)], null).size, 0);
 });
+
+test('why: injury context carries direction (questionable self = against an OVER; lead RB out raising pass rate helps a WR OVER)', async () => {
+  const { whyPick } = await import('../src/why.js');
+  const card = { opportunity: { targets: 8 }, usageHistory: { targets: 7, games: 3 }, notes: [
+    'Listed Questionable (ankle): WRs listed questionable played 72% of the time in 2023–25 and got ~92% of their usual usage when active. Projection assumes he plays (props are void if he doesn\'t), at 92% usage; range widened.',
+    'Team run/pass mix: lead RB X is out, so BAL\'s pass rate is raised 1.3 pts (teams without their lead RB ran 1.6 fewer times and threw 1.3 more, 2022–25).'] };
+  const w = whyPick({ direction: 'OVER', stat: 'rec_yds', line: 60.5, card });
+  assert.equal(w.find((x) => /^Injury: Listed/.test(x.text)).stance, 'against');
+  assert.equal(w.find((x) => /run\/pass mix/.test(x.text)).stance, 'for');
+});
+
+test('why: a questionable QB whose usage is unchanged (props void if he sits) is context, not a reason', async () => {
+  const { whyPick } = await import('../src/why.js');
+  const card = { notes: ['Listed Questionable: QBs listed questionable played 43% of the time in 2023–25 and got ~100% of their usual usage when active. Projection assumes he plays (props are void if he doesn\'t), at 100% usage; range widened.'] };
+  assert.equal(whyPick({ direction: 'UNDER', stat: 'rush_yds', line: 30.5, card }).find((x) => /^Injury/.test(x.text)).stance, 'info');
+});
