@@ -210,3 +210,34 @@ Also fixed: the displayed team pass rate (and the skeptic's team-rush estimate) 
 - No blend onto a zero projection, and QB stats blend only for the starter.
 - Receptions are capped at 0.9 × simulated targets.
 - No baseline-driven layer for a stat whose share rose 1.5+ points from a teammate's absence.
+
+## fbm-1.5.1: correction to fbm-1.4.2–1.5.0, plus re-learning on raw output (2026-10-01)
+
+**What was wrong:** the market-blind harness applied whatever calibration layers existed at the time.
+- Batch 6 was raw. Batches 7–11 were calibrated with the then-current v1.3 / v1.4 files.
+- In fbm-1.4.2 I re-learned v1.3 / v1.4 on batch 9's already-calibrated projections, then applied the result to raw simulation output.
+
+**Consequences:**
+- Most of the drop in lead-back carries (week 4 RB1 average 15.2 → 13.7) came from this, not from the model's logic. The "+0.78 RB1 shift" in fbm-1.4.4 was a patch over it.
+- The claim that "the old v1.4 corrections were compensating for bugs" was wrong. On raw output they are learned again: RB carries / rush yds / receptions / targets and QB completions / attempts / pass yds.
+- The batch 6 → 7 comparison mixed raw against calibrated output. The St. Brown name-parsing bug and the game-state weighting bug were still real bugs, but the size of that "improvement" is not a clean measurement.
+- Learning steps that ran on calibrated batches (anchor, RB1 shift, situational blend, big-miss model, tier records) are re-done below.
+
+**Fixes:**
+1. Blind runs now record raw simulation only. `src/matchup.js` skips v1.3 / v1.4 / anchor / situational blend when `blind`. Verified: batch 12 RB1 projections equal simulated volume.
+2. Every layer is re-learned on raw batch 13, through one shared offline pipeline (`scripts/lib/pipeline.mjs`) that reproduces the live calibrated projection.
+
+| Layer | Result on raw batch 13 |
+|---|---|
+| v1.3 calibration | 2026 miss 6.39 → 6.31 |
+| v1.4 corrections | kept for RB carries, rush yds, receptions, targets, long rush; QB completions, attempts, pass yds, long completion |
+| Live vs raw, 2025–26 | QB pass yds 61.1 → 59.4; RB carries 3.83 → 3.75; RB rush yds 23.5 → 23.3; WR rec yds 27.2 → 26.8 |
+| RB1 carries | live 14.00 vs actual 14.37 (was 1.4 short raw); separate RB1 shift removed |
+| Season anchor | QB rush yds 0.5, TE targets 0.4, WR targets / receptions / rec yds 0.3, RB rush yds 0.2, WR long 0.1 |
+| Situational blend (wk 10–18 test; also requires no worse record vs lines) | RB carries 0.1, RB receptions 0.2, RB targets 0.6, TE receptions 0.4, WR targets 0.6 |
+| Game pick (refit) | 141–119 (54.2%) out of sample |
+| Outlier tiers | 1–1.5× 54.3% (UNDER 55.2%), 1.5–2× 51.0%, 2×+ 51.6% (partly in-sample for v1.4) |
+
+**Role-growth prior rule:** stop blending last season's share when this season's is 10+ points higher for carries or 6+ for targets. Tested raw vs raw (batch 12 on, batch 13 off) and rejected. On affected rows: RB carries 4.10 → 4.12, RB rush yds 22.3 → 22.5, WR targets 2.50 → 2.65, TE yds 20.7 → 22.1. Early role jumps regress, matching batch 10.
+
+**Team consistency:** independently calibrated players could add up to more catches or receiving yards than their QB's completions or passing yards. Both sides now meet in the middle. Whole distributions are rescaled, and P(over) is recomputed from the quantiles.

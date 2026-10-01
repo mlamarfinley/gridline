@@ -2,7 +2,7 @@
 // role selection, player projections with explanations, and provenance.
 import * as espn from './espn.js';
 import { Provenance, fetchCached } from './fetcher.js';
-import { LEAGUES, MODEL_VERSION, SHRINK, SIMS, RB1_CARRY_SHIFT } from './config.js';
+import { LEAGUES, MODEL_VERSION, SHRINK, SIMS } from './config.js';
 import { getBaselines } from './baselines.js';
 import { loadTeamGames, teamContext, playerGameRows, STATES, normPos, finalizeDerived } from './history.js';
 import { selectRoles, keyPlayers, contextWeights, availability } from './roles.js';
@@ -370,6 +370,8 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
         const ps = prior.share(nameMap.get(id), t.abbr);
         if (ps.games >= 4) {
           const n = played.length;
+          // Last season's share stays in even when this season's role looks bigger: dropping it for "grown" roles was
+          // tested twice (blind batches 10 and 12 vs 13) and made those players' projections worse — early jumps regress.
           if (ps.target != null) targetShare = (n * targetShare + FIT.share.target.k * ps.target) / (n + FIT.share.target.k);
           if (ps.carry != null && pos === 'RB') carryShare = (n * carryShare + FIT.share.carry.k * ps.carry) / (n + FIT.share.carry.k);
         }
@@ -582,24 +584,25 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       for (const k of statKeys) {
         let s;
         // v1.4: learned-from-every-miss correction where one beat v1.3 out of sample; otherwise v1.3 calibration.
-        const m14 = simStats[k] && !STAT_DEFS[k].ratio ? v14For(lg, pos, k, role) : null;
+        // Market-blind batches record the RAW simulation: every post-simulation layer (v1.3/v1.4 calibration, RB1 shift,
+        // season anchor, situational blend) is learned FROM those batches, so it must never be applied inside them.
+        const RAW = !!blind;
+        const m14 = !RAW && simStats[k] && !STAT_DEFS[k].ratio ? v14For(lg, pos, k, role) : null;
         let arrK;
         if (m14) {
           const raw = summarize(simStats[k]);
           const r14 = applyV14(simStats[k], m14, buildX({ proj: raw.mean, p10: raw.p10, p90: raw.p90, week: ev?.week ?? null, role, ctx: ctx14, usage: usage14p }));
           arrK = r14.arr; v14Applied[k] = r14.correction;
         } else {
-          const cal = calibrationFor(lg, pos, k);
+          const cal = RAW ? null : calibrationFor(lg, pos, k);
           arrK = simStats[k] && !STAT_DEFS[k].ratio ? calibrateSample(simStats[k], cal) : simStats[k];
-          // Lead backs: the pooled RB calibration leaves them ~0.8 carries short (learned on RB1s + RB2s together).
-          if (lg === 'nfl' && pos === 'RB' && role === 'RB1' && k === 'carries' && arrK?.length && cal) arrK = Float64Array.from(arrK, (v) => Math.max(0, v + RB1_CARRY_SHIFT));
         }
         if (qbRecAdj < 1 && !isK && id !== roles.qb && k === 'rec_yds' && arrK?.length) arrK = Float64Array.from(arrK, (v) => v * qbRecAdj);
         // "Who he is" anchor (src/fitted_anchor.json): blend toward his own season average where that beat the model
         // in both walk-forward directions (2024→2025, 2025→2024). Not when a teammate's absence/questionable tag changed
         // his role by 5+ points of share — his average then describes a different job.
         let anchorInfo = null;
-        const aw = lg === 'nfl' && !STAT_DEFS[k].ratio ? ANCHOR?.[`${pos}|${k}`]?.w : 0;
+        const aw = !RAW && lg === 'nfl' && !STAT_DEFS[k].ratio ? ANCHOR?.[`${pos}|${k}`]?.w : 0;
         if (aw > 0 && arrK?.length && rowsCur.length >= 2 && !roleChanged(info, k)) {
           const histK = rowsCur.map((x) => x.stats[k]).filter((v) => v != null);
           if (histK.length >= 2) {
@@ -724,6 +727,25 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
         }
       }
     } catch (e) { for (const t of Object.values(teams)) t.units = { error: `matchup data unavailable: ${e.message}` }; }
+  }
+
+  // ---------- TEAM CONSISTENCY: receivers can't out-catch their QB ----------
+  // The simulation keeps every catch tied to a completion, but each player's projection is then calibrated on its
+  // own (v1.3/v1.4, anchor, situational blend). When the receivers' calibrated catches (or yards) add up to more than
+  // the QB's completions (or passing yards), both sides meet in the middle. Whole distributions are rescaled
+  // (quantiles, range, P(over)), never just the headline number.
+  if (lg === 'nfl') for (const t of Object.values(teams)) {
+    const qb = t.cards.find((c) => c.pos === 'QB' && /Starting/.test(c.role || ''));
+    if (!qb) continue;
+    const rec = [...t.cards, ...t._support].filter((c) => c.pos !== 'QB' && c.pos !== 'K');
+    for (const [rk, qk, word] of [['receptions', 'completions', 'catches'], ['rec_yds', 'pass_yds', 'yards']]) {
+      const Q = qb.stats?.[qk]?.proj, R = rec.reduce((a, c) => a + (c.stats?.[rk]?.proj || 0), 0);
+      if (!(Q > 0) || !(R > Q * 1.01)) continue;
+      const T = (Q + R) / 2;
+      for (const c of rec) if (c.stats?.[rk]?.proj) rescaleStat(c.stats[rk], T / R, rk);
+      rescaleStat(qb.stats[qk], T / Q, qk);
+      (t.consistency ||= []).push(`Receivers' calibrated ${word} (${f1c(R)}) exceeded the QB's ${qk === 'completions' ? 'completions' : 'passing yards'} (${f1c(Q)}); both rescaled to ${f1c(T)}.`);
+    }
   }
 
   // ---------- SAME-POSITION LOG vs this opponent (display only) ----------
@@ -933,6 +955,21 @@ const addText = (c, t) => [c >= 0.005 ? `+${fmtPct(c)} carry share` : null, t >=
 function effectiveWeights(weights) {
   const tot = STATES.reduce((a, s) => a + (weights[s] || 0), 0) || 1;
   return Object.fromEntries(STATES.map((s) => [s, (1 - OPENING_CLOSE) * (weights[s] || 0) / tot + (s === 'close' ? OPENING_CLOSE : 0)]));
+}
+const f1c = (x) => (Math.round(x * 10) / 10).toString();
+/** Scale a stat's whole simulated distribution by f (headline, range, quantiles) and recompute P(over) from quantiles. */
+function rescaleStat(st, f, k) {
+  const r = (x) => (x == null ? x : x * f);
+  st.proj = round(st.proj * f, k); st.p10 = r(st.p10); st.p50 = r(st.p50); st.p90 = r(st.p90);
+  if (Array.isArray(st.quantiles)) st.quantiles = st.quantiles.map(r);
+  if (st.threshold != null && Array.isArray(st.quantiles) && st.quantiles.length > 1) {
+    const qs = st.quantiles, n = qs.length - 1, L = st.threshold;
+    let p;
+    if (L < qs[0]) p = 1; else if (L >= qs[n]) p = 0;
+    else { let i = 0; while (i < n && qs[i + 1] <= L) i++; const span = qs[i + 1] - qs[i]; const frac = span > 0 ? (L - qs[i]) / span : 1; p = 1 - (i + frac) / n; }
+    st.probOver = p; st.fairOdds = { over: probToAmerican(p), under: probToAmerican(1 - p) };
+  }
+  st.reconciled = Math.round(f * 1000) / 1000;
 }
 function normalizeStates(byState, overall, weights) {
   const w = weighted(byState, effectiveWeights(weights));
