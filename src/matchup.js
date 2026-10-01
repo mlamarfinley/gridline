@@ -20,11 +20,12 @@ import { whyPick, edgeKeyFor } from './why.js';
 import { bigMissProbs, oppUnitFor, BIG, topDrivers } from './bigmiss.js';
 import { calibrationFor, calibrateSample } from './calibrate.js';
 import { v14For, buildX, usageFromRows, applyV14 } from './v14.js';
-import { seasonState, situationInput, situationMultiplier, loadWeekly } from './situational.js';
+import { seasonState, situationInput, situationMultiplier, loadWeekly, teamRunsModel } from './situational.js';
 import fsA from 'node:fs';
 let ANCHOR = null;
 try { ANCHOR = JSON.parse(fsA.readFileSync(new URL('./fitted_anchor.json', import.meta.url), 'utf8')).byStat; } catch { ANCHOR = null; }
-let SITFIT = null, SITBLEND = null;
+let SITFIT = null, SITBLEND = null, TEAMRUNS = null;
+try { TEAMRUNS = JSON.parse(fsA.readFileSync(new URL('./fitted_team_runs.json', import.meta.url), 'utf8')).beta; } catch { TEAMRUNS = null; }
 try { SITFIT = JSON.parse(fsA.readFileSync(new URL('./fitted_situational.json', import.meta.url), 'utf8')).byStat; } catch { SITFIT = null; }
 try { SITBLEND = JSON.parse(fsA.readFileSync(new URL('./fitted_situational_blend.json', import.meta.url), 'utf8')).byStat; } catch { SITBLEND = null; }
 // Role changed for THIS stat: a teammate's absence adds 1.5+ points of the share that drives it (carry share for
@@ -218,7 +219,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
   const expMarginHome = implied ? implied.home - implied.away : null;
   let SIT = null;
   if (lg === 'nfl' && !blind && ev?.week != null && SITFIT) {
-    try { const [cur, prev, ids] = await Promise.all([loadWeekly(season), loadWeekly(season - 1), loadPlayerIds()]); SIT = { state: seasonState(cur, prev, ev.week), ids }; } catch { SIT = null; }
+    try { const [cur, prev, ids] = await Promise.all([loadWeekly(season), loadWeekly(season - 1), loadPlayerIds()]); SIT = { state: seasonState(cur, prev, ev.week), ids, cur, prev }; } catch { SIT = null; }
   }
   for (const t of [home, away]) {
     const opp = t.id === home.id ? away : home;
@@ -727,6 +728,19 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
         }
       }
     } catch (e) { for (const t of Object.values(teams)) t.units = { error: `matchup data unavailable: ${e.message}` }; }
+  }
+
+  // ---------- Team run volume: history model (second opinion; not used by the simulation — it tied, not beat) ----------
+  if (SIT && TEAMRUNS) for (const t of Object.values(teams)) {
+    const opp = Object.values(teams).find((x) => x !== t);
+    try {
+      const r = teamRunsModel(SIT.cur, SIT.prev, ev.week, NVA(t.abbr), NVA(opp.abbr), t.expMargin, implied ? implied.home + implied.away : null, TEAMRUNS);
+      // Like-for-like: the simulation's runs include QB scrambles (ESPN tags them as rushes) but not kneel-downs; box-score
+      // carries include both. The difference is ~0.8 per team-game (nflverse 2025), so compare runs excl. kneel-downs.
+      const ew = effectiveWeights(t.scriptWeights || {});
+      const sim = t.params?.plays != null ? t.params.plays * STATES.reduce((a, s2) => a + (ew[s2] || 0) * (1 - (t.params.passRate?.[s2] ?? 0.55)), 0) : null;
+      t.teamRuns = { ...r, designedEst: r.est - 0.8, simulation: sim, boxAdjust: 0.8 };
+    } catch { /* display only */ }
   }
 
   // ---------- TEAM CONSISTENCY: receivers can't out-catch their QB ----------

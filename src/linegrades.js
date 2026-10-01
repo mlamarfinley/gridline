@@ -70,6 +70,21 @@ export function rates(a) {
 }
 
 /** Baseline (mean + team-level SD) from per-team offensive aggregates. Pure; tested. */
+/** Mean / SD across teams of each grade's underlying z (components and composites), for re-standardizing. */
+export function gradeDistribution(off, def, base) {
+  const acc = {};
+  const push = (k, v) => { if (v != null && Number.isFinite(v)) (acc[k] ||= []).push(v); };
+  for (const [tid, o] of off) {
+    const g = gradeTeam(o, def.get(tid) || emptyLine(), { ...base, dist: null });
+    for (const k of ['olRun', 'olPass', 'dlRun', 'dlPass']) push(k, g[k].zRaw);
+    if (g.olRun.zRaw != null && g.olPass.zRaw != null) push('ol', 0.55 * g.olRun.zRaw + 0.45 * g.olPass.zRaw);
+    if (g.dlRun.zRaw != null && g.dlPass.zRaw != null) push('dl', 0.5 * g.dlRun.zRaw + 0.5 * g.dlPass.zRaw);
+  }
+  const out = {};
+  for (const [k, v] of Object.entries(acc)) if (v.length >= 8) { const m = v.reduce((a, b) => a + b, 0) / v.length; out[k] = { mean: m, sd: Math.sqrt(v.reduce((a, b) => a + (b - m) ** 2, 0) / (v.length - 1)), teams: v.length }; }
+  return out;
+}
+
 export function baselineFromTeams(teamAggs) {
   const mean = {}, sd = {};
   const list = teamAggs.map(rates);
@@ -115,10 +130,14 @@ export function gradeComponent(key, agg, base) {
     wsum += w; zsum += w * z; minN = Math.min(minN, r.n);
   }
   if (!wsum) return { key, label: C.label, score: null, letter: null, confidence: null, inputs, reason: 'inputs unavailable' };
-  const z = zsum / wsum;
+  const zRaw = zsum / wsum;
+  // Re-standardize against the spread of the same (shrunk) score across all teams, so 15 points = one real team-level
+  // SD. Dividing a shrunk rate by the SD of RAW rates compressed every unit into ~40–60 early in the season.
+  const D = base.dist?.[key];
+  const z = D && D.sd > 0 ? (zRaw - D.mean) / D.sd : zRaw;
   const score = Math.max(0, Math.min(100, Math.round(50 + 15 * z)));
   const unit = C.parts.some(([m]) => m === 'sackRate') ? 'dropbacks' : 'runs';
-  return { key, label: C.label, score, letter: letter(score), z, confidence: confidence(minN, unit), sample: minN, sampleUnit: unit, inputs, partial: wsum < 0.999 };
+  return { key, label: C.label, score, letter: letter(score), z, zRaw, confidence: confidence(minN, unit), sample: minN, sampleUnit: unit, inputs, partial: wsum < 0.999 };
 }
 
 export function gradeTeam(offAgg, defAgg, base) {
@@ -126,10 +145,18 @@ export function gradeTeam(offAgg, defAgg, base) {
     olRun: gradeComponent('olRun', offAgg, base), olPass: gradeComponent('olPass', offAgg, base),
     dlRun: gradeComponent('dlRun', defAgg, base), dlPass: gradeComponent('dlPass', defAgg, base),
   };
-  const comp = (a, b, wa) => (a.score == null || b.score == null ? (a.score ?? b.score ?? null) : Math.round(wa * a.score + (1 - wa) * b.score));
+  // Composite from the underlying z's (not by averaging two 0–100 scores, which pulls toward 50), then re-standardized
+  // across teams like the components.
+  const comp = (a, b, wa, key) => {
+    if (a.zRaw == null || b.zRaw == null) return a.score ?? b.score ?? null;
+    let z = wa * a.zRaw + (1 - wa) * b.zRaw;
+    const D = base.dist?.[key];
+    if (D && D.sd > 0) z = (z - D.mean) / D.sd;
+    return Math.max(0, Math.min(100, Math.round(50 + 15 * z)));
+  };
   const worst = (a, b) => (['low', 'medium', 'high'].find((c) => c === a.confidence || c === b.confidence) || null);
-  g.ol = { label: 'OL composite', score: comp(g.olRun, g.olPass, 0.55), confidence: worst(g.olRun, g.olPass) };
-  g.dl = { label: 'DL composite', score: comp(g.dlRun, g.dlPass, 0.5), confidence: worst(g.dlRun, g.dlPass) };
+  g.ol = { label: 'OL composite', score: comp(g.olRun, g.olPass, 0.55, 'ol'), confidence: worst(g.olRun, g.olPass) };
+  g.dl = { label: 'DL composite', score: comp(g.dlRun, g.dlPass, 0.5, 'dl'), confidence: worst(g.dlRun, g.dlPass) };
   g.ol.letter = letter(g.ol.score); g.dl.letter = letter(g.dl.score);
   return g;
 }
@@ -151,7 +178,7 @@ export async function leagueBaseline(lg, season, cutoffISO, currentWeek, prov, {
       ids.push(...games.map((g) => g.id));
     }
   }
-  const off = new Map();
+  const off = new Map(), def = new Map();
   let unverified = 0;
   await Promise.all(ids.map(async (id) => {
     const s = await espn.getSummary(lg, id, { final: true });
@@ -162,9 +189,10 @@ export async function leagueBaseline(lg, season, cutoffISO, currentWeek, prov, {
     }
     const plays = espn.extractPlays(s.data);
     const t = espn.summaryTeams(s.data);
-    for (const tid of [t.home.id, t.away.id]) off.set(tid, lineAgg(plays, tid, 'off', off.get(tid) || emptyLine()));
+    for (const tid of [t.home.id, t.away.id]) { off.set(tid, lineAgg(plays, tid, 'off', off.get(tid) || emptyLine())); def.set(tid, lineAgg(plays, tid, 'def', def.get(tid) || emptyLine())); }
   }));
   const b = baselineFromTeams([...off.values()]);
+  b.dist = gradeDistribution(off, def, b);
   const out = { ...b, excludedUnverified: unverified, source: `Measured from ${ids.length - unverified} completed ${LEAGUES[lg].label} games this season before kickoff (${b.teams} teams)`, measured: true, games: ids.length };
   if (ids.length) prov?.add({ url: `derived:league-line-baseline:${key}`, source: 'ESPN public API (derived)', label: 'League OL/DL baseline', fetchedAt: new Date().toISOString(), fromCache: true, stale: false, error: null });
   if (!ids.length || Object.values(b.sd).some((x) => x == null)) {

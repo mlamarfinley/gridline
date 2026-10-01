@@ -263,3 +263,25 @@ Shipped at the user's request, with its real record shown on the page. The data 
 | With spread | 5.96 | 4.93 |
 
 Not changed. Three games of team run volume are mostly game script.
+
+## fbm-1.5.3: team runs, line grades, pass-rate display (2026-10-01)
+
+**Team run volume as one model.** All inputs weighed together by OLS on 2022–24 team-games (`scripts/team_runs_test.mjs` → `src/fitted_team_runs.json`):
+
+    runs ≈ L + 0.49·(n/(n+3))·(team this season − L) + 0.30·(team last season − L)
+             + 0.23·(nD/(nD+3))·(opp allowed this season − L) + 0.23·(opp allowed last season − L)
+             + 0.14·spread − 0.10·(total − 44)
+
+- 2025 MAE 5.88, vs 5.86 for the current shrinkage estimator: a tie. The "pull toward league average" is simply what remains after these inputs.
+- Not used by the simulation; shown on each game page as a second opinion.
+- Like-for-like: simulated runs include QB scrambles but not kneel-downs. Box-score carries are about 0.8 per team-game higher (nflverse 2025).
+- Week 4: the simulation averages about 1 run above the history model.
+  - ATL: sim 29.4, history 28.6. Team volume is not what keeps Bijan below his average.
+  - CHI: history +1.9, because the NYJ defense faces few runs.
+
+**OL / DL grades:**
+- Before: a shrunk team rate was divided by the SD of raw team rates, and composites averaged two 0–100 scores. Nearly every unit landed between 40 and 60.
+- Now: components and composites are re-standardized against the spread of the same shrunk score across all teams, so 15 points = one real team-level SD.
+- Week 4 range: DL 15 (NYG) to 88 (MIN); OL 20–89. Display only; projections unchanged.
+
+**Pass rate by game state:** NO has no plays this season while leading by 8+. The model uses the league rate for that state (47%), scaled to NO's overall passing volume (51% in the simulation). The page now shows each state's sample size and labels the fallback.

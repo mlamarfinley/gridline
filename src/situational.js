@@ -117,3 +117,20 @@ export async function loadWeekly(season) {
   const r = await fetchCached(`https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_${season}.csv`, { ttl: 6 * 3600, as: 'text', label: `nflverse ${season} weekly (situational model)` });
   return csvRows(r.data).filter((x) => x.season_type === 'REG');
 }
+
+/**
+ * Team run volume, every input weighed together (scripts/team_runs_test.mjs; OLS on 2022–25 → src/fitted_team_runs.json):
+ * runs ≈ L + β·[1, (n/(n+3))·(team this season − L), team last season − L, (nD/(nD+3))·(opp allowed this season − L),
+ *               opp allowed last season − L, spread, total − 44]. Shown as a second opinion next to the simulation.
+ */
+export function teamRunsModel(curRows, prevRows, week, team, opp, spread, total, beta) {
+  const agg = (rows) => { const m = new Map(); for (const r of rows) { const k = `${r.game_id}|${r.team}`; const x = m.get(k) || m.set(k, { team: r.team, opp: r.opponent_team, week: +r.week, runs: 0 }).get(k); x.runs += +r.carries || 0; } return [...m.values()]; };
+  const C = agg(curRows).filter((x) => x.week < week), P = agg(prevRows);
+  const mean = (a) => (a.length ? a.reduce((s, v) => s + v, 0) / a.length : null);
+  const L = mean(P.map((x) => x.runs));
+  const c = C.filter((x) => x.team === team).map((x) => x.runs), cd = C.filter((x) => x.opp === opp).map((x) => x.runs);
+  const lastT = mean(P.filter((x) => x.team === team).map((x) => x.runs)) ?? L, lastO = mean(P.filter((x) => x.opp === opp).map((x) => x.runs)) ?? L;
+  const f = [1, c.length ? (c.length / (c.length + 3)) * (mean(c) - L) : 0, lastT - L, cd.length ? (cd.length / (cd.length + 3)) * (mean(cd) - L) : 0, lastO - L, spread ?? 0, (total ?? 44) - 44];
+  const est = L + f.reduce((a, v, i) => a + v * beta[i], 0);
+  return { est, league: L, thisSeason: mean(c), games: c.length, lastSeason: lastT, oppAllows: mean(cd), oppLastSeason: lastO, spread, total };
+}

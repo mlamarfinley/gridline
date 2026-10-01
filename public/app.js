@@ -548,7 +548,8 @@ function contextBlock(m) {
     ${row('Games in sample', (t) => t.context.games)}
     ${row('Offensive plays / game', (t) => f1(o(t).playsPerGame), 'pace')}
     ${row('Early-down neutral pass rate', (t) => n(pct(o(t).earlyDownNeutralPassRate), o(t).earlyDownN), 'down/distance tendency')}
-    ${row('Pass rate trailing / close / leading', (t) => `${pct(o(t).passRates.trail.raw)} / ${pct(o(t).passRates.close.raw)} / ${pct(o(t).passRates.lead.raw)}`, 'raw')}
+    ${row('Pass rate trailing / close / leading', (t) => ['trail', 'close', 'lead'].map((k) => { const r = o(t).passRates[k]; return r.n ? `${pct(r.raw)} <span class="faint">(${r.n} plays)</span>` : `<span class="faint" title="No plays in this game state yet this season; the model uses the league rate for it, scaled to the team's overall passing volume">none yet → league ${pct(r.shrunk)}</span>`; }).join(' / '), 'raw')}
+    ${row('Team runs per game', (t) => t.teamRuns ? `sim ${f1(t.teamRuns.simulation)} · history model ${f1(t.teamRuns.designedEst)} <span class="faint" title="All inputs weighed together, weights learned on 2022–24 (tied the simulation's accuracy on 2025, so shown as a second opinion): this season ×0.49 (scaled by games), last season ×0.30, opponent allowed this season ×0.23 and last season ×0.23, +0.14 per point favored">(box-score carries: this season ${f1(t.teamRuns.thisSeason)} in ${t.teamRuns.games}g · last season ${f1(t.teamRuns.lastSeason)} · opp allows ${f1(t.teamRuns.oppAllows)} · league ${f1(t.teamRuns.league)} → ${f1(t.teamRuns.est)}, minus ~0.8 kneel-downs)</span>` : '—', 'incl. QB scrambles')}
     ${row('Offense rush success rate', (t) => n(pct(o(t).rushSuccess), o(t).rushSuccessN), 'run-blocking proxy')}
     ${row('Offense sack rate', (t) => n(pct(o(t).sackRate, 1), o(t).dropbacks), 'pass-pro proxy')}
     ${row('Defense rush success allowed', (t) => n(pct(d(t).rushSuccessAllowed), d(t).rushSuccessN), 'run-D proxy')}
