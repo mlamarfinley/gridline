@@ -35,7 +35,9 @@ export const CFBD_API_KEY = process.env.CFBD_API_KEY || '';
 //            the run/pass mix shift when a lead RB / WR1 is missing — rates measured from 2022–25 nflverse data.
 // 1.4.2 NFL: play-by-play name fix ("A.St. Brown"), game-state shares averaged with the simulator's real weights,
 //            receiver matchup multipliers damped (oppRecExp); v1.3/v1.4/big-miss re-learned on blind batch 9.
-export const MODEL_VERSION = 'fbm-1.4.2';
+// 1.4.3 NFL: learned season-average anchor (src/fitted_anchor.json, walk-forward both directions); a single RB
+//            absorbs at most 55% of an absent lead back's share (measured 2022–25).
+export const MODEL_VERSION = 'fbm-1.4.3';
 
 // Weeks inspected while tuning each model version. Results on these weeks are IN-SAMPLE
 // (development) and must never be presented as independent validation.
@@ -50,6 +52,7 @@ export const DEV_WEEKS = {
   'fbm-1.4.0': { nfl: [2, 3], cfb: [4] },
   'fbm-1.4.1': { nfl: [2, 3, 4], cfb: [4] },
   'fbm-1.4.2': { nfl: [2, 3, 4], cfb: [4] },
+  'fbm-1.4.3': { nfl: [2, 3, 4], cfb: [4] },
 };
 
 export const LEAGUES = {

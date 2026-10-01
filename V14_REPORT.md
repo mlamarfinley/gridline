@@ -114,3 +114,19 @@ Every change below was validated on market-blind batches over every 2024–26 NF
 
 **Guards added:**
 - No calibration shift and no v1.4 correction for a player with no simulated opportunity. Backup QBs had been getting 0.3 completions.
+
+## fbm-1.4.3: re-examining the running-back logic (2026-10-01)
+
+The question: are lead backs under-projected, especially on favorites? Every test below is out of sample (blind batch 9).
+
+| Idea | Evidence | Shipped |
+|---|---|---|
+| Push favorites' team run/pass mix toward the run (team carries were 2.1 short for 3–7 pt favorites) | Correcting it made accuracy worse: RB carries miss 3.77 → 3.81, QB pass yds 58.5 → 60.1. Carry outcomes are right-skewed, so the typical game sits below the average. | no |
+| Blend carries toward the back's own season average | Backs averaging 20+ carries got 18.5 next game; the model said 18.1. A 40% blend: 5.45 → 5.73 (worse). Heavy workloads regress. | no |
+| Blend yards / receiving toward the player's own season average (`scripts/learn_anchor.mjs`) | Helped in both directions (2024→2025 and 2025→2024). Weights: RB rush yds 0.3, RB rec yds 0.2, WR targets / receptions / rec yds 0.3, TE targets 0.4, QB rush yds 0.5. | yes |
+| One back absorbing all of an absent lead back's share | The RB2 absorbed 48% on average (median 55%) of the lead's share, 2022–25 (`scripts/rb2_absorb.mjs`). Capped at 55%. | yes |
+| Require the game pick to have a big gap | On the new rerun, big-gap picks won 51.6% vs 56–58% for small/lean gaps | no; renamed to "Game pick" (not an outlier) |
+
+**Explanations:**
+- Every pick now cites what the last 5 players in the same slot (RB1, WR1, …) did against this defense, compared with the line.
+- The backup-carries-in-blowouts note appears only when the blowout-lead chance is ≥ 12%.

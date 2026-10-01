@@ -20,6 +20,9 @@ import { whyPick, edgeKeyFor } from './why.js';
 import { bigMissProbs, oppUnitFor, BIG, topDrivers } from './bigmiss.js';
 import { calibrationFor, calibrateSample } from './calibrate.js';
 import { v14For, buildX, usageFromRows, applyV14 } from './v14.js';
+import fsA from 'node:fs';
+let ANCHOR = null;
+try { ANCHOR = JSON.parse(fsA.readFileSync(new URL('./fitted_anchor.json', import.meta.url), 'utf8')).byStat; } catch { ANCHOR = null; }
 import { FIT, loadPriorSeason, priorPoints, blendTeam } from './priors.js';
 import { lineAgg, gradeTeam, leagueBaseline, METHOD as LINE_METHOD } from './linegrades.js';
 
@@ -386,6 +389,9 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
         const sumT = groupT.reduce((s, j) => s + avgShare((rows.get(j) || []).slice(-3), 'target'), 0);
         let addC = 0, addT = 0;
         if (kc > 0.03 && carryPool.includes(pos) && sumC > 0) addC = kc * remaining * (avgShare(r.slice(-3), 'carry') / sumC) * (posK === 'QB' ? 0.3 : 1);
+        // One back never inherits the whole job: with the lead RB out, the RB2 absorbed ~48% (median 55%) of his share in
+        // 2022–25 (scripts/rb2_absorb.mjs) — the rest went to a third back / call-up. Cap any single back at 55%.
+        if (posK === 'RB' && pos === 'RB') addC = Math.min(addC, 0.55 * kc * remaining);
         if (kt > 0.03 && sumT > 0) addT = kt * remaining * (avgShare(r.slice(-3), 'target') / sumT);
         addC *= vw; addT *= vw;
         if (addC + addT > 0.005) {
@@ -573,6 +579,21 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
           arrK = simStats[k] && !STAT_DEFS[k].ratio ? calibrateSample(simStats[k], cal) : simStats[k];
         }
         if (qbRecAdj < 1 && !isK && id !== roles.qb && k === 'rec_yds' && arrK?.length) arrK = Float64Array.from(arrK, (v) => v * qbRecAdj);
+        // "Who he is" anchor (src/fitted_anchor.json): blend toward his own season average where that beat the model
+        // in both walk-forward directions (2024→2025, 2025→2024). Not when a teammate's absence/questionable tag changed
+        // his role by 5+ points of share — his average then describes a different job.
+        let anchorInfo = null;
+        const aw = lg === 'nfl' && !STAT_DEFS[k].ratio ? ANCHOR?.[`${pos}|${k}`]?.w : 0;
+        if (aw > 0 && arrK?.length && rowsCur.length >= 2 && (info?.redistribution || []).reduce((a, x) => a + x.addCarryShare + x.addTargetShare, 0) < 0.05) {
+          const histK = rowsCur.map((x) => x.stats[k]).filter((v) => v != null);
+          if (histK.length >= 2) {
+            const sa = histK.reduce((a, b) => a + b, 0) / histK.length;
+            let m0 = 0; for (const v of arrK) m0 += v; m0 /= arrK.length;
+            const shift = aw * (sa - m0);
+            arrK = Float64Array.from(arrK, (v) => Math.max(0, v + shift));
+            anchorInfo = { w: aw, seasonAvg: Math.round(sa * 10) / 10, before: Math.round(m0 * 10) / 10, shift: Math.round(shift * 10) / 10 };
+          }
+        }
         if (k === 'ypc') s = ratioSummary(simStats.rush_yds, simStats.carries);
         else if (k === 'ypr') s = ratioSummary(simStats.rec_yds, simStats.receptions);
         else s = arrK ? summarize(arrK) : null;
@@ -595,6 +616,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
           threshold, thresholdSource: book ? 'book line' : threshold != null ? 'season average (no book line)' : null,
           probOver: pOver, fairOdds: pOver != null ? { over: probToAmerican(pOver), under: probToAmerican(1 - pOver) } : null,
           calibration: v14Applied[k] != null ? { version: 'fbm-1.4.0', correction: Math.round(v14Applied[k] * 100) / 100 } : 'fbm-1.3.0',
+          anchor: anchorInfo,
           available: s != null,
           unavailableReason: s == null ? 'Not modelled' : (k === 'targets' && lg === 'cfb' ? null : null),
         };
@@ -764,7 +786,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
     if (!outlier.pick.isDisplayed) {
       for (const t of Object.values(teams)) {
         const c = t._support.find((x) => x.id === outlier.pick.playerId);
-        if (c) { c.role = 'Outlier pick'; c.extraReason = `Outlier pick: ${outlier.pick.direction} ${outlier.pick.line} ${outlier.pick.short}`; t.cards.push(c); }
+        if (c) { c.role = 'Game pick'; c.extraReason = `Game pick: ${outlier.pick.direction} ${outlier.pick.line} ${outlier.pick.short}`; t.cards.push(c); }
       }
     }
   }

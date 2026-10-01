@@ -163,7 +163,7 @@ export function selectOutlier(candidates, { now = Date.now(), top = 6 } = {}) {
   if (!pick) {
     if (!withLines) noPickReason = 'No player prop lines are posted for this game, so there is nothing to compare against.';
     else if (!eligible.length) noPickReason = 'Book lines exist, but none passed the sample/availability/freshness checks.';
-    else noPickReason = `No real outlier this game. The strongest big-miss signal is ${eligible[0].name} ${eligible[0].label} ${eligible[0].direction} ${eligible[0].line} (${pct(eligible[0].bigProb)} chance of ${eligible[0].bigText}, ${eligible[0].lift.toFixed(2)}× typical) — ${eligible[0].reason}.`;
+    else noPickReason = `No pick this game. The strongest big-miss signal is ${eligible[0].name} ${eligible[0].label} ${eligible[0].direction} ${eligible[0].line} (${pct(eligible[0].bigProb)} chance of ${eligible[0].bigText}, ${eligible[0].lift.toFixed(2)}× typical) — ${eligible[0].reason}.`;
   }
   return {
     pick: pick ? { ...pick, evidence: evidenceFor(pick) } : null,

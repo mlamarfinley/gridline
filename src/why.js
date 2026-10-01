@@ -77,7 +77,7 @@ export function whyPick(c) {
     const fav = c.expMargin >= 0 ? `favored by ${f1(c.expMargin)}` : `an underdog by ${f1(-c.expMargin)}`;
     const meaningful = Math.abs(c.expMargin) >= 3 && Math.abs(ahead - behind) >= 0.1;
     const e = !meaningful ? 0 : runStat ? (ahead > behind ? 1 : -1) : (behind > ahead ? 1 : -1);
-    add(`Game script: ${c.team} is ${fav}; the model spends ${pct(ahead)} of the game ahead and ${pct(behind)} behind. Teams that are ahead run more and throw less${runStat ? '' : ', and trailing teams throw more'}.${meaningful && runStat && ahead > behind ? ' (Some late-game carries go to backups in blowouts.)' : ''}`, e);
+    add(`Game script: ${c.team} is ${fav}; the model spends ${pct(ahead)} of the game ahead and ${pct(behind)} behind. Teams that are ahead run more and throw less${runStat ? '' : ', and trailing teams throw more'}.${meaningful && runStat && (w.blowLead || 0) >= 0.12 ? ` (${pct(w.blowLead)} chance of a blowout lead, where some late carries go to backups.)` : ''}`, e);
   }
 
   // 3. Efficiency + line math
@@ -101,6 +101,17 @@ export function whyPick(c) {
     const ypa = c.proj / projVol;
     add(`Line math: about ${f1(ypa)} yds per attempt projected, so ${line} yards needs ${f1(line / ypa)} attempts; the model expects ${f1(projVol)}.`, mathEffect(projVol, line / ypa));
   }
+
+  // 4a. Same slot vs this defense: what the last 5 players in his role (RB1, WR1, …) did against them.
+  const vp = card.stats?.[c.stat]?.vsPos;
+  if (vp?.avg != null && c.line != null) {
+    const g = vp.games.filter((x) => x.value != null);
+    const d = vp.avg - c.line, meaningful = Math.abs(d) >= 0.1 * Math.max(1, c.line) && g.length >= 3;
+    add(`Matchup: ${vp.label}, last ${g.length}: ${g.map((x) => `${x.name ? x.name.split(' ').slice(-1)[0] : '?'} ${f1(x.value)}`).join(', ')} — average ${f1(vp.avg)} vs this ${c.line} line.`, meaningful ? (d > 0 ? 1 : -1) : 0);
+  }
+  // Season anchor (learned): part of the projection is his own season average.
+  const an = card.stats?.[c.stat]?.anchor;
+  if (an && Math.abs(an.shift) >= 0.5) add(`Who he is: the projection is blended ${pct(an.w)} toward his season average (${f1(an.seasonAvg)}), moving it ${an.shift > 0 ? 'up' : 'down'} ${f1(Math.abs(an.shift))} — learned from 2024–25, where it made projections more accurate.`, an.shift > 0 ? 1 : -1);
 
   // 4. Matchup (defense vs his position/style + unit edge)
   const fit = card.matchup?.fit;

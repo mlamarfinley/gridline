@@ -253,14 +253,14 @@ const SLOTS = [
   ['Receiver 1', (c) => c.role === 'Receiver 1'],
   ['Receiver 2', (c) => c.role === 'Receiver 2'],
   ['Additional', (c) => c.role === 'Additional'],
-  ['Outlier pick', (c) => c.role === 'Outlier pick'],
+  ['Game pick', (c) => c.role === 'Game pick'],
 ];
 
 // Teams side by side: one team per column, one row per role so corresponding players line up.
 function pairedPlayers(m) {
   const A = m.away, H = m.home;
   const hl = m.outlier?.pick?.playerId;
-  const cell = (t, side, c, label) => `<div class="cell ${side}">${c ? card(m, c, c.id === hl) : `<div class="empty">${esc(t.abbr)}: no ${esc(label.toLowerCase())} ${label === 'Additional' ? 'met the usage threshold' : label === 'Outlier pick' ? 'on this side' : 'with usage before kickoff'}</div>`}</div>`;
+  const cell = (t, side, c, label) => `<div class="cell ${side}">${c ? card(m, c, c.id === hl) : `<div class="empty">${esc(t.abbr)}: no ${esc(label.toLowerCase())} ${label === 'Additional' ? 'met the usage threshold' : label === 'Game pick' ? 'on this side' : 'with usage before kickoff'}</div>`}</div>`;
   const rows = SLOTS.map(([label, f]) => {
     const a = A.cards.find(f), h = H.cards.find(f);
     if (!a && !h) return '';
@@ -304,7 +304,7 @@ function skepticBlock(m) {
   </section>`;
 }
 
-const STANCE = { for: 'Supports', against: 'Against', info: '' };
+const STANCE = { for: 'Supports the pick', against: 'Against the pick', info: '' };
 function whyList(items) {
   return `<ul class="whylist">${items.map((w) => (typeof w === 'string' ? { text: w, stance: 'info' } : w)).map((w) => `<li class="st-${w.stance}">${w.stance !== 'info' ? `<b class="stance">${STANCE[w.stance]}</b> ` : ''}${esc(w.text)}</li>`).join('')}</ul>`;
 }
@@ -329,10 +329,10 @@ function outlierBlock(m) {
       ${o.shortlist.map((c) => `<tr><td>${esc(c.name)} <span class="faint">${esc(c.team)}</span></td><td>${esc(c.short)}</td><td>${c.direction}</td><td class="m">${f1(c.proj)}</td><td class="b">${c.line}</td><td>${sgn(Math.round(c.gap * 10) / 10)} (${sgn(Math.round(c.gapPct * 100))}%)</td><td>${f2(c.z)}</td><td>${f2(c.score)}</td><td>${pct(c.sideProb)}</td><td>${c.qualifies ? 'qualifies' : esc(c.reason || '')}</td></tr>`).join('')}
       </tbody></table></div></details>` : '';
   const conflicts = o.roleConflicts?.length ? `<p class="conflict">Role conflict${o.roleConflicts.length > 1 ? 's' : ''} to verify (excluded from picks): ${[...new Map(o.roleConflicts.map((r) => [r.playerId, r])).values()].map((r) => `${esc(r.name)} (${esc(r.team)} ${esc(r.pos)}) has book lines, e.g. ${esc(r.label)} ${r.line}, but the model gives him no role for it — check depth chart / injury news.`).join(' ')}</p>` : '';
-  if (!p) return `<section class="outlier none"><div class="k">Outlier pick</div><p>No pick. ${esc(o.noPickReason || '')}</p>${conflicts}${shortlist}<p class="exp">experimental · uncalibrated · a gap is disagreement with the book, not evidence the book is wrong</p></section>`;
+  if (!p) return `<section class="outlier none"><div class="k">Game pick</div><p>No pick. ${esc(o.noPickReason || '')}</p>${conflicts}${shortlist}<p class="exp">experimental · uncalibrated · a gap is disagreement with the book, not evidence the book is wrong</p></section>`;
   const gap = Math.round(p.gap * 10) / 10;
   return `<section class="outlier" style="--tc:${sideVar(p.team)}">
-    <div class="k">Backtested pick · a line likely to miss big</div>
+    <div class="k">Game pick · the backtested side most likely to miss our way</div><p class="exp">Not the same as an outlier: picks with a small gap from the line won 56–58% out of sample, picks with a big gap 52%. Big gaps are listed under Outliers.</p>
     <div class="ohead"><span class="dir ${p.direction === 'OVER' ? 'over' : 'under'}">${p.direction}</span>
       <span class="who">${esc(p.name)} <span class="faint">${esc(p.team)} ${esc(p.pos)}</span></span>
       <span class="what">${esc(p.label)} ${p.direction === 'OVER' ? '&gt;' : '&lt;'} <b class="b">${p.line}</b></span></div>
@@ -351,7 +351,7 @@ function outlierBlock(m) {
       <div><h5>Uncertainty</h5><ul>${(p.flags.length ? p.flags : ['no quality flags raised']).map((f) => `<li>${esc(f)}</li>`).join('')}<li>Model probabilities are uncalibrated simulation outputs; held-out backtests showed overconfidence at the extremes.</li></ul></div></div>
     <details class="why"><summary>Model reasoning for this stat</summary><p>${esc(p.explain || '')}</p></details>
     ${conflicts}${shortlist}
-    <p class="exp">experimental · out of sample (2024↔2025) picks made this way won 55% of the time against the line (break-even ≈ 52%) — suggestive, not proven; big misses also go the other way</p>
+    <p class="exp">experimental · out of sample (2024↔2025) picks made this way went 147–123 (54%) against the line (break-even ≈ 52.4%) — suggestive, not proven; big misses also go the other way</p>
   </section>`;
 }
 

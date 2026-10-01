@@ -57,7 +57,7 @@ test('the model\'s range must reach a big miss', () => {
 test('no forced pick: a weak big-miss signal gives "no real outlier" with the reason', () => {
   const r = selectOutlier([base({ proj: 60, probOver: 0.4, bigMiss: bm({ bust: 0.1 }) }), base({ playerId: 'b' })], { now });
   assert.equal(r.pick, null);
-  assert.match(r.noPickReason, /No real outlier/);
+  assert.match(r.noPickReason, /No pick this game/);
 });
 
 test('quality gates: tiny sample, out/doubtful and stale lines are ineligible; questionable is flagged, not folded into the score', () => {
