@@ -393,7 +393,7 @@ function cardBody(m, c, key) {
       ${s.situational ? `<div class="sitm" title="Learned from 2022–25 games: his baseline times how this kind of situation changed output for players at his position"><span class="faint">Situation model</span> ${esc(sitText(s.situational))}${s.situational.w ? ` <span class="faint">· ${Math.round(s.situational.w * 100)}% blended in</span>` : ' <span class="faint">· reference only</span>'}</div>` : ''}
       ${s.probOver != null ? `<div class="prob">Model P(&gt; ${s.threshold}) <span class="p">${pct(s.probOver)}</span> · fair ${am(s.fairOdds?.over)}<br><span class="faint">threshold = ${esc(s.thresholdSource)}</span>${bk?.implied?.noVigOver != null ? `<br>Book no-vig P(over) ${pct(bk.implied.noVigOver)}` : ''}<br><span class="exp">experimental · uncalibrated</span></div>` : ''}
     </div>
-    <div class="chart">${last5Chart(s)}${vsPosBlock(s)}</div>
+    <div class="chart">${last5Chart(s)}${h2hBlock(s)}${vsPosBlock(s)}</div>
   </div>
   ${s.explain ? `<details class="why"><summary>Why this projection</summary><div class="expl">${esc(s.explain)}</div></details>` : ''}
   ${c.notes?.length ? `<ul class="notes">${c.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}`;
@@ -410,6 +410,13 @@ function sitText(x) {
   const lbl = (p) => ({ favPts: `fav ${f1(x.spread)}`, blowFav: `big fav ${f1(x.spread)}`, dogPts: `dog ${f1(-x.spread)}`, blowDog: `big dog ${f1(-x.spread)}`, teamTot: 'team total', oppAllow: `opp allows ${f1(x.oppAllowPer)}/g vs ${f1(x.leaguePer)}`, home: 'home', wind15: 'wind', cold: 'cold' })[p.feat] || p.feat;
   const parts = [...(Math.abs(x.constMult - 1) >= 0.005 ? [{ feat: 'stat level', mult: x.constMult }] : []), ...(x.parts || [])];
   return `${f1(x.base)}${parts.map((p) => ` × ${p.mult.toFixed(2)} ${p.feat === 'stat level' ? '(typical)' : `(${lbl(p)})`}`).join('')} = ${f1(x.value)}`;
+}
+
+function h2hBlock(s) {
+  const h = s.h2h;
+  if (!h || !h.games?.some((g) => g.value != null)) return '';
+  return `<div class="vspos"><div class="vspos-h">His last ${h.games.length} vs ${esc(h.opp)}${h.avg != null ? ` · avg <b>${f1(h.avg)}</b>` : ''}${s.book?.line != null ? ` · line ${s.book.line}` : ''}</div>
+    <table>${h.games.map((g) => `<tr><td class="faint" title="${g.season} season">${ET(g.date, { month: 'numeric', day: 'numeric', year: '2-digit' })}${g.postseason ? ' · playoffs' : ''}</td><td class="faint">${esc(g.atVs || '')}${g.team ? ` <span title="his team then">(${esc(g.team)})</span>` : ''}</td><td></td><td class="num">${g.value == null ? '—' : f1(g.value)}</td></tr>`).join('')}</table></div>`;
 }
 
 function vsPosBlock(s) {

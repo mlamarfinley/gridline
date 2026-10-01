@@ -109,6 +109,11 @@ export function whyPick(c) {
     const d = vp.avg - c.line, meaningful = Math.abs(d) >= 0.1 * Math.max(1, c.line) && g.length >= 3;
     add(`Matchup: ${vp.label}, last ${g.length}: ${g.map((x) => `${x.name ? x.name.split(' ').slice(-1)[0] : '?'} ${f1(x.value)}`).join(', ')} — average ${f1(vp.avg)} vs this ${c.line} line.`, meaningful ? (d > 0 ? 1 : -1) : 0);
   }
+  // Head-to-head: his last games against this opponent (any team, any season). Context only — 1–3 games, often with
+  // different teammates and coaches, is too small a sample to count for or against a side.
+  const hh = card.stats?.[c.stat]?.h2h;
+  if (hh?.games?.some((g) => g.value != null)) add(`Head-to-head: his last ${hh.games.length} vs ${hh.opp}: ${hh.games.map((g) => `${f1(g.value)} (${g.season} season${g.team ? `, ${g.team}` : ''})`).join(', ')}${hh.avg != null && c.line != null ? ` — average ${f1(hh.avg)} vs this ${c.line} line` : ''}. Small sample, so context only.`);
+
   // Situational multiplier model: his baseline × what this kind of game has done to players like him (2022–25).
   const sx = card.stats?.[c.stat]?.situational;
   if (sx && c.line != null) {

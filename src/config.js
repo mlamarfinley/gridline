@@ -39,7 +39,7 @@ export const CFBD_API_KEY = process.env.CFBD_API_KEY || '';
 //            absorbs at most 55% of an absent lead back's share (measured 2022–25).
 // 1.4.4 NFL: lead backs (RB1) get +0.78 carries on top of the pooled RB calibration — the pooled shift is learned
 //            on RB1s and RB2s together and left RB1s ~0.8 carries short (walk-forward: 2026 MAE 4.48 → 4.36).
-export const MODEL_VERSION = 'fbm-1.5.3';
+export const MODEL_VERSION = 'fbm-1.5.3'; // (h2h tracker is display-only; projections unchanged)
 // 1.5.3 NFL: OL/DL grades re-standardized across all teams (were compressed into ~40–60); team-runs history model
 //            (all inputs weighed by OLS) shown beside the simulation; pass-rate rows show samples and fallbacks.
 // 1.5.2 NFL: the game pick requires the gap from the line to clear the stat's significance bar (user rule; its

@@ -706,6 +706,39 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
     // line can be considered for the OUTLIER PICK (they are only displayed if picked).
     teams[t.id]._support = supporting.map((id) => mkCard(id, 'Support'));
     teams[t.id]._ctx = { opp: opp.abbr, expMargin, impliedPts, freedShare };
+
+    // ---------- HEAD-TO-HEAD: his last 3 games against this opponent, across seasons (display only) ----------
+    // This season's games, then ESPN game logs going back up to 5 seasons until 3 meetings are found — including
+    // meetings while he played for another team. Never in blind mode (it would read later seasons' logs).
+    if (!blind) {
+      const H2H_SEASONS = 5;
+      await Promise.all([...teams[t.id].cards, ...teams[t.id]._support].filter((c) => c.pos !== 'K').map(async (c) => {
+        const cur = (pInfo[c.id]?.r || []).filter((x) => x.oppAbbr === opp.abbr).map((x) => ({ ...x, season }));
+        const found = [...cur];
+        const prevL = (prevLogs.get(c.id) || []).filter((x) => x.opp === opp.abbr).map((x) => ({ ...x, season: season - 1 }));
+        found.unshift(...prevL);
+        for (let back = 2; back <= H2H_SEASONS && found.length < 3; back++) {
+          try {
+            const g = await espn.getGamelog(lg, c.id, season - back);
+            const older = espn.parseGamelog(g.data).filter((x) => x.opp === opp.abbr && /Regular|Postseason/i.test(x.seasonLabel || '')).map((x) => ({ ...x, season: season - back }));
+            found.unshift(...older);
+          } catch { break; }
+        }
+        const last3 = found.sort((a, b) => String(a.date).localeCompare(String(b.date))).slice(-3);
+        if (!last3.length) return;
+        for (const [k, st] of Object.entries(c.stats)) {
+          const games = last3.map((r) => {
+            let v = r.stats?.[k];
+            if (k === 'ypc') v = r.stats?.carries ? r.stats.rush_yds / r.stats.carries : null;
+            if (k === 'ypr') v = r.stats?.receptions ? r.stats.rec_yds / r.stats.receptions : null;
+            if (k === 'tds') v = r.stats?.rush_td != null || r.stats?.rec_td != null ? (r.stats.rush_td || 0) + (r.stats.rec_td || 0) : null;
+            return { date: r.date, season: r.season, atVs: r.atVs || (r.isHome === false ? '@' : r.isHome ? 'vs' : null), team: r.team || null, value: v == null ? null : Math.round(v * 10) / 10, postseason: /Postseason/i.test(r.seasonLabel || '') || undefined };
+          });
+          const v = games.map((x) => x.value).filter((x) => x != null);
+          st.h2h = { opp: opp.abbr, games, avg: v.length ? Math.round((v.reduce((a, b) => a + b, 0) / v.length) * 10) / 10 : null };
+        }
+      }));
+    }
     teams[t.id]._hist = teamTotals.length ? { targets: teamTotals.reduce((a, g) => a + (g.teamTargets || 0), 0) / teamTotals.length, carries: teamTotals.reduce((a, g) => a + (g.teamCarries || 0), 0) / teamTotals.length, passAtt: teamTotals.reduce((a, g) => a + (g.teamTargets || 0), 0) / teamTotals.length } : null;
   }
 
