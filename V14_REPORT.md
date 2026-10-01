@@ -53,3 +53,21 @@ Average absolute miss on rows that had a book line, in yards/units:
 - **Fitted corrections:** `src/fitted_v14.json`.
 - **Config:** `MODEL_VERSION` is `fbm-1.4.0`. 2026 weeks 2–3 stay labelled in-sample.
 - **Cards:** every projection card now shows which calibration it used and the size of the v1.4 correction.
+
+## Outlier pick: role-aware OVERs (added after review)
+
+**Prompted by:** "Aaron Rodgers OVER 1.5 rushing yards", a pick that mostly depends on whether a pocket QB runs at all.
+
+**What the 2024–26 backtest showed** (outlier-strength OVERs):
+- Minor-role OVERs finished at 0 or less **36%** of the time, versus 3% for core-role OVERs.
+- They didn't actually lose more often: 54.1% of 98 picks, a near coin flip. So they're high-variance, not proven losers.
+- That's not the model's most credible kind of disagreement, so the rule now leans against them.
+
+**Rule** (src/outlier.js, `roleMin`, `minorRolePenalty`):
+- An OVER needs the stat to be part of the player's job: at least 4 expected carries for rushing, 3 targets for receiving, 15 attempts for passing.
+- **Under half of that minimum** (e.g. a WR's rushing yards): ineligible for an OVER.
+- **Minor role:** score × 0.6.
+- **Real zero-game chance** (10th percentile = 0, non-TD stats): score × 0.6. This stacks with the minor-role penalty.
+- **UNDERs are unchanged:** minor-role UNDERs won 55.8% of 274.
+
+**Bug fixed in the same release:** when an RB was out, his carries were spread over RBs *and QBs*. In week 4 that gave Geno Smith +25% carry share (39.7 projected rushing yards; 15.3 after the fix). An absent RB's carries now go to the other RBs only. Blind backtests don't redistribute for absences, so the backtest and v1.4 learning are unaffected.

@@ -341,12 +341,15 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
         const nm = nameMap.get(k) || 'teammate';
         if (remaining < 0.05) { notes.push(`Usage measured in games without ${nm} (${Math.round(measured * 100)}% of sample weight).`); continue; }
         const posK = normPos(posOf(k));
-        const groupC = simIds.filter((j) => j !== k && ['RB', 'QB'].includes(normPos(posOf(j))));
+        // Who absorbs the absent player's carries: an absent RB's (or WR's) carries go to the other RBs only —
+        // a QB's scrambles/designed runs don't rise because a back is out. An absent QB keeps the old QB+RB pool (×0.3).
+        const carryPool = posK === 'QB' ? ['RB', 'QB'] : ['RB'];
+        const groupC = simIds.filter((j) => j !== k && carryPool.includes(normPos(posOf(j))));
         const groupT = simIds.filter((j) => j !== k);
         const sumC = groupC.reduce((s, j) => s + avgShare((rows.get(j) || []).slice(-3), 'carry'), 0);
         const sumT = groupT.reduce((s, j) => s + avgShare((rows.get(j) || []).slice(-3), 'target'), 0);
         let addC = 0, addT = 0;
-        if (kc > 0.03 && ['RB', 'QB'].includes(pos) && sumC > 0) addC = kc * remaining * (avgShare(r.slice(-3), 'carry') / sumC) * (posK === 'QB' ? 0.3 : 1);
+        if (kc > 0.03 && carryPool.includes(pos) && sumC > 0) addC = kc * remaining * (avgShare(r.slice(-3), 'carry') / sumC) * (posK === 'QB' ? 0.3 : 1);
         if (kt > 0.03 && sumT > 0) addT = kt * remaining * (avgShare(r.slice(-3), 'target') / sumT);
         if (addC + addT > 0.005) {
           carryShare += addC; targetShare += addT;
@@ -597,6 +600,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
           roleChange: (c.notes || []).some((n) => /^Role change/.test(n)),
           notes: (c.notes || []).filter((n) => !/^Small sample/.test(n)),
           opportunityText: c.opportunity?.carries != null ? `Projected opportunity: ${c.opportunity.carries.toFixed(1)} carries (${fmtPct(c.opportunity.carryShare)} share), ${c.opportunity.targets.toFixed(1)} targets (${fmtPct(c.opportunity.targetShare)} share)${c.opportunity.dropbacks != null ? `, ${c.opportunity.dropbacks.toFixed(1)} pass attempts` : ''}.` : null,
+          expVolume: c.opportunity?.carries != null ? { carries: c.opportunity.carries, targets: c.opportunity.targets, attempts: c.opportunity.dropbacks } : null,
           explain: s.explain, isDisplayed: t.cards.includes(c),
         });
       }

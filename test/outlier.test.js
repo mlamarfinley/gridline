@@ -85,3 +85,29 @@ test('impossible line timestamp (after retrieval) is never treated as fresh', ()
   const ok = scoreCandidate(base({ lineUpdated: '2026-10-02T18:00Z', retrievedAt: '2026-10-02T19:25Z', proj: 30, probOver: 0.1 }), now);
   assert.ok(!ok.flags.some((f) => /impossible/.test(f)));
 });
+
+test('minor-role OVER (pocket QB rushing) is penalized below the bar; a running QB with the same gap still qualifies', () => {
+  const pocket = base({ pos: 'QB', stat: 'rush_yds', proj: 13.1, p10: 0, p50: 7.3, p90: 34.8, line: 1.5, probOver: 0.65, expVolume: { carries: 2.9, targets: 0, attempts: 34 } });
+  const s = scoreCandidate(pocket, now);
+  assert.equal(s.eligible, true);
+  assert.equal(s.qualifies, false);
+  assert.ok(s.flags.some((f) => /minor role/.test(f)));
+  const runner = scoreCandidate(base({ pos: 'QB', stat: 'rush_yds', proj: 62, p10: 30, p50: 60, p90: 95, line: 44.5, probOver: 0.7, expVolume: { carries: 9, targets: 0, attempts: 30 } }), now);
+  assert.equal(runner.qualifies, true);
+  assert.equal(runner.quality, 1);
+});
+
+test('OVER on a stat that is not the player\'s role (WR rushing) is ineligible; UNDER is not affected', () => {
+  const wr = scoreCandidate(base({ pos: 'WR', stat: 'rush_yds', proj: 9, p10: 0, p50: 3, p90: 22, line: 1.5, probOver: 0.6, expVolume: { carries: 0.6, targets: 7, attempts: null } }), now);
+  assert.equal(wr.eligible, false);
+  assert.match(wr.reason, /not his role/);
+  const under = scoreCandidate(base({ pos: 'QB', stat: 'rush_yds', proj: 3, p10: 0, p50: 1, p90: 10, line: 14.5, probOver: 0.2, expVolume: { carries: 2.5, targets: 0, attempts: 33 } }), now);
+  assert.equal(under.direction, 'UNDER');
+  assert.equal(under.quality, 1);
+  assert.equal(under.qualifies, true);
+});
+
+test('TD OVERs are exempt from the zero-game penalty (TDs are naturally zero most games)', () => {
+  const td = scoreCandidate(base({ pos: 'QB', stat: 'pass_td', proj: 2.4, p10: 0, p50: 2, p90: 4, line: 1.5, probOver: 0.62, expVolume: { carries: 3, targets: 0, attempts: 34 } }), now);
+  assert.equal(td.quality, 1);
+});

@@ -14,11 +14,20 @@ export const OUTLIER_RULES = {
   minGames: 2,           // current-season games for the player
   staleHours: 72,        // book line older than this => ineligible
   sdFloor: { yards: 6, count: 0.8, td: 0.35 },
+  // An OVER needs the stat to be part of the player's job. Expected volume below `roleMin` = minor role
+  // (score × minorRolePenalty); below half of it = not his role (ineligible). The same penalty again when the
+  // model gives a real chance of a zero game (10th percentile ≤ 0) on a non-TD stat; the two stack. UNDERs are not affected:
+  // in the 2024–26 blind backtest minor-role OVERs finished at 0 or less 36% of the time (vs 3% for core
+  // roles); minor-role UNDERs won 55.8% of 274.
+  roleMin: { carries: 4, targets: 3, attempts: 15 },
+  minorRolePenalty: 0.6,
 };
 
 const TD_STATS = new Set(['pass_td', 'rush_td', 'rec_td', 'tds', 'ints']);
 const YARD_STATS = new Set(['pass_yds', 'rush_yds', 'rec_yds', 'long_rush', 'long_rec', 'long_cmp']);
 const RATIO = new Set(['ypc', 'ypr']);
+const VOLUME_OF = { rush_yds: 'carries', carries: 'carries', long_rush: 'carries', rush_td: 'carries', rec_yds: 'targets', receptions: 'targets', targets: 'targets', long_rec: 'targets', rec_td: 'targets', pass_yds: 'attempts', completions: 'attempts', pass_att: 'attempts', long_cmp: 'attempts', pass_td: 'attempts', ints: 'attempts' };
+const VOL_WORD = { carries: 'carries', targets: 'targets', attempts: 'pass attempts' };
 
 export function sdFloor(stat) {
   if (TD_STATS.has(stat)) return OUTLIER_RULES.sdFloor.td;
@@ -45,6 +54,17 @@ export function scoreCandidate(c, now = Date.now()) {
   const direction = gap >= 0 ? 'OVER' : 'UNDER';
   const sideProb = c.probOver == null ? null : direction === 'OVER' ? c.probOver : 1 - c.probOver;
   let quality = 1;
+  if (direction === 'OVER') {
+    const vk = VOLUME_OF[c.stat];
+    const v = vk && c.expVolume ? c.expVolume[vk] : null;
+    const min = vk ? OUTLIER_RULES.roleMin[vk] : null;
+    if (v != null && min != null && v < min / 2) return { ...c, eligible: false, reason: `not his role: ${v.toFixed(1)} expected ${VOL_WORD[vk]} — an OVER would need an unusual role`, z, direction };
+    const minor = v != null && min != null && v < min;
+    const zeroRisk = !TD_STATS.has(c.stat) && c.p10 <= 0;
+    // The two risks are separate and stack: a minor role AND a real zero-game chance needs a huge gap.
+    if (minor) { quality *= OUTLIER_RULES.minorRolePenalty; flags.push(`minor role for this stat (${v.toFixed(1)} expected ${VOL_WORD[vk]})`); }
+    if (zeroRisk) { quality *= OUTLIER_RULES.minorRolePenalty; flags.push('real chance of a zero game (10th percentile is 0)'); }
+  }
   if ((c.seasonGames ?? 0) < OUTLIER_RULES.minGames) return { ...c, eligible: false, reason: `only ${c.seasonGames ?? 0} game(s) this season`, z, direction };
   if (c.seasonGames < 4) { quality *= 0.85; flags.push(`small sample (${c.seasonGames} games)`); }
   const inj = String(c.injuryStatus || '').toLowerCase();
