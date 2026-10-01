@@ -264,6 +264,16 @@ details.why .expl, details.why p { margin: 6px 0 0; font-size: 12px; color: var(
 /* Outlier pick */
 .outlier { margin-top: 22px; padding: 14px 16px; background: var(--panel); border-left: 3px solid var(--tc, var(--model)); }
 .outlier.none { border-left-color: var(--rule-2); }
+.outliers { margin-top: 14px; padding: 12px 16px; border-left: 3px solid var(--model); }
+.outliers .k { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--model); font-weight: 600; }
+.outliers .orow { border-top: 1px solid var(--rule); padding: 7px 0; font-size: 13.5px; }
+.outliers .orow summary { cursor: pointer; line-height: 1.5; }
+.outliers .leanh { margin: 12px 0 2px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.whylist { margin: 6px 0 4px; padding-left: 18px; font-size: 13px; line-height: 1.5; }
+.whylist li { margin: 4px 0; }
+.whylist .stance { font-weight: 600; }
+.whylist li.st-for .stance { color: var(--good); }
+.whylist li.st-against .stance { color: var(--bad); }
 .skeptic { margin-top: 14px; padding: 12px 16px; border-left: 3px solid var(--rule-2); }
 .skeptic.has-high { border-left-color: var(--bad); }
 .skeptic .k { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }

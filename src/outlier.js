@@ -10,6 +10,19 @@
 // Nothing qualifies => no pick (stated plainly).
 import { BIG, MIN_LINE, threshold } from './bigmiss.js';
 
+// OUTLIERS (model vs line): a gap is "significant" when it clears a per-stat bar — max(units, share of line):
+// 10 yds on a 97.5 rushing line is an outlier; 10 yds on a 239 passing line (one throw) is not; 6 vs 6.5
+// receptions is a coin flip, not an outlier. Strength = |model − line| / bar (≥ 1 = outlier, 0.6–1 = lean).
+export const SIGNIFICANCE = { pass_yds: [20, 0.08], rush_yds: [9, 0.10], rec_yds: [9, 0.12], receptions: [1.0, 0.15], carries: [2.5, 0.12], completions: [2.5, 0.10] };
+export const sigThreshold = (stat, line) => (SIGNIFICANCE[stat] ? Math.max(SIGNIFICANCE[stat][0], SIGNIFICANCE[stat][1] * line) : null);
+// How picks with gaps this size actually did against the line, 2024–25 blind backtest (raw projections).
+export const TIER_RECORD = {
+  '1–1.5×': { all: [1410, 0.511], OVER: [643, 0.501], UNDER: [767, 0.520] },
+  '1.5–2×': { all: [644, 0.502], OVER: [294, 0.473], UNDER: [350, 0.526] },
+  '2×+': { all: [487, 0.495], OVER: [195, 0.456], UNDER: [292, 0.521] },
+};
+export const tierOf = (strength) => (strength >= 2 ? '2×+' : strength >= 1.5 ? '1.5–2×' : strength >= 1 ? '1–1.5×' : strength >= 0.6 ? 'lean' : null);
+
 export const OUTLIER_RULES = {
   minLift: 1.5,          // learned P(big miss) ≥ 1.5× the typical rate for this stat (after quality adjustment),
                          // AND more likely our way than the other way. Out of sample (2024→2025 / 2025→2024): side
@@ -70,6 +83,7 @@ export function scoreCandidate(c, now = Date.now()) {
   const bigProb = direction === 'OVER' ? bm.boom : bm.bust, baseProb = direction === 'OVER' ? bm.baseBoom : bm.baseBust, lift = direction === 'OVER' ? liftOver : liftUnder;
   const againstProb = direction === 'OVER' ? bm.bust : bm.boom; // chance the line misses big the OTHER way
   const T = threshold(c.stat, c.line);
+  const sigT = sigThreshold(c.stat, c.line), sigStrength = sigT ? Math.abs(gap) / sigT : 0, gapDir = gap >= 0 ? 'OVER' : 'UNDER';
   const sideProb = c.probOver == null ? null : direction === 'OVER' ? c.probOver : 1 - c.probOver;
   let quality = 1, roleQuality = 1;
   if (direction === 'OVER') {
@@ -113,7 +127,7 @@ export function scoreCandidate(c, now = Date.now()) {
   else if (!tailReaches) reason = `the model's range doesn't reach ${bigText}`;
   return {
     ...c, eligible: true, qualifies: reason == null, direction, gap, gapPct: c.line !== 0 ? gap / Math.abs(c.line) : null,
-    sd, z, quality, score, lift, bigProb, againstProb, baseProb, bigThreshold: T, bigText, sideProb, flags, reason,
+    sd, z, quality, roleQuality, score, lift, bigProb, againstProb, baseProb, bigThreshold: T, sigThreshold: sigT, sigStrength, sigTier: tierOf(sigStrength), gapDir, bigText, sideProb, flags, reason,
   };
 }
 
@@ -140,6 +154,11 @@ export function selectOutlier(candidates, { now = Date.now(), top = 6 } = {}) {
   scored = scored.map((c) => (conflicted.has(c.playerId) && !c.roleConflict ? { ...c, eligible: false, qualifies: false, reason: 'player has a role conflict on another stat — projections for him are role-contaminated' } : c));
   const eligible = scored.filter((c) => c.eligible).sort((a, b) => b.score - a.score);
   const pick = eligible.find((c) => c.qualifies) || null;
+  // Every significant model-vs-line gap (minor-role OVERs excluded — e.g. a pocket QB's rushing).
+  const significant = eligible.filter((c) => c.sigStrength >= 0.6 && !(c.gapDir === 'OVER' && c.roleQuality < 1))
+    .sort((a, b) => b.sigStrength - a.sigStrength)
+    .map((c) => ({ ...c, tierRecord: TIER_RECORD[c.sigTier]?.[c.gapDir] || null }));
+  const outliers = significant.filter((c) => c.sigStrength >= 1), leans = significant.filter((c) => c.sigStrength < 1).slice(0, 5);
   const withLines = scored.filter((c) => c.line != null).length;
   let noPickReason = null;
   if (!pick) {
@@ -149,6 +168,7 @@ export function selectOutlier(candidates, { now = Date.now(), top = 6 } = {}) {
   }
   return {
     pick: pick ? { ...pick, evidence: evidenceFor(pick) } : null,
+    outliers, leans,
     noPickReason,
     shortlist: eligible.slice(0, top),
     // Largest standardized gaps in each direction (for slate scans / reporting), eligible only.

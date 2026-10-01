@@ -16,64 +16,83 @@ const VOLUME = {
 const VOL_WORD = { targets: 'targets', carries: 'carries', passAtt: 'pass attempts' };
 const TEAM_VOL = { targets: 'targets', carries: 'carries', passAtt: 'passAtt' };
 
-/** c: outlier candidate with .card (player card), .teamHist / .teamProj ({targets, carries, passAtt} per game), .unitEdge. */
+/**
+ * c: candidate with .direction, .card (player card), .teamHist / .teamProj ({targets, carries, passAtt} per game),
+ * .unitEdge, .expMargin, .scriptWeights. Returns [{ text, stance }] where stance is 'for' (supports the pick),
+ * 'against' (works against it) or 'info' (context), ordered for → against → info.
+ */
 export function whyPick(c) {
   const out = [];
+  const sign = c.direction === 'UNDER' ? -1 : 1; // +1 = facts that push the number UP support this pick
+  const add = (text, effect = 0) => out.push({ text, stance: effect === 0 ? 'info' : effect * sign > 0 ? 'for' : 'against' });
   const card = c.card || {};
   const vk = VOLUME[c.stat];
   const o = card.opportunity || {};
   const h = card.usageHistory || {};
   const projVol = vk === 'passAtt' ? o.dropbacks : vk ? o[vk] : null;
   const histVol = vk ? h[vk] : null;
+  const runStat = /rush|carries/.test(c.stat);
 
   // 1. Volume
   if (projVol != null && histVol != null && h.games >= 1) {
     const word = VOL_WORD[vk];
     const diff = projVol - histVol;
-    let s = `Volume: the model expects ${f1(projVol)} ${word}, vs his ${f1(histVol)} per game this season`;
-    const causes = [];
-    const shares = (card.shareTrend || []).map((x) => (vk === 'carries' ? x.carry : x.target)).filter((v) => v != null);
+    const big = Math.abs(diff) >= 0.1 * Math.max(histVol, 1);
+    let s = `Volume: the model expects ${f1(projVol)} ${word}, vs his ${f1(histVol)} per game this season${h.partialGames ? ` (not counting ${h.partialGames} partial game${h.partialGames > 1 ? 's' : ''})` : ''}`;
+    const shares = (card.shareTrend || []).filter((x) => !x.partial).map((x) => (vk === 'carries' ? x.carry : x.target)).filter((v) => v != null);
     const projShare = vk === 'carries' ? o.carryShare : vk === 'targets' ? o.targetShare : null;
     if (projShare != null && shares.length) {
       const seasonShare = shares.reduce((a, b) => a + b, 0) / shares.length, last = shares[shares.length - 1];
-      if (Math.abs(projShare - seasonShare) >= 0.03) causes.push(`his projected ${vk === 'carries' ? 'carry' : 'target'} share is ${pct(projShare)} vs ${pct(seasonShare)} on the season${Math.abs(last - seasonShare) >= 0.05 ? ` — it was ${pct(last)} last game (${shares.map(pct).join(' → ')})` : ''}`);
+      if (Math.abs(projShare - seasonShare) >= 0.03) s += ` — his projected ${vk === 'carries' ? 'carry' : 'target'} share is ${pct(projShare)} vs ${pct(seasonShare)} on the season${Math.abs(last - seasonShare) >= 0.05 ? ` (${shares.map(pct).join(' → ')})` : ''}`;
     }
-    // Same basis on both sides: projected team targets/carries (sum over every simulated player) vs actual per game.
+    add(`${s}.`, big ? (diff > 0 ? 1 : -1) : 0);
+    // Team volume, same basis on both sides: projected team targets/carries vs actual per game.
     const teamH = c.teamHist?.[TEAM_VOL[vk]], teamP = c.teamProj?.[TEAM_VOL[vk]];
-    if (teamH && teamP && Math.abs(teamP / teamH - 1) >= 0.08) causes.push(`his team is projected for ${f1(teamP)} ${vk === 'carries' ? 'carries' : 'targets'} vs ${f1(teamH)} per game so far (expected game script: ${c.expMargin != null ? (c.expMargin > 0 ? `favored by ${f1(c.expMargin)}` : `underdog by ${f1(-c.expMargin)}`) : 'n/a'})`);
-    for (const r of card.redistribution || []) { const add = vk === 'carries' ? r.addCarryShare : r.addTargetShare; if (add >= 0.01) causes.push(`${r.from} is out, adding ${pct(add)} ${vk === 'carries' ? 'carry' : 'target'} share`); }
-    if (Math.abs(diff) >= 0.15 * Math.max(histVol, 1)) s += causes.length ? ` — because ${causes.join('; ')}.` : '.';
-    else s += causes.length ? ` (${causes.join('; ')}).` : ' — about the same.';
-    out.push(s);
+    if (teamH && teamP) {
+      const r = teamP / teamH - 1;
+      add(`Team volume: his team is projected for ${f1(teamP)} ${vk === 'carries' ? 'carries' : 'targets'}, vs ${f1(teamH)} per game so far.`, Math.abs(r) >= 0.08 ? (r > 0 ? 1 : -1) : 0);
+    }
+    for (const r of card.redistribution || []) { const a = vk === 'carries' ? r.addCarryShare : r.addTargetShare; if (a >= 0.01) add(`Injury: ${r.from} is out, adding ${pct(a)} ${vk === 'carries' ? 'carry' : 'target'} share.`, 1); }
+  }
+  for (const n of card.notes || []) if (/partial game/.test(n)) add(`Injury context: ${n}`);
+
+  // 2. Game script
+  if (c.expMargin != null && c.scriptWeights) {
+    const w = c.scriptWeights, ahead = (w.lead || 0) + (w.blowLead || 0), behind = (w.trail || 0) + (w.blowTrail || 0);
+    const fav = c.expMargin >= 0 ? `favored by ${f1(c.expMargin)}` : `an underdog by ${f1(-c.expMargin)}`;
+    const meaningful = Math.abs(c.expMargin) >= 3 && Math.abs(ahead - behind) >= 0.1;
+    const e = !meaningful ? 0 : runStat ? (ahead > behind ? 1 : -1) : (behind > ahead ? 1 : -1);
+    add(`Game script: ${c.team} is ${fav}; the model spends ${pct(ahead)} of the game ahead and ${pct(behind)} behind. Teams that are ahead run more and throw less${runStat ? '' : ', and trailing teams throw more'}.${meaningful && runStat && ahead > behind ? ' (Some late-game carries go to backups in blowouts.)' : ''}`, e);
   }
 
-  // 2. Efficiency + 3. line math
+  // 3. Efficiency + line math
   const e = card.efficiency || {};
   const line = c.line;
   if ((c.stat === 'receptions' || c.stat === 'rec_yds') && e.catchRate?.final) {
     const cr = e.catchRate.final, ypc = e.ypCatch?.final;
     if (c.stat === 'receptions') {
-      out.push(`Line math: at his ${pct(cr)} catch rate, ${line} catches takes about ${f1((Math.floor(line) + 1) / cr)} targets; his targets this season: ${listOf(c.card?.stats?.targets?.last5)}.`);
+      add(`Line math: at his ${pct(cr)} catch rate, ${line} catches takes about ${f1((Math.floor(line) + 1) / cr)} targets; his targets this season: ${listOf(c.card?.stats?.targets?.last5)}.`);
     } else if (ypc) {
-      const ypt = cr * ypc;
-      out.push(`Efficiency: ${pct(cr)} catch rate × ${f1(ypc)} yds/catch ≈ ${f1(ypt)} yds per target${e.ypCatch?.oppMult && Math.abs(e.ypCatch.oppMult - 1) >= 0.04 ? ` (opponent adjustment ×${e.ypCatch.oppMult.toFixed(2)})` : ''}. Line math: ${line} yards needs about ${f1(line / ypt)} targets at that rate.`);
+      const ypt = cr * ypc, m = e.ypCatch?.oppMult ?? 1;
+      add(`Efficiency: ${pct(cr)} catch rate × ${f1(ypc)} yds/catch ≈ ${f1(ypt)} yds per target${Math.abs(m - 1) >= 0.04 ? ` (opponent adjustment ×${m.toFixed(2)})` : ''}. Line math: ${line} yards needs about ${f1(line / ypt)} targets at that rate.`, Math.abs(m - 1) >= 0.04 ? (m > 1 ? 1 : -1) : 0);
     }
-  } else if ((c.stat === 'rush_yds') && e.ypc?.final) {
-    out.push(`Efficiency: ${f1(e.ypc.final)} yds/carry${Math.abs((e.ypc.oppMult ?? 1) - 1) >= 0.04 ? ` (opponent run D ×${e.ypc.oppMult.toFixed(2)})` : ''}. Line math: ${line} yards needs about ${f1(line / e.ypc.final)} carries at that rate; his carries this season: ${listOf(c.card?.stats?.carries?.last5)}.`);
+  } else if (c.stat === 'rush_yds' && e.ypc?.final) {
+    const m = e.ypc.oppMult ?? 1;
+    add(`Efficiency: ${f1(e.ypc.final)} yds/carry${Math.abs(m - 1) >= 0.04 ? ` (opponent run defense ×${m.toFixed(2)})` : ''}. Line math: ${line} yards needs about ${f1(line / e.ypc.final)} carries at that rate; his carries this season: ${listOf(c.card?.stats?.carries?.last5)}.`, Math.abs(m - 1) >= 0.04 ? (m > 1 ? 1 : -1) : 0);
   } else if (c.stat === 'pass_yds' && projVol) {
     const ypa = c.proj / projVol;
-    out.push(`Efficiency: about ${f1(ypa)} yds per attempt projected. Line math: ${line} yards needs ${f1(line / ypa)} attempts at that rate, or ${f1(line / projVol)} yds/attempt on ${f1(projVol)} attempts.`);
-  } else if (/_td$/.test(c.stat)) {
-    out.push(`Touchdowns: the model's mean is ${f1(c.proj)} — driven by his team's implied ${f1(c.impliedPts)} points and his share of red-zone work.`);
+    add(`Efficiency: about ${f1(ypa)} yds per attempt projected. Line math: ${line} yards needs ${f1(line / ypa)} attempts at that rate.`);
   }
 
   // 4. Matchup (defense vs his position/style + unit edge)
   const fit = card.matchup?.fit;
-  const runStat = /rush|carries/.test(c.stat);
-  for (const r of fit?.reasons || []) if ((r.kind === 'run') === runStat) out.push(`Matchup: ${r.text}`);
-  if (card.matchup?.style?.length) out.push(`Player type: ${card.matchup.style.join(', ')}.`);
-  if (c.unitEdge) out.push(`Unit ratings: ${c.unitEdge.label} — ${c.team} offense ${c.unitEdge.offense} vs ${c.opponent} defense ${c.unitEdge.defense} (${c.unitEdge.verdict}).`);
-  return out;
+  let favorableRec = false;
+  for (const r of fit?.reasons || []) if ((r.kind === 'run') === runStat) { add(`Matchup: ${r.text}`, r.effect || 0); if (!runStat && r.effect > 0) favorableRec = true; }
+  if (c.unitEdge) add(`Unit ratings: ${c.unitEdge.label} — ${c.team} offense ${c.unitEdge.offense} vs ${c.opponent} defense ${c.unitEdge.defense} (${c.unitEdge.verdict}).`, c.unitEdge.verdict === 'offense advantage' ? 1 : c.unitEdge.verdict === 'defense advantage' ? -1 : 0);
+  if (favorableRec && sign < 0) add('Note: the model doesn\'t shift targets toward a favorable matchup. When tested, that made projections less accurate. So a soft spot in the defense shows up here only in yards per target, not in more targets.');
+  if (card.matchup?.style?.length) add(`Player type: ${card.matchup.style.join(', ')}.`);
+  const order = { for: 0, against: 1, info: 2 };
+  return out.sort((a, b) => order[a.stance] - order[b.stance]);
 }
 
 function listOf(l5) {

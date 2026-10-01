@@ -110,3 +110,16 @@ test('OVER on a stat that is not the player\'s role (WR rushing) is ineligible',
   assert.equal(wr.eligible, false);
   assert.match(wr.reason, /not his role/);
 });
+
+test('outliers: a significant gap is stat-specific (10 rush yds on 97.5 yes; 10 pass yds on 239 no; 6 vs 6.5 catches no)', async () => {
+  const { sigThreshold } = await import('../src/outlier.js');
+  const strength = (stat, line, proj) => Math.abs(proj - line) / sigThreshold(stat, line);
+  assert.ok(strength('rush_yds', 97.5, 86.8) >= 1);
+  assert.ok(strength('pass_yds', 239.5, 249) < 1);
+  assert.ok(strength('receptions', 6.5, 6.0) < 1);
+  assert.ok(strength('rec_yds', 50.5, 34.5) >= 1.5);
+  const r = selectOutlier([base({ proj: 86.8, line: 97.5, p10: 40, p90: 130, probOver: 0.38 }), base({ playerId: 'q', proj: 70.5, line: 69.5 })], { now });
+  assert.equal(r.outliers.length, 1);
+  assert.equal(r.outliers[0].gapDir, 'UNDER');
+  assert.ok(r.outliers[0].tierRecord);
+});

@@ -304,6 +304,9 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       const r = rows.get(id) || [];
       const ww = contextWeights(id, teamTotals, keys, expectedPresent);
       const wOf = new Map(ww.map((x) => [x.eventId, x.w]));
+      // Partial games (e.g. left early injured): unrepresentative of his role, so they barely count.
+      const partial = partialGames(r, snaps ? snapsFor(snaps, t.abbr, nameMap.get(id)) : null);
+      for (const [eid] of partial) if (wOf.has(eid)) wOf.set(eid, wOf.get(eid) * 0.05);
       const played = r.filter((x) => wOf.has(x.eventId));
       let sw = 0, sw2 = 0, wc = 0, wtc = 0, wt = 0, wtt = 0;
       const stC = {}, stT = {}, stTC = {}, stTT = {};
@@ -336,6 +339,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       if (pos === 'WR' || pos === 'TE') targetShare = Math.max(targetShare, 0.03);
       if (pos === 'QB') targetShare = 0;
       const notes = [];
+      for (const [, pg] of partial) notes.push(`Week ${pg.week} vs ${pg.opp} treated as a partial game (${pg.evidence}) — likely an early exit (injury); it barely counts toward his usage.`);
       const redistribution = []; // structured record of usage moved from absent teammates (audited by src/skeptic.js)
       // Redistribute usage vacated by unavailable key teammates (to the extent the sample does
       // not already reflect their absence).
@@ -389,9 +393,10 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
         else if (lg === 'cfb') { dispersion *= 1.3; notes.push('Not in the last game\'s box score — reason unknown (inferred from missing stats; no college injury feed). Treated as available with no workload cut; range widened.'); }
         else { dispersion *= 1.3; notes.push('Did not record a stat last game and is not ruled out on the current injury report. No public workload-restriction evidence, so no cut applied — range widened instead.'); }
       }
-      const shareTrend = r.slice(-5).map((x) => ({ opp: x.oppAbbr, carry: x.share.carry, target: x.share.target, week: x.week }));
-      if (r.length >= 3) {
-        const last = r[r.length - 1], prev = r.slice(0, -1);
+      const shareTrend = r.slice(-5).map((x) => ({ opp: x.oppAbbr, carry: x.share.carry, target: x.share.target, week: x.week, partial: partial.has(x.eventId) || undefined }));
+      const rFull = r.filter((x) => !partial.has(x.eventId)); // role-change check ignores partial games
+      if (rFull.length >= 3) {
+        const last = rFull[rFull.length - 1], prev = rFull.slice(0, -1);
         const dC = (last.share.carry || 0) - avgShare(prev, 'carry'), dT = (last.share.target || 0) - avgShare(prev, 'target');
         const parts = [];
         if (Math.abs(dC) >= 0.15) parts.push(`${dC >= 0 ? '+' : ''}${fmtPct(dC)} carry share`);
@@ -402,7 +407,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       // Efficiency (player → shrunk toward prior-season → league), then opponent + weather.
       const cur = sumStats(played.map((x) => x.stats));
       const pbp = played.reduce((a, x) => { if (x.pbp) for (const k of Object.keys(x.pbp)) a[k] = (a[k] || 0) + x.pbp[k]; return a; }, {});
-      pInfo[id] = { pos, r, played, cur, pbp, notes, redistribution, av, carryShare, targetShare, carryByState, targetByState, nEff, returning, shareTrend, dispersion };
+      pInfo[id] = { pos, r, partial, played, cur, pbp, notes, redistribution, av, carryShare, targetShare, carryByState, targetByState, nEff, returning, shareTrend, dispersion };
       players.push({ id, pos, isCore: coreIds.includes(id), carryShare: carryByState, targetShare: targetByState, dropbackShare: id === roles.qb ? 1 : 0, dispersion });
     }
 
@@ -577,7 +582,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
         efficiency: effOut[id] || null,
         byScript, withWithout, shareTrend: info?.shareTrend || null, snapTrend, usageTrend14: id === roles.k ? null : usage14p,
         redistribution: id === roles.k ? [] : info.redistribution,
-        usageHistory: id === roles.k ? null : (() => { const g = info.r || []; if (!g.length) return { games: 0 }; const a = (f) => g.reduce((s2, x) => s2 + (x.stats?.[f] || 0), 0) / g.length; const L = g[g.length - 1].stats || {}; return { games: g.length, carries: a('carries'), targets: a('targets'), passAtt: a('pass_att'), last: { carries: L.carries || 0, targets: L.targets || 0, passAtt: L.pass_att || 0 } }; })(),
+        usageHistory: id === roles.k ? null : (() => { const g = (info.r || []).filter((x) => !info.partial?.has(x.eventId)); if (!g.length) return { games: 0 }; const a = (f) => g.reduce((s2, x) => s2 + (x.stats?.[f] || 0), 0) / g.length; const L = g[g.length - 1].stats || {}; return { games: g.length, partialGames: info.partial?.size || 0, carries: a('carries'), targets: a('targets'), passAtt: a('pass_att'), last: { carries: L.carries || 0, targets: L.targets || 0, passAtt: L.pass_att || 0 } }; })(),
         actual: null,
       };
     };
@@ -661,17 +666,19 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
     const all = [...ref.team.cards, ...(ref.team._support || [])];
     const teamProj = { targets: all.reduce((a, x) => a + (x.opportunity?.targets || 0), 0), carries: all.reduce((a, x) => a + (x.opportunity?.carries || 0), 0) };
     teamProj.passAtt = teamProj.targets;
-    return whyPick({ ...p, card: ref.card, teamHist: ref.team._hist, teamProj, expMargin: ref.team.expMargin, impliedPts: ref.team.impliedPts, unitEdge: edge || null });
+    return whyPick({ ...p, card: ref.card, teamHist: ref.team._hist, teamProj, expMargin: ref.team.expMargin, scriptWeights: ref.team.scriptWeights, impliedPts: ref.team.impliedPts, unitEdge: edge || null });
   };
   if (outlier.pick) {
     const p = outlier.pick, kind = p.direction === 'OVER' ? 'boom' : 'bust';
     const drivers = p.bigMiss ? topDrivers(kind, p.bigMiss.x, p.stat) : [];
     p.why = [
-      `Why this is an outlier: ${Math.round(p.bigProb * 100)}% chance the line misses by ${p.bigText} — ${p.lift.toFixed(1)}× the usual ${Math.round(p.baseProb * 100)}% for ${p.label.toLowerCase()} lines. Chance it misses big the other way: ${Math.round(p.againstProb * 100)}%.${drivers.length ? ` Biggest drivers: ${drivers.join(', ')}.` : ''}`,
+      { stance: 'info', text: `Why this is the backtested pick: ${Math.round(p.bigProb * 100)}% chance the line misses by ${p.bigText} — ${p.lift.toFixed(1)}× the usual ${Math.round(p.baseProb * 100)}% for ${p.label.toLowerCase()} lines. Chance it misses big the other way: ${Math.round(p.againstProb * 100)}%.${drivers.length ? ` Biggest drivers: ${drivers.join(', ')}.` : ''}` },
       ...explainPick(p),
     ];
   }
   for (const c of outlier.shortlist || []) c.why = explainPick(c);
+  // Outliers are explained from the side of the GAP (model vs line), not the big-miss direction.
+  for (const c of [...(outlier.outliers || []), ...(outlier.leans || [])]) c.why = explainPick({ ...c, direction: c.gapDir });
   if (outlier.pick) {
     outlier.pick.retrievedAt = propsMeta.retrievedAt || null;
     outlier.pick.mode = mode;
@@ -741,6 +748,30 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
 
 // ---------- helpers ----------
 function avg(a) { let s = 0; for (const x of a) s += x; return a.length ? s / a.length : 0; }
+/**
+ * Games that don't represent a player's role: he barely played (left early — usually an injury) or was a late
+ * scratch-like cameo. Snap counts when available (nflverse/PFR): snap% < 50% of his median with a normal median
+ * (>= 35%). Without snaps: touches < 40% of his median touches with a median of 8+. Returns Map eventId -> info.
+ */
+export function partialGames(rows, snapSeries) {
+  const out = new Map();
+  if (!rows || rows.length < 2) return out;
+  const med = (a) => { const b = [...a].sort((x, y) => x - y); return b[Math.floor((b.length - 1) / 2)]; };
+  if (snapSeries && snapSeries.length >= 2) {
+    const byWeek = new Map(snapSeries.map((s) => [s.week, s.pct]));
+    const pcts = rows.map((x) => byWeek.get(x.week)).filter((v) => v != null);
+    if (pcts.length >= 2) {
+      const m = med(pcts);
+      if (m >= 0.35) for (const x of rows) { const p = byWeek.get(x.week); if (p != null && p < 0.5 * m) out.set(x.eventId, { week: x.week, opp: x.oppAbbr, evidence: `${Math.round(p * 100)}% of snaps vs his usual ${Math.round(m * 100)}%` }); }
+      return out;
+    }
+  }
+  const touches = (x) => (x.stats?.carries || 0) + (x.stats?.targets || 0) + (x.stats?.pass_att || 0);
+  const m = med(rows.map(touches));
+  if (m >= 8) for (const x of rows) if (touches(x) < 0.4 * m) out.set(x.eventId, { week: x.week, opp: x.oppAbbr, evidence: `${touches(x)} touches vs his usual ${m}` });
+  return out;
+}
+
 function avgShare(rows, k) { const v = rows.map((x) => x.share?.[k]).filter((x) => x != null); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : 0; }
 function fmtPct(x) { return x == null ? '—' : `${Math.round(x * 1000) / 10}%`; }
 function weighted(obj, w) { let s = 0, t = 0; for (const k of Object.keys(w)) { s += (obj[k] ?? 0) * w[k]; t += w[k]; } return t ? s / t : null; }

@@ -66,3 +66,25 @@ test('a backup QB projected not to play is not flagged for being below his past 
   const r = skeptic(match(team([qb(), backup])));
   assert.ok(!r.findings.some((f) => f.playerId === 'b'));
 });
+
+test('why: each reason says whether it supports or works against the pick (a soft matchup is AGAINST an UNDER)', async () => {
+  const { whyPick } = await import('../src/why.js');
+  const card = { opportunity: { targets: 7.5, targetShare: 0.24, teamPlays: 60, teamPassRate: 0.55 }, usageHistory: { games: 3, targets: 7.7 }, shareTrend: [], efficiency: { catchRate: { final: 0.58 } },
+    matchup: { fit: { reasons: [{ kind: 'rec', effect: 1, text: '35% of his targets are short outside; this defense allows 6.9 yds/target there (league 5.5).' }] } }, notes: [], stats: { targets: { last5: [] } } };
+  const w = whyPick({ direction: 'UNDER', stat: 'receptions', line: 5.5, proj: 4.2, card, team: 'JAX', opponent: 'CIN', expMargin: 11.5, scriptWeights: { lead: 0.33, blowLead: 0.15, trail: 0.06, blowTrail: 0.01 } });
+  assert.equal(w.find((x) => /short outside/.test(x.text)).stance, 'against');
+  assert.equal(w.find((x) => /Game script/.test(x.text)).stance, 'for'); // favored → throws less → supports the receiving UNDER
+  assert.ok(w.some((x) => /doesn't shift targets/.test(x.text)));
+});
+
+test('partial games: an early exit (16% of snaps vs usual 71%) is detected; a normal game is not', async () => {
+  const { partialGames } = await import('../src/matchup.js');
+  const g = (week, carries) => ({ eventId: `e${week}`, week, oppAbbr: 'X', stats: { carries, targets: 2 } });
+  const rows = [g(1, 15), g(2, 4), g(3, 15)];
+  const bySnaps = partialGames(rows, [{ week: 1, pct: 0.71 }, { week: 2, pct: 0.16 }, { week: 3, pct: 0.72 }]);
+  assert.deepEqual([...bySnaps.keys()], ['e2']);
+  assert.match(bySnaps.get('e2').evidence, /16% of snaps vs his usual 71%/);
+  const byTouches = partialGames(rows, null); // no snap data: 6 touches vs his usual 17
+  assert.deepEqual([...byTouches.keys()], ['e2']);
+  assert.equal(partialGames([g(1, 15), g(2, 13), g(3, 16)], null).size, 0);
+});

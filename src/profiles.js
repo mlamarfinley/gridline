@@ -244,18 +244,18 @@ export function playerFit(pl, def, league) {
     const top = ZONES.slice().sort((a, b) => pl.share[b] - pl.share[a]).slice(0, 2);
     for (const z of top) {
       const r = def.zone[z] / league.zone[z];
-      if (Math.abs(r - 1) >= 0.12) out.reasons.push({ kind: 'rec', text: `${Math.round(pl.share[z] * 100)}% of his targets are ${ZONE_LABEL[z]}; this defense allows ${(def.zone[z]).toFixed(1)} yds/target there (league ${league.zone[z].toFixed(1)}).` });
+      if (Math.abs(r - 1) >= 0.12) out.reasons.push({ kind: 'rec', effect: r > 1 ? 1 : -1, text: `${Math.round(pl.share[z] * 100)}% of his targets are ${ZONE_LABEL[z]}; this defense allows ${(def.zone[z]).toFixed(1)} yds/target there (league ${league.zone[z].toFixed(1)}).` });
     }
-    if (Math.abs(out.posFit) >= 0.1) out.reasons.push({ kind: 'rec', text: `This defense allows ${def.pos[pl.pos].toFixed(1)} yds/target to ${pl.pos}s (league ${league.pos[pl.pos].toFixed(1)}).` });
-    if (Math.abs(out.covFit) >= 0.02) out.reasons.push({ kind: 'rec', text: `Defense plays man ${Math.round(def.manRate * 100)}% (league ${Math.round(league.manRate * 100)}%) and he is ${pl.manEdge > 0 ? 'better vs man' : 'better vs zone'} (last season's charting).` });
+    if (Math.abs(out.posFit) >= 0.1) out.reasons.push({ kind: 'rec', effect: out.posFit > 0 ? 1 : -1, text: `This defense allows ${def.pos[pl.pos].toFixed(1)} yds/target to ${pl.pos}s (league ${league.pos[pl.pos].toFixed(1)}).` });
+    if (Math.abs(out.covFit) >= 0.02) out.reasons.push({ kind: 'rec', effect: out.covFit > 0 ? 1 : -1, text: `Defense plays man ${Math.round(def.manRate * 100)}% (league ${Math.round(league.manRate * 100)}%) and he is ${pl.manEdge > 0 ? 'better vs man' : 'better vs zone'} (last season's charting).` });
   }
   if (pl.carries >= 5 && pl.pos !== 'QB') {
     const lgSide = pl.insideShare * league.run.inside + (1 - pl.insideShare) * league.run.outside;
     const dSide = pl.insideShare * def.run.inside + (1 - pl.insideShare) * def.run.outside;
     out.runFit = Math.log(dSide / lgSide);
     out.explFit = Math.log(pl.explRate / league.expl) * Math.log(def.expl / league.expl);
-    if (Math.abs(out.runFit) >= 0.06) out.reasons.push({ kind: 'run', text: `Runs ${Math.round(pl.insideShare * 100)}% inside; this defense allows ${def.run.inside.toFixed(1)} yds/carry inside and ${def.run.outside.toFixed(1)} outside (league ${league.run.inside.toFixed(1)} / ${league.run.outside.toFixed(1)}).` });
-    if (def.expl / league.expl > 1.15 && pl.explRate / league.expl > 1.15) out.reasons.push({ kind: 'run', text: `Explosive runner vs a defense that gives up 10+ yard runs ${Math.round(def.expl * 100)}% of the time (league ${Math.round(league.expl * 100)}%).` });
+    if (Math.abs(out.runFit) >= 0.06) out.reasons.push({ kind: 'run', effect: out.runFit > 0 ? 1 : -1, text: `Runs ${Math.round(pl.insideShare * 100)}% inside; this defense allows ${def.run.inside.toFixed(1)} yds/carry inside and ${def.run.outside.toFixed(1)} outside (league ${league.run.inside.toFixed(1)} / ${league.run.outside.toFixed(1)}).` });
+    if (def.expl / league.expl > 1.15 && pl.explRate / league.expl > 1.15) out.reasons.push({ kind: 'run', effect: 1, text: `Explosive runner vs a defense that gives up 10+ yard runs ${Math.round(def.expl * 100)}% of the time (league ${Math.round(league.expl * 100)}%).` });
   }
   return out;
 }

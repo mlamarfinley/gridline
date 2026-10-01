@@ -196,6 +196,7 @@ async function renderGame(lg, id) {
     ${m.mode !== 'pregame' ? `<div class="banner">Retrospective view. Projections are rebuilt using only games completed before kickoff; injury reports, depth charts and weather are <b>not</b> applied because today's versions would leak post-kickoff information.${done ? ' Actual results are shown beside each projection.' : ''}</div>` : ''}
     ${scriptBlock(A, H)}
     ${outlierBlock(m)}
+    ${outliersBlock(m)}
     ${skepticBlock(m)}
     ${m.rbUpside ? `<div class="callout"><div class="k">RB matchup upside</div>${esc(m.rbUpside.name)} (${esc(m.rbUpside.team)}) — 90th-percentile outcome ${m.rbUpside.p90} rush yds; opponent allows explosive RB runs at ×${f2(m.rbUpside.oppRun10Mult)} (10+) / ×${f2(m.rbUpside.oppRun20Mult)} (20+) the baseline rate after sample shrinkage. Upside, not a prediction of a big play.</div>` : ''}
     ${injuryBlock(m)}
@@ -303,6 +304,21 @@ function skepticBlock(m) {
   </section>`;
 }
 
+const STANCE = { for: 'Supports', against: 'Against', info: '' };
+function whyList(items) {
+  return `<ul class="whylist">${items.map((w) => (typeof w === 'string' ? { text: w, stance: 'info' } : w)).map((w) => `<li class="st-${w.stance}">${w.stance !== 'info' ? `<b class="stance">${STANCE[w.stance]}</b> ` : ''}${esc(w.text)}</li>`).join('')}</ul>`;
+}
+function outliersBlock(m) {
+  const o = m.outlier;
+  if (!o || (!o.outliers?.length && !o.leans?.length)) return `<section class="outliers"><div class="k">Outliers · model vs book line</div><p class="faint">No player's projection differs from his line by a significant amount for that stat.</p></section>`;
+  const row = (c) => `<details class="orow"><summary><span class="dir ${c.gapDir === 'OVER' ? 'over' : 'under'}">${c.gapDir}</span> <b>${esc(c.name)}</b> <span class="faint">${esc(c.team)} ${esc(c.pos)}</span> · ${esc(c.label)} · line <b class="b">${c.line}</b> · model <b class="m">${f1(c.proj)}</b> · gap ${sgn(Math.round(c.gap * 10) / 10)} <span class="faint">(${f2(c.sigStrength)}× the ${f1(c.sigThreshold)} bar${c.tierRecord ? ` · gaps this size: ${pct(c.tierRecord[1])} of ${c.tierRecord[0]}` : ''})</span></summary>${c.why?.length ? whyList(c.why) : ''}</details>`;
+  return `<section class="outliers"><div class="k">Outliers · model vs book line, biggest first</div>
+    <p class="exp">A gap counts as an outlier when it clears a per-stat bar: about 9 rushing or receiving yards (10–12% of the line), 20 passing yards, 1 reception, 2.5 carries. Honest record: in 2024–25, gaps of every size won about 50% against the line (UNDERs 52%, OVERs 46–50%). The backtested pick above has the better record.</p>
+    ${o.outliers.map(row).join('') || '<p class="faint">No full outliers this game.</p>'}
+    ${o.leans?.length ? `<h5 class="leanh">Leans (0.6–1× the bar)</h5>${o.leans.map(row).join('')}` : ''}
+  </section>`;
+}
+
 function outlierBlock(m) {
   const o = m.outlier;
   if (!o) return '';
@@ -316,7 +332,7 @@ function outlierBlock(m) {
   if (!p) return `<section class="outlier none"><div class="k">Outlier pick</div><p>No pick. ${esc(o.noPickReason || '')}</p>${conflicts}${shortlist}<p class="exp">experimental · uncalibrated · a gap is disagreement with the book, not evidence the book is wrong</p></section>`;
   const gap = Math.round(p.gap * 10) / 10;
   return `<section class="outlier" style="--tc:${sideVar(p.team)}">
-    <div class="k">Outlier pick · a line likely to miss big</div>
+    <div class="k">Backtested pick · a line likely to miss big</div>
     <div class="ohead"><span class="dir ${p.direction === 'OVER' ? 'over' : 'under'}">${p.direction}</span>
       <span class="who">${esc(p.name)} <span class="faint">${esc(p.team)} ${esc(p.pos)}</span></span>
       <span class="what">${esc(p.label)} ${p.direction === 'OVER' ? '&gt;' : '&lt;'} <b class="b">${p.line}</b></span></div>
@@ -330,7 +346,7 @@ function outlierBlock(m) {
       <div><dt>Model P(${p.direction.toLowerCase()})</dt><dd>${pct(p.sideProb)} · fair ${am(p.direction === 'OVER' ? p.fairOdds?.over : p.fairOdds?.under)}</dd></div>
     </dl>
     <p class="fresh">Line: ${esc(p.lineSource || 'book')} · line updated ${etStamp(p.lineUpdated)} · retrieved ${etStamp(p.retrievedAt)} · price ${p.overPrice != null ? `O ${am(p.overPrice)} / U ${am(p.underPrice)}` : 'not in feed'}${p.mode !== 'pregame' ? ' · <b>retrospective (closing line)</b>' : ''}</p>
-    ${p.why?.length ? `<div class="owhy"><h5>Why</h5><ul>${p.why.map((w) => `<li>${esc(w)}</li>`).join('')}</ul></div>` : ''}
+    ${p.why?.length ? `<div class="owhy"><h5>Why</h5>${whyList(p.why)}</div>` : ''}
     <div class="ocols"><div><h5>Evidence</h5><ul>${p.evidence.map((e) => `<li>${esc(e)}</li>`).join('')}</ul></div>
       <div><h5>Uncertainty</h5><ul>${(p.flags.length ? p.flags : ['no quality flags raised']).map((f) => `<li>${esc(f)}</li>`).join('')}<li>Model probabilities are uncalibrated simulation outputs; held-out backtests showed overconfidence at the extremes.</li></ul></div></div>
     <details class="why"><summary>Model reasoning for this stat</summary><p>${esc(p.explain || '')}</p></details>
