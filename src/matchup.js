@@ -14,6 +14,7 @@ import { oddsApiProps, cfbdLineYards } from './optional.js';
 import { STAT_DEFS, STAT_LISTS, COMPACT } from './stats.js';
 import { selectOutlier } from './outlier.js';
 import { calibrationFor, calibrateSample } from './calibrate.js';
+import { v14For, buildX, usageFromRows, applyV14 } from './v14.js';
 import { FIT, loadPriorSeason, priorPoints, blendTeam } from './priors.js';
 import { lineAgg, gradeTeam, leagueBaseline, METHOD as LINE_METHOD } from './linegrades.js';
 
@@ -495,11 +496,29 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       const propLines = props[id] || {};
       const oaLines = oddsApi.byName?.[normName(nameN)] || {};
       const stats = {};
+      // fbm-1.4 pregame context — identical fields to the ledger's frozen blind_pred_context (src/blind.js).
+      const isK = id === roles.k;
+      const e14 = effOut[id];
+      const ctx14 = {
+        carries: isK ? null : avg(simStats.carries), targets: isK ? null : avg(simStats.targets), attempts: id === roles.qb ? avg(simStats.pass_att) : null,
+        carryShare: isK ? null : info.carryShare, targetShare: isK ? null : info.targetShare, ypc: e14?.ypc?.final ?? null, catchRate: e14?.catchRate?.final ?? null, ypCatch: e14?.ypCatch?.final ?? null,
+        teamPlays: team.plays, teamAtt: (V12 ? v12 : null)?.volume?.attTarget ?? null, expMargin, teamPts: impliedPts, qbYpa: (V12 ? v12 : null)?.qb?.ypaTarget ?? null, notes: isK ? [] : info.notes,
+      };
+      const usage14p = isK ? undefined : usageFromRows(info.r, ev?.week ?? null, snaps ? snapsFor(snaps, t.abbr, nameN) : null);
+      const v14Applied = {};
       for (const k of statKeys) {
         let s;
-        // v1.3: learned output calibration (centre shift + range width) applied to the simulated sample.
-        const cal = calibrationFor(lg, pos, k);
-        const arrK = simStats[k] && !STAT_DEFS[k].ratio ? calibrateSample(simStats[k], cal) : simStats[k];
+        // v1.4: learned-from-every-miss correction where one beat v1.3 out of sample; otherwise v1.3 calibration.
+        const m14 = simStats[k] && !STAT_DEFS[k].ratio ? v14For(lg, pos, k) : null;
+        let arrK;
+        if (m14) {
+          const raw = summarize(simStats[k]);
+          const r14 = applyV14(simStats[k], m14, buildX({ proj: raw.mean, p10: raw.p10, p90: raw.p90, week: ev?.week ?? null, role, ctx: ctx14, usage: usage14p }));
+          arrK = r14.arr; v14Applied[k] = r14.correction;
+        } else {
+          const cal = calibrationFor(lg, pos, k);
+          arrK = simStats[k] && !STAT_DEFS[k].ratio ? calibrateSample(simStats[k], cal) : simStats[k];
+        }
         if (k === 'ypc') s = ratioSummary(simStats.rush_yds, simStats.carries);
         else if (k === 'ypr') s = ratioSummary(simStats.rec_yds, simStats.receptions);
         else s = arrK ? summarize(arrK) : null;
@@ -518,6 +537,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
           book: book ? { line: book.line, overPrice: book.overPrice ?? null, underPrice: book.underPrice ?? null, source: book.source, updated: book.updated || null, implied: bookImp } : null,
           threshold, thresholdSource: book ? 'book line' : threshold != null ? 'season average (no book line)' : null,
           probOver: pOver, fairOdds: pOver != null ? { over: probToAmerican(pOver), under: probToAmerican(1 - pOver) } : null,
+          calibration: v14Applied[k] != null ? { version: 'fbm-1.4.0', correction: Math.round(v14Applied[k] * 100) / 100 } : 'fbm-1.3.0',
           available: s != null,
           unavailableReason: s == null ? 'Not modelled' : (k === 'targets' && lg === 'cfb' ? null : null),
         };
@@ -540,7 +560,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
           teamPlays: team.plays, teamPassRate: weighted(team.passRate, weights), effectiveGames: info.nEff,
         },
         efficiency: effOut[id] || null,
-        byScript, withWithout, shareTrend: info?.shareTrend || null, snapTrend,
+        byScript, withWithout, shareTrend: info?.shareTrend || null, snapTrend, usageTrend14: id === roles.k ? null : usage14p,
         actual: null,
       };
     };
