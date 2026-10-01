@@ -43,6 +43,7 @@ export function sdFloor(stat) {
 export function scoreCandidate(c, now = Date.now()) {
   const flags = [];
   if (c.line == null || !Number.isFinite(c.line)) return { ...c, eligible: false, reason: 'no book line' };
+  if (c.skepticVeto) return { ...c, eligible: false, reason: `skeptic: ${c.skepticVeto}` };
   if (RATIO.has(c.stat)) return { ...c, eligible: false, reason: 'ratio stat not offered as a prop' };
   if (c.proj == null || c.p10 == null || c.p90 == null) return { ...c, eligible: false, reason: 'no projection' };
   // Model assigns this player no role for the stat (range 0–0) while the book posts a line:

@@ -1,6 +1,6 @@
 {
  "batch": 6,
- "learnedAt": "2026-10-01T00:55:46.528Z",
+ "learnedAt": "2026-10-01T01:22:13.902Z",
  "model": "fbm-1.4.0",
  "method": "Per position|stat Huber ridge regression of (actual − projection) on frozen pregame inputs; λ chosen on the latest third of training weeks; walk-forward; book lines never used as inputs.",
  "features": [
@@ -36,6 +36,38 @@
  ],
  "fold1": {
   "test2025": {
+   "bigCorrection": {
+    "n": 54,
+    "v13": 12.935,
+    "v14": 16.334,
+    "byStat": {
+     "QB|long_cmp": {
+      "n": 23,
+      "v13": 12.45,
+      "v14": 18.07
+     },
+     "WR|rec_yds": {
+      "n": 22,
+      "v13": 18.19,
+      "v14": 19.93
+     },
+     "K|k_pts": {
+      "n": 7,
+      "v13": 1.14,
+      "v14": 3.86
+     },
+     "WR|targets": {
+      "n": 2,
+      "v13": 1.95,
+      "v14": 0.51
+     }
+    }
+   },
+   "outOfDomain": {
+    "n": 0,
+    "v13": null,
+    "v14Extrapolated": null
+   },
    "n": 18613,
    "mae": {
     "raw": 7.765,
@@ -123,6 +155,28 @@
    }
   },
   "test2026": {
+   "bigCorrection": {
+    "n": 2,
+    "v13": 28.716,
+    "v14": 23.065,
+    "byStat": {
+     "K|k_pts": {
+      "n": 1,
+      "v13": 5.16,
+      "v14": 1.5
+     },
+     "WR|rec_yds": {
+      "n": 1,
+      "v13": 52.27,
+      "v14": 44.63
+     }
+    }
+   },
+   "outOfDomain": {
+    "n": 0,
+    "v13": null,
+    "v14Extrapolated": null
+   },
    "n": 2409,
    "mae": {
     "raw": 7.496,
@@ -212,6 +266,23 @@
  },
  "final": {
   "test2026": {
+   "bigCorrection": {
+    "n": 4,
+    "v13": 13.075,
+    "v14": 13.43,
+    "byStat": {
+     "RB|rush_yds": {
+      "n": 4,
+      "v13": 13.07,
+      "v14": 13.43
+     }
+    }
+   },
+   "outOfDomain": {
+    "n": 0,
+    "v13": null,
+    "v14Extrapolated": null
+   },
    "n": 2409,
    "mae": {
     "raw": 7.496,
@@ -348,6 +419,12 @@
    "n": 933,
    "lambda": 3,
    "s": 0.95,
+   "domain": {
+    "minProj": 6.3,
+    "roles": {
+     "Kicker": 933
+    }
+   },
    "mu": [
     7.50086,
     10.70954,
@@ -454,6 +531,14 @@
    "n": 1881,
    "lambda": 0.3,
    "s": 1.35,
+   "domain": {
+    "minProj": 2.8,
+    "roles": {
+     "RB1": 951,
+     "RB2": 889,
+     "Additional": 41
+    }
+   },
    "mu": [
     9.1026,
     9.99415,
@@ -555,6 +640,14 @@
    "n": 1881,
    "lambda": 0.3,
    "s": 1.15,
+   "domain": {
+    "minProj": 7.2,
+    "roles": {
+     "RB1": 951,
+     "RB2": 889,
+     "Additional": 41
+    }
+   },
    "mu": [
     12.69851,
     18.40032,
@@ -671,6 +764,14 @@
    "n": 1881,
    "lambda": 0.3,
    "s": 1.15,
+   "domain": {
+    "minProj": 0.6,
+    "roles": {
+     "RB1": 951,
+     "RB2": 889,
+     "Additional": 41
+    }
+   },
    "mu": [
     1.94306,
     3.54173,
@@ -794,6 +895,14 @@
    "n": 1881,
    "lambda": 0.3,
    "s": 1.35,
+   "domain": {
+    "minProj": 12,
+    "roles": {
+     "RB1": 951,
+     "RB2": 889,
+     "Additional": 41
+    }
+   },
    "mu": [
     39.29484,
     57.19724,
@@ -900,6 +1009,14 @@
    "n": 1518,
    "lambda": 0.1,
    "s": 1,
+   "domain": {
+    "minProj": 0.9,
+    "roles": {
+     "RB1": 858,
+     "RB2": 628,
+     "Additional": 32
+    }
+   },
    "mu": [
     2.67003,
     4.29051,
@@ -1018,6 +1135,13 @@
    "n": 908,
    "lambda": 1,
    "s": 1.15,
+   "domain": {
+    "minProj": 19.6,
+    "roles": {
+     "Starting QB": 899,
+     "Additional": 9
+    }
+   },
    "mu": [
     21.53117,
     13.12225,
@@ -1137,6 +1261,13 @@
    "n": 907,
    "lambda": 3,
    "s": 1.05,
+   "domain": {
+    "minProj": 34.1,
+    "roles": {
+     "Starting QB": 898,
+     "Additional": 9
+    }
+   },
    "mu": [
     37.42646,
     33.70562,
@@ -1238,6 +1369,13 @@
    "n": 908,
    "lambda": 1,
    "s": 1.25,
+   "domain": {
+    "minProj": 29.3,
+    "roles": {
+     "Starting QB": 899,
+     "Additional": 9
+    }
+   },
    "mu": [
     31.90573,
     16.65308,
@@ -1361,6 +1499,13 @@
    "n": 908,
    "lambda": 0.3,
    "s": 1.05,
+   "domain": {
+    "minProj": 207.1,
+    "roles": {
+     "Starting QB": 899,
+     "Additional": 9
+    }
+   },
    "mu": [
     230.2315,
     182.27974,

@@ -13,6 +13,7 @@ import { loadSnaps, snapsFor, normName } from './snaps.js';
 import { oddsApiProps, cfbdLineYards } from './optional.js';
 import { STAT_DEFS, STAT_LISTS, COMPACT } from './stats.js';
 import { selectOutlier } from './outlier.js';
+import { skeptic } from './skeptic.js';
 import { calibrationFor, calibrateSample } from './calibrate.js';
 import { v14For, buildX, usageFromRows, applyV14 } from './v14.js';
 import { FIT, loadPriorSeason, priorPoints, blendTeam } from './priors.js';
@@ -329,6 +330,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       if (pos === 'WR' || pos === 'TE') targetShare = Math.max(targetShare, 0.03);
       if (pos === 'QB') targetShare = 0;
       const notes = [];
+      const redistribution = []; // structured record of usage moved from absent teammates (audited by src/skeptic.js)
       // Redistribute usage vacated by unavailable key teammates (to the extent the sample does
       // not already reflect their absence).
       for (const k of outKeys) {
@@ -353,6 +355,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
         if (kt > 0.03 && sumT > 0) addT = kt * remaining * (avgShare(r.slice(-3), 'target') / sumT);
         if (addC + addT > 0.005) {
           carryShare += addC; targetShare += addT;
+          redistribution.push({ fromId: k, from: nm, fromPos: posK, toPos: pos, addCarryShare: addC, addTargetShare: addT });
           notes.push(`+${fmtPct(addC)} carry / +${fmtPct(addT)} target share from ${nm}'s absence (pro-rata redistribution; ${Math.round(measured * 100)}% of sample already without ${nm}).`);
         }
       }
@@ -393,7 +396,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       // Efficiency (player → shrunk toward prior-season → league), then opponent + weather.
       const cur = sumStats(played.map((x) => x.stats));
       const pbp = played.reduce((a, x) => { if (x.pbp) for (const k of Object.keys(x.pbp)) a[k] = (a[k] || 0) + x.pbp[k]; return a; }, {});
-      pInfo[id] = { pos, r, played, cur, pbp, notes, av, carryShare, targetShare, carryByState, targetByState, nEff, returning, shareTrend, dispersion };
+      pInfo[id] = { pos, r, played, cur, pbp, notes, redistribution, av, carryShare, targetShare, carryByState, targetByState, nEff, returning, shareTrend, dispersion };
       players.push({ id, pos, isCore: coreIds.includes(id), carryShare: carryByState, targetShare: targetByState, dropbackShare: id === roles.qb ? 1 : 0, dispersion });
     }
 
@@ -512,7 +515,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       for (const k of statKeys) {
         let s;
         // v1.4: learned-from-every-miss correction where one beat v1.3 out of sample; otherwise v1.3 calibration.
-        const m14 = simStats[k] && !STAT_DEFS[k].ratio ? v14For(lg, pos, k) : null;
+        const m14 = simStats[k] && !STAT_DEFS[k].ratio ? v14For(lg, pos, k, role) : null;
         let arrK;
         if (m14) {
           const raw = summarize(simStats[k]);
@@ -564,6 +567,8 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
         },
         efficiency: effOut[id] || null,
         byScript, withWithout, shareTrend: info?.shareTrend || null, snapTrend, usageTrend14: id === roles.k ? null : usage14p,
+        redistribution: id === roles.k ? [] : info.redistribution,
+        usageHistory: id === roles.k ? null : (() => { const g = info.r || []; if (!g.length) return { games: 0 }; const a = (f) => g.reduce((s2, x) => s2 + (x.stats?.[f] || 0), 0) / g.length; const L = g[g.length - 1].stats || {}; return { games: g.length, carries: a('carries'), targets: a('targets'), passAtt: a('pass_att'), last: { carries: L.carries || 0, targets: L.targets || 0, passAtt: L.pass_att || 0 } }; })(),
         actual: null,
       };
     };
@@ -606,7 +611,12 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       }
     }
   }
-  const outlier = selectOutlier(candidates);
+  // SKEPTIC: independent sanity audit of every projected player (incl. supporting players). A high-severity
+  // finding means a likely logic error, so that player can't be the OUTLIER PICK.
+  const withSupport = (t) => ({ ...t, cards: [...t.cards, ...(t._support || [])] });
+  const skepticReport = skeptic({ league: lg, season, home: withSupport(teams[home.id]), away: withSupport(teams[away.id]) });
+  const vetoed = new Set(skepticReport.vetoed);
+  const outlier = selectOutlier(candidates.map((c) => (vetoed.has(c.playerId) ? { ...c, skepticVeto: (skepticReport.findings.find((f) => f.playerId === c.playerId && f.severity === 'high') || {}).message } : c)));
   if (outlier.pick) {
     outlier.pick.retrievedAt = propsMeta.retrievedAt || null;
     outlier.pick.mode = mode;
@@ -665,7 +675,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
     odds: odds ? { ...odds, meta: oddsMeta } : null, implied, mlNoVig,
     venue, weather, weatherEffects: wx.notes,
     props: propsMeta, oddsApi: { enabled: oddsApi.enabled, error: oddsApi.error || null },
-    injuryNote, outlier, rbUpside, lineProxy, blindAudit, lineBaseExcluded: lineBase.excludedUnverified ?? null,
+    injuryNote, outlier, skeptic: skepticReport, rbUpside, lineProxy, blindAudit, lineBaseExcluded: lineBase.excludedUnverified ?? null,
     lineGrades: { away: lineGrades[away.id], home: lineGrades[home.id], baseline: { source: lineBase.source, measured: lineBase.measured, games: lineBase.games, teams: lineBase.teams, mean: lineBase.mean, sd: lineBase.sd }, method: LINE_METHOD },
     baselines: { source: B.source, measured: B.measured },
     disclosures: disclosures(lg, pregame, propsMeta, oddsApi, weather),

@@ -99,7 +99,13 @@ function learn(train) {
     }
     const lessons = m.beta.slice(1).map((b, j) => ({ feature: FEATS[j], effect: +(b).toFixed(3) })).filter((e) => Math.abs(e.effect) > 0.05 * Math.max(1, Math.abs(m.delta)) && e.feature)
       .sort((a, b) => Math.abs(b.effect) - Math.abs(a.effect)).slice(0, 4);
-    out[k] = { n: L.length, lambda: best.lambda, s, mu: m.mu.map((v) => +v.toFixed(5)), sd: m.sd.map((v) => +v.toFixed(5)), beta: m.beta.map((v) => +v.toFixed(5)), delta: +m.delta.toFixed(3), lessons };
+    // Training domain: every role this correction saw in training. For any other role (e.g. a backup
+    // QB or fullback shown only as a 'Support' candidate) the live model falls back to v1.3 — no extrapolation.
+    // (minProj is recorded for the skeptic's reference only: out-of-sample, low projections in trained roles DID improve.)
+    const projSorted = L.map((r) => r.proj).sort((a, b) => a - b);
+    const roles = {}; for (const r of L) roles[r.role || '?'] = (roles[r.role || '?'] || 0) + 1;
+    const domain = { minProj: +projSorted[Math.floor(0.1 * (projSorted.length - 1))].toFixed(3), roles: Object.fromEntries(Object.entries(roles).filter(([, n]) => n >= 1)) };
+    out[k] = { n: L.length, lambda: best.lambda, s, domain, mu: m.mu.map((v) => +v.toFixed(5)), sd: m.sd.map((v) => +v.toFixed(5)), beta: m.beta.map((v) => +v.toFixed(5)), delta: +m.delta.toFixed(3), lessons };
   }
   return out;
 }
@@ -114,13 +120,22 @@ function learnV13(train) {
 function evaluate(test, v13, v14) {
   const fRaw = (r) => r.proj;
   const f13 = (r) => Math.max(0, r.proj + (v13[`${r.pos}|${r.stat}`] ?? 0));
-  const f14 = (r) => { const m = v14[`${r.pos}|${r.stat}`]; return m?.beta ? Math.max(0, r.proj + predictCorr(m, r.x)) : f13(r); };
+  const inDomain = (m, r) => m.domain.roles[r.role || '?'] != null;
+  const f14any = (r) => { const m = v14[`${r.pos}|${r.stat}`]; return m?.beta ? Math.max(0, r.proj + predictCorr(m, r.x)) : f13(r); };
+  const f14 = (r) => { const m = v14[`${r.pos}|${r.stat}`]; return m?.beta && inDomain(m, r) ? Math.max(0, r.proj + predictCorr(m, r.x)) : f13(r); };
+  const outRows = test.filter((r) => { const m = v14[`${r.pos}|${r.stat}`]; return m?.beta && !inDomain(m, r); });
   const lineRows = test.filter((r) => r.line != null);
   const pick = (f) => { let w = 0, l = 0; for (const r of lineRows) { const p = f(r); if (p === r.line || r.actual === r.line) continue; if ((r.actual > r.line) === (p > r.line)) w++; else l++; } return { w, l, rate: +(w / (w + l)).toFixed(4) }; };
   const KEY = ['QB|pass_yds', 'RB|rush_yds', 'WR|rec_yds', 'TE|rec_yds', 'RB|rec_yds', 'WR|receptions', 'TE|receptions', 'RB|carries', 'QB|completions'];
   const byStat = {};
   for (const k of KEY) { const L = test.filter((r) => `${r.pos}|${r.stat}` === k); if (L.length) byStat[k] = { n: L.length, raw: +mae(L, fRaw).toFixed(2), v13: +mae(L, f13).toFixed(2), v14: +mae(L, f14).toFixed(2) }; }
+  // Skeptic calibration: rows where the learned correction is > 35% of the projection (src/skeptic.js bigCorrection).
+  const big = test.filter((r) => { const m = v14[`${r.pos}|${r.stat}`]; return m?.beta && inDomain(m, r) && r.proj > 5 && Math.abs(predictCorr(m, r.x)) > 0.35 * r.proj; });
+  const bigBy = {}; for (const r of big) (bigBy[`${r.pos}|${r.stat}`] ||= []).push(r);
   return {
+    bigCorrection: { n: big.length, v13: big.length ? +mae(big, f13).toFixed(3) : null, v14: big.length ? +mae(big, f14).toFixed(3) : null,
+      byStat: Object.fromEntries(Object.entries(bigBy).map(([k, L]) => [k, { n: L.length, v13: +mae(L, f13).toFixed(2), v14: +mae(L, f14).toFixed(2) }])) },
+    outOfDomain: { n: outRows.length, v13: outRows.length ? +mae(outRows, f13).toFixed(3) : null, v14Extrapolated: outRows.length ? +mae(outRows, f14any).toFixed(3) : null },
     n: test.length,
     mae: { raw: +mae(test, fRaw).toFixed(3), v13: +mae(test, f13).toFixed(3), v14: +mae(test, f14).toFixed(3) },
     lineRows: lineRows.length,

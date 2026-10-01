@@ -103,10 +103,13 @@ export const predictCorr = (m, x) => m.beta[0] + x.reduce((s, v, j) => s + (m.sd
 
 let V14 = null;
 try { V14 = JSON.parse(fs.readFileSync(path.join(ROOT, 'src', 'fitted_v14.json'), 'utf8')).byStat; } catch { V14 = null; }
-export function v14For(lg, pos, stat) {
+export function v14For(lg, pos, stat, role = null) {
   if (lg !== 'nfl' || !V14) return null;
   const m = V14[`${pos}|${stat}`];
-  return m?.beta ? m : null;
+  if (!m?.beta) return null;
+  // Only for roles it saw in training; anything else falls back to v1.3.
+  if (m.domain?.roles && role != null && m.domain.roles[role] == null) return null;
+  return m;
 }
 
 /** Apply the learned correction to a raw simulated sample. Returns {arr, correction}. */

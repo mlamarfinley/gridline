@@ -16,6 +16,7 @@
     "gapscan": "node --no-warnings scripts/gapscan.js",
     "blind": "node --no-warnings scripts/blind.js",
     "export:ledger": "node --no-warnings scripts/export-site.js --ledger",
-    "export:site": "node --no-warnings scripts/export-site.js --out site"
+    "export:site": "node --no-warnings scripts/export-site.js --out site",
+    "skeptic": "node --no-warnings scripts/skeptic.mjs"
   }
 }

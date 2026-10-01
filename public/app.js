@@ -196,6 +196,7 @@ async function renderGame(lg, id) {
     ${m.mode !== 'pregame' ? `<div class="banner">Retrospective view. Projections are rebuilt using only games completed before kickoff; injury reports, depth charts and weather are <b>not</b> applied because today's versions would leak post-kickoff information.${done ? ' Actual results are shown beside each projection.' : ''}</div>` : ''}
     ${scriptBlock(A, H)}
     ${outlierBlock(m)}
+    ${skepticBlock(m)}
     ${m.rbUpside ? `<div class="callout"><div class="k">RB matchup upside</div>${esc(m.rbUpside.name)} (${esc(m.rbUpside.team)}) — 90th-percentile outcome ${m.rbUpside.p90} rush yds; opponent allows explosive RB runs at ×${f2(m.rbUpside.oppRun10Mult)} (10+) / ×${f2(m.rbUpside.oppRun20Mult)} (20+) the baseline rate after sample shrinkage. Upside, not a prediction of a big play.</div>` : ''}
     ${injuryBlock(m)}
     <h2 class="sec">Players — side by side · projection, 10th–90th range, last five</h2>
@@ -284,6 +285,22 @@ function wireSideToggle() {
     box.dataset.show = b.dataset.show;
     document.querySelectorAll('.sidetoggle button').forEach((x) => x.setAttribute('aria-checked', String(x === b)));
   }));
+}
+
+function skepticBlock(m) {
+  const k = m.skeptic;
+  if (!k) return '';
+  const main = k.findings.filter((f) => f.severity !== 'info');
+  const info = k.findings.filter((f) => f.severity === 'info');
+  const head = main.length
+    ? `${k.counts.high ? `<b class="sk-high">${k.counts.high} likely logic error${k.counts.high > 1 ? 's' : ''}</b>` : ''}${k.counts.high && k.counts.medium ? ' · ' : ''}${k.counts.medium ? `<b class="sk-med">${k.counts.medium} worth a look</b>` : ''}`
+    : 'No logic problems found in this matchup.';
+  return `<section class="skeptic ${k.counts.high ? 'has-high' : ''}"><div class="k">Skeptic check</div>
+    <p class="sk-head">${head}</p>
+    ${main.length ? `<ul class="sk-list">${main.map((f) => `<li class="sk-${f.severity}">${esc(f.message)}</li>`).join('')}</ul>` : ''}
+    ${k.counts.high ? '<p class="exp">Players with a likely logic error are excluded from the outlier pick.</p>' : ''}
+    ${info.length ? `<details class="why"><summary>${info.length} explained / informational note${info.length > 1 ? 's' : ''}</summary><ul class="sk-list">${info.map((f) => `<li>${esc(f.message)}</li>`).join('')}</ul></details>` : ''}
+  </section>`;
 }
 
 function outlierBlock(m) {
