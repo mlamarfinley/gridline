@@ -22,7 +22,8 @@ export function zoneOf(p) {
   if (p.ay >= 8) return mid ? 'interMid' : 'interOut';
   return mid ? 'shortMid' : 'shortOut';
 }
-export const runSideOf = (p) => (p.rl === 'middle' || p.rg === 'guard' ? 'inside' : p.rl ? 'outside' : null);
+// Inside = between the tackles (middle, guard or tackle gap); outside = to the edge (end).
+export const runSideOf = (p) => (p.rl === 'middle' || p.rg === 'guard' || p.rg === 'tackle' ? 'inside' : p.rl ? 'outside' : null);
 const shrink = (sum, n, prior, k) => (n + k > 0 ? (sum + k * prior) / (n + k) : prior);
 
 // ---------------------------------------------------------------------------------------------------------
@@ -95,6 +96,7 @@ export async function buildContext(season, week) {
     run: { inside: lg(L.run.inside), outside: lg(L.run.outside) }, expl: lg(L.expl), rush: lg(L.rush),
     dropEPA: lg(L.dropEPA), rushEPA: lg(L.rushEPA), mz: { man: lg(L.mz.man), zone: lg(L.mz.zone) }, manRate: lg(L.manRate),
   };
+  league.insideShare = L.run.inside.n + L.run.outside.n > 0 ? L.run.inside.n / (L.run.inside.n + L.run.outside.n) : 0.6;
   const zt = ZONES.reduce((s, z) => s + L.zone[z].n, 0);
   league.zoneShare = Object.fromEntries(ZONES.map((z) => [z, zt ? L.zone[z].n / zt : 1 / ZONES.length]));
 
@@ -131,7 +133,7 @@ export async function buildContext(season, week) {
     for (const z of ZONES) share[z] = (p.zone[z] + K.playerShare * league.zoneShare[z]) / (p.zn + K.playerShare);
     const lgYPT = league.pos[ps] || lg(L.zone.shortOut);
     const manYPT = shrink(p.man.s, p.man.n, league.mz.man, K.playerMZ), zoneYPT = shrink(p.zoneCov.s, p.zoneCov.n, league.mz.zone, K.playerMZ);
-    const insideShare = (p.inside + 0.6 * 20) / (p.sideN + 20); // league RBs run ~60% inside
+    const insideShare = (p.inside + league.insideShare * 20) / (p.sideN + 20);
     const explRate = shrink(p.expl.s, p.expl.n, league.expl, K.playerExpl);
     const topRoutes = Object.entries(p.routes).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([r]) => r);
     players.set(g, { gsis: g, pos: ps, team: p.team, targets: p.tg.n, carries: p.car.n, share, manYPT, zoneYPT, manEdge: (manYPT - zoneYPT) / (lgYPT || 7), insideShare, explRate, topRoutes,
@@ -199,19 +201,20 @@ export function unitEdges(offTeam, defTeam) {
 // ---------- player style tags ----------
 function styleTags(p, league) {
   const tags = [];
-  if (p.targets >= 8 && (p.pos === 'WR' || p.pos === 'TE' || p.pos === 'RB')) {
+  if (p.targets >= 8 && (p.pos === 'WR' || p.pos === 'TE')) {
     const deep = p.share.deepOut + p.share.deepMid, lgDeep = league.zoneShare.deepOut + league.zoneShare.deepMid;
     const mid = p.share.shortMid + p.share.interMid, lgMid = league.zoneShare.shortMid + league.zoneShare.interMid;
     if (deep > lgDeep * 1.35) tags.push('Deep threat');
     if (mid > lgMid * 1.3) tags.push('Middle-of-field target');
     if (p.share.shortOut + p.share.shortMid > 0.62 && deep < lgDeep * 0.7) tags.push('Underneath / short-area');
-    if (p.share.deepOut + p.share.interOut + p.share.shortOut > 0.72) tags.push('Outside receiver');
+    const out = p.share.deepOut + p.share.interOut + p.share.shortOut, lgOut = league.zoneShare.deepOut + league.zoneShare.interOut + league.zoneShare.shortOut;
+    if (out > lgOut + 0.08 && mid <= lgMid * 1.3) tags.push('Outside receiver');
     if (p.manEdge > 0.12) tags.push('Beats man coverage');
     if (p.manEdge < -0.12) tags.push('Better vs zone');
   }
   if (p.carries >= 15 && p.pos === 'RB') {
-    if (p.insideShare > 0.68) tags.push('Inside / power runner');
-    else if (p.insideShare < 0.5) tags.push('Outside / perimeter runner');
+    if (p.insideShare > league.insideShare + 0.1) tags.push('Inside / between-the-tackles runner');
+    else if (p.insideShare < league.insideShare - 0.12) tags.push('Outside / perimeter runner');
     if (p.explRate > league.expl * 1.25) tags.push('Explosive runner');
     if (p.explRate < league.expl * 0.8) tags.push('Grinder (few long runs)');
   }

@@ -316,7 +316,7 @@ function outlierBlock(m) {
   if (!p) return `<section class="outlier none"><div class="k">Outlier pick</div><p>No pick. ${esc(o.noPickReason || '')}</p>${conflicts}${shortlist}<p class="exp">experimental · uncalibrated · a gap is disagreement with the book, not evidence the book is wrong</p></section>`;
   const gap = Math.round(p.gap * 10) / 10;
   return `<section class="outlier" style="--tc:${sideVar(p.team)}">
-    <div class="k">Outlier pick · largest credible model–book disagreement</div>
+    <div class="k">Outlier pick · a line likely to miss big</div>
     <div class="ohead"><span class="dir ${p.direction === 'OVER' ? 'over' : 'under'}">${p.direction}</span>
       <span class="who">${esc(p.name)} <span class="faint">${esc(p.team)} ${esc(p.pos)}</span></span>
       <span class="what">${esc(p.label)} ${p.direction === 'OVER' ? '&gt;' : '&lt;'} <b class="b">${p.line}</b></span></div>
@@ -325,15 +325,17 @@ function outlierBlock(m) {
       <div><dt>Model projection</dt><dd class="m">${f1(p.proj)}</dd></div>
       <div><dt>Gap</dt><dd>${sgn(gap)} (${sgn(Math.round(p.gapPct * 100))}%)</dd></div>
       <div><dt>Model 10–90 range</dt><dd>${f1(p.p10)}–${f1(p.p90)}</dd></div>
-      <div><dt>Standardized</dt><dd>${f2(p.z)} SD · adj ${f2(p.score)}</dd></div>
+      <div><dt>Chance of a big miss our way</dt><dd>${pct(p.bigProb)} <span class="faint">(${esc(p.bigText)}; usually ${pct(p.baseProb)})</span></dd></div>
+      <div><dt>Chance of a big miss the other way</dt><dd>${pct(p.againstProb)}</dd></div>
       <div><dt>Model P(${p.direction.toLowerCase()})</dt><dd>${pct(p.sideProb)} · fair ${am(p.direction === 'OVER' ? p.fairOdds?.over : p.fairOdds?.under)}</dd></div>
     </dl>
     <p class="fresh">Line: ${esc(p.lineSource || 'book')} · line updated ${etStamp(p.lineUpdated)} · retrieved ${etStamp(p.retrievedAt)} · price ${p.overPrice != null ? `O ${am(p.overPrice)} / U ${am(p.underPrice)}` : 'not in feed'}${p.mode !== 'pregame' ? ' · <b>retrospective (closing line)</b>' : ''}</p>
+    ${p.why?.length ? `<div class="owhy"><h5>Why</h5><ul>${p.why.map((w) => `<li>${esc(w)}</li>`).join('')}</ul></div>` : ''}
     <div class="ocols"><div><h5>Evidence</h5><ul>${p.evidence.map((e) => `<li>${esc(e)}</li>`).join('')}</ul></div>
       <div><h5>Uncertainty</h5><ul>${(p.flags.length ? p.flags : ['no quality flags raised']).map((f) => `<li>${esc(f)}</li>`).join('')}<li>Model probabilities are uncalibrated simulation outputs; held-out backtests showed overconfidence at the extremes.</li></ul></div></div>
     <details class="why"><summary>Model reasoning for this stat</summary><p>${esc(p.explain || '')}</p></details>
     ${conflicts}${shortlist}
-    <p class="exp">experimental · uncalibrated · disagreement with the book, not a claim the book is wrong</p>
+    <p class="exp">experimental · out of sample (2024↔2025) picks made this way won 55% of the time against the line (break-even ≈ 52%) — suggestive, not proven; big misses also go the other way</p>
   </section>`;
 }
 

@@ -14,6 +14,10 @@ import { oddsApiProps, cfbdLineYards } from './optional.js';
 import { STAT_DEFS, STAT_LISTS, COMPACT } from './stats.js';
 import { selectOutlier } from './outlier.js';
 import { skeptic } from './skeptic.js';
+import { buildContext, playerFit, unitEdges } from './profiles.js';
+import { loadPlayerIds } from './pbp.js';
+import { whyPick, edgeKeyFor } from './why.js';
+import { bigMissProbs, oppUnitFor, BIG, topDrivers } from './bigmiss.js';
 import { calibrationFor, calibrateSample } from './calibrate.js';
 import { v14For, buildX, usageFromRows, applyV14 } from './v14.js';
 import { FIT, loadPriorSeason, priorPoints, blendTeam } from './priors.js';
@@ -290,6 +294,8 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
     // Workload is redistributed only for absences backed by a published injury report / roster
     // designation (NFL). Inferred absences never trigger redistribution.
     const outKeys = pregame && lg === 'nfl' ? [...keys].filter((k) => !expectedPresent(k) && (roles.usage.get(k)?.touches || 0) > 0) : [];
+    // Share of team carries/targets held by regulars who are OUT this week (big-miss feature: volume freed up).
+    const freedShare = { carry: outKeys.reduce((a, k) => a + avgShare((rows.get(k) || []).slice(-3), 'carry'), 0), target: outKeys.reduce((a, k) => a + avgShare((rows.get(k) || []).slice(-3), 'target'), 0) };
 
     const players = [];
     const pInfo = {};
@@ -535,8 +541,11 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
         const arr = k === 'ypc' || k === 'ypr' ? null : arrK;
         const pOver = arr && threshold != null ? probOver(arr, threshold) : null;
         const bookImp = book?.overPrice != null ? { over: americanToProb(book.overPrice), under: americanToProb(book.underPrice), noVigOver: book.underPrice != null ? noVig(book.overPrice, book.underPrice)?.a : null } : null;
+        // Raw (pre-calibration) simulation summary: the big-miss model was trained on raw projections/ranges.
+        const rawS = simStats[k] && !STAT_DEFS[k].ratio ? summarize(simStats[k]) : null;
         stats[k] = {
           key: k, label: STAT_DEFS[k].label, short: STAT_DEFS[k].short,
+          raw: rawS ? { proj: rawS.mean, p10: rawS.p10, p90: rawS.p90 } : null,
           proj: s ? round(s.mean, k) : null, p10: s?.p10 ?? null, p50: s?.p50 ?? null, p90: s?.p90 ?? null, quantiles: s?.quantiles || null,
           seasonAvg: seasonAvg != null ? round(seasonAvg, k) : null, seasonGames: rowsCur.length,
           last5: lastFive(rowsCur, prevRows, k, season),
@@ -587,7 +596,29 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
     // Supporting skill players are simulated anyway; build their cards so any of them with a posted
     // line can be considered for the OUTLIER PICK (they are only displayed if picked).
     teams[t.id]._support = supporting.map((id) => mkCard(id, 'Support'));
-    teams[t.id]._ctx = { opp: opp.abbr, expMargin, impliedPts };
+    teams[t.id]._ctx = { opp: opp.abbr, expMargin, impliedPts, freedShare };
+    teams[t.id]._hist = teamTotals.length ? { targets: teamTotals.reduce((a, g) => a + (g.teamTargets || 0), 0) / teamTotals.length, carries: teamTotals.reduce((a, g) => a + (g.teamCarries || 0), 0) / teamTotals.length, passAtt: teamTotals.reduce((a, g) => a + (g.teamTargets || 0), 0) / teamTotals.length } : null;
+  }
+
+  // ---------- MATCHUP ENGINE (src/profiles.js): unit ratings, edges, player style + fit vs this defense ----------
+  // Live NFL only: the blind harness may not read files that contain the target game.
+  if (lg === 'nfl' && !blind && ev?.week != null) {
+    try {
+      const mctx = await buildContext(season, ev.week);
+      const nvIds = await loadPlayerIds();
+      const NV = { WSH: 'WAS', LAR: 'LA' };
+      const nv = (a) => NV[a] || a;
+      for (const t of Object.values(teams)) {
+        const opp = Object.values(teams).find((x) => x !== t);
+        const mine = mctx.teams[nv(t.abbr)], theirs = mctx.teams[nv(opp.abbr)];
+        t.units = mine ? { ratings: mine.ratings, edges: unitEdges(mine, theirs), oppDef: theirs?.ratings?.def || null } : null;
+        for (const c of [...t.cards, ...t._support, ...(t.kicker ? [t.kicker] : [])]) {
+          const id = nvIds.byEspn.get(String(c.id));
+          const pl = id ? mctx.players.get(id.gsis) : null;
+          c.matchup = pl ? { style: pl.style, fit: theirs ? playerFit(pl, theirs.def, mctx.league) : null, explRel: pl.explRate / mctx.league.expl - 1, deepShare: pl.share.deepOut + pl.share.deepMid } : null;
+        }
+      }
+    } catch (e) { for (const t of Object.values(teams)) t.units = { error: `matchup data unavailable: ${e.message}` }; }
   }
 
   // ---------- OUTLIER PICK (compares to posted lines; never alters projections) ----------
@@ -605,6 +636,11 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
           roleChange: (c.notes || []).some((n) => /^Role change/.test(n)),
           notes: (c.notes || []).filter((n) => !/^Small sample/.test(n)),
           opportunityText: c.opportunity?.carries != null ? `Projected opportunity: ${c.opportunity.carries.toFixed(1)} carries (${fmtPct(c.opportunity.carryShare)} share), ${c.opportunity.targets.toFixed(1)} targets (${fmtPct(c.opportunity.targetShare)} share)${c.opportunity.dropbacks != null ? `, ${c.opportunity.dropbacks.toFixed(1)} pass attempts` : ''}.` : null,
+          bigMiss: BIG[s.key] ? bigMissProbs({ stat: s.key, line: s.book.line, proj: s.raw?.proj ?? s.proj, p10: s.raw?.p10 ?? s.p10, p90: s.raw?.p90 ?? s.p90,
+            recent: (s.last5 || []).filter((x) => String(x.season) === String(season)).map((x) => x.value ?? 0),
+            freed: /rush|carries/.test(s.key) ? t._ctx.freedShare?.carry : t._ctx.freedShare?.target,
+            share: c.opportunity?.targetShare ?? c.opportunity?.carryShare ?? 0, expMargin: t._ctx.expMargin, teamPts: t._ctx.impliedPts,
+            explRel: c.matchup?.explRel ?? 0, deepShare: c.matchup?.deepShare ?? 0, fit: c.matchup?.fit || null, oppUnit: oppUnitFor(s.key, c.pos, t.units?.oppDef) }) : null,
           expVolume: c.opportunity?.carries != null ? { carries: c.opportunity.carries, targets: c.opportunity.targets, attempts: c.opportunity.dropbacks } : null,
           explain: s.explain, isDisplayed: t.cards.includes(c),
         });
@@ -617,6 +653,25 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
   const skepticReport = skeptic({ league: lg, season, home: withSupport(teams[home.id]), away: withSupport(teams[away.id]) });
   const vetoed = new Set(skepticReport.vetoed);
   const outlier = selectOutlier(candidates.map((c) => (vetoed.has(c.playerId) ? { ...c, skepticVeto: (skepticReport.findings.find((f) => f.playerId === c.playerId && f.severity === 'high') || {}).message } : c)));
+  // WHY: the reasoning behind the pick (and the top of the shortlist), in plain English (src/why.js).
+  const cardById = new Map(); for (const t of Object.values(teams)) for (const c of [...t.cards, ...t._support]) cardById.set(c.id, { card: c, team: t });
+  const explainPick = (p) => {
+    const ref = cardById.get(p.playerId); if (!ref) return [];
+    const edge = (ref.team.units?.edges || []).find((e) => e.label === edgeKeyFor(p.pos, p.stat));
+    const all = [...ref.team.cards, ...(ref.team._support || [])];
+    const teamProj = { targets: all.reduce((a, x) => a + (x.opportunity?.targets || 0), 0), carries: all.reduce((a, x) => a + (x.opportunity?.carries || 0), 0) };
+    teamProj.passAtt = teamProj.targets;
+    return whyPick({ ...p, card: ref.card, teamHist: ref.team._hist, teamProj, expMargin: ref.team.expMargin, impliedPts: ref.team.impliedPts, unitEdge: edge || null });
+  };
+  if (outlier.pick) {
+    const p = outlier.pick, kind = p.direction === 'OVER' ? 'boom' : 'bust';
+    const drivers = p.bigMiss ? topDrivers(kind, p.bigMiss.x) : [];
+    p.why = [
+      `Why this is an outlier: ${Math.round(p.bigProb * 100)}% chance the line misses by ${p.bigText} — ${p.lift.toFixed(1)}× the usual ${Math.round(p.baseProb * 100)}% for ${p.label.toLowerCase()} lines. Chance it misses big the other way: ${Math.round(p.againstProb * 100)}%.${drivers.length ? ` Biggest drivers: ${drivers.join(', ')}.` : ''}`,
+      ...explainPick(p),
+    ];
+  }
+  for (const c of outlier.shortlist || []) c.why = explainPick(c);
   if (outlier.pick) {
     outlier.pick.retrievedAt = propsMeta.retrievedAt || null;
     outlier.pick.mode = mode;
@@ -636,7 +691,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       if (!s.available) continue;
       flat.push({ playerId: c.id, playerName: c.name, team: t.abbr, opponent: oppAbbr, position: c.pos, role: c.role, stat: s.key, projection: s.proj, p10: s.p10, p50: s.p50, p90: s.p90, threshold: s.threshold, thresholdSource: s.thresholdSource, probOver: s.probOver, fairOver: s.fairOdds?.over ?? null, bookLine: s.book?.line ?? null, bookOver: s.book?.overPrice ?? null, bookUnder: s.book?.underPrice ?? null, bookSource: s.book?.source ?? null, bookUpdated: s.book?.updated ?? null, opportunity: c.opportunity, efficiency: c.efficiency ? { ypc: c.efficiency.ypc.final, catchRate: c.efficiency.catchRate.final, ypCatch: c.efficiency.ypCatch.final } : null, expMargin, impliedPts });
     }
-    delete t._support; delete t._ctx;
+    delete t._support; delete t._ctx; delete t._hist;
   }
 
   // College emphasis: RB matchup upside.

@@ -1,61 +1,76 @@
-// OUTLIER PICK: over/under selection, quality gates, no forced pick, projections untouched.
+// OUTLIER PICK (fbm-1.5): a line likely to miss BIG, ranked by learned big-miss chance vs typical — not the
+// model's raw gap. Real outliers only: no TD / longest-play props, no tiny lines, no coin-flip "sides".
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { selectOutlier, scoreCandidate, OUTLIER_RULES } from '../src/outlier.js';
+import { selectOutlier, scoreCandidate } from '../src/outlier.js';
 
 const now = Date.parse('2026-10-02T12:00:00Z');
 const fresh = '2026-10-02T06:00Z';
-const base = (o = {}) => ({ playerId: 'p', name: 'Player', team: 'KC', pos: 'RB', stat: 'rush_yds', label: 'Rushing yards', short: 'Rush Yds', proj: 60, p10: 30, p50: 58, p90: 92, line: 59.5, probOver: 0.5, seasonAvg: 62, seasonGames: 4, last5: [50, 70, 65, 40, 80], lineUpdated: fresh, notes: [], ...o });
+// A rushing-yards line of 69.5: the big-miss threshold is max(30, 0.45 × 69.5) = 31.3 yards.
+const bm = (o = {}) => ({ boom: 0.16, bust: 0.08, baseBoom: 0.16, baseBust: 0.08, x: [], ...o });
+const base = (o = {}) => ({ playerId: 'p', name: 'Player', team: 'KC', pos: 'RB', stat: 'rush_yds', label: 'Rushing yards', short: 'Rush Yds', proj: 70, p10: 30, p50: 68, p90: 115, line: 69.5, probOver: 0.5, seasonAvg: 70, seasonGames: 4, last5: [50, 70, 65, 40, 80], lineUpdated: fresh, notes: [], expVolume: { carries: 15, targets: 3, attempts: null }, bigMiss: bm(), ...o });
 
-test('UNDER pick for a low-performance expectation', () => {
-  const r = selectOutlier([base({ proj: 38, p10: 18, p90: 60, probOver: 0.18, line: 59.5 }), base({ playerId: 'q', proj: 61 })], { now });
-  assert.equal(r.pick.direction, 'UNDER');
+test('UNDER: a line likely to miss big on the low side, model agrees and its range reaches the big miss', () => {
+  const r = selectOutlier([base({ proj: 52, p10: 20, p90: 90, probOver: 0.3, bigMiss: bm({ bust: 0.22, boom: 0.1 }) }), base({ playerId: 'q' })], { now });
   assert.equal(r.pick.playerId, 'p');
-  assert.ok(r.pick.gap < 0 && r.pick.gapPct < 0);
-  assert.equal(r.pick.sideProb, 1 - 0.18);
-  assert.ok(r.pick.evidence.some((e) => /Cleared 59.5 in 3 of last 5/.test(e)));
+  assert.equal(r.pick.direction, 'UNDER');
+  assert.ok(r.pick.lift >= 2.5 && r.pick.bigProb === 0.22 && r.pick.againstProb === 0.1);
+  assert.match(r.pick.bigText, /31 yds\+ under/);
 });
 
-test('OVER pick chosen by standardized gap across any stat with a posted line (incl. supporting player)', () => {
-  const r = selectOutlier([
-    base({ stat: 'receptions', label: 'Receptions', proj: 6.2, p10: 3, p90: 9, line: 3.5, probOver: 0.8, isDisplayed: false, role: 'Support' }),
-    base({ proj: 75, p10: 30, p90: 120, line: 60.5, probOver: 0.64 }),
-  ], { now });
-  assert.equal(r.pick.stat, 'receptions');
+test('OVER: a boom spot (e.g. a 70-yard line that ends at 120) qualifies when it is more likely our way', () => {
+  const r = selectOutlier([base({ proj: 84, p90: 140, probOver: 0.62, bigMiss: bm({ boom: 0.34, bust: 0.07 }) })], { now });
   assert.equal(r.pick.direction, 'OVER');
-  assert.equal(r.pick.isDisplayed, false);
+  assert.ok(r.pick.lift > 2);
 });
 
-test('no book line => not a candidate; nothing posted => no pick with reason', () => {
-  const r = selectOutlier([base({ line: null }), base({ line: undefined, playerId: 'z' })], { now });
+test('TD props are never outliers (a 0.5 TD line with the model at 1 is one side of a coin flip)', () => {
+  const c = scoreCandidate(base({ pos: 'QB', stat: 'pass_td', label: 'Passing TDs', proj: 1.0, p10: 0, p90: 2, line: 0.5, probOver: 0.62, bigMiss: null }), now);
+  assert.equal(c.eligible, false);
+  assert.match(c.reason, /single play/);
+});
+
+test('tiny lines are never outliers (1.5 receptions vs a 0.9 projection is just the other side)', () => {
+  const c = scoreCandidate(base({ pos: 'RB', stat: 'receptions', label: 'Receptions', proj: 0.9, p10: 0, p90: 2.5, line: 1.5, probOver: 0.3 }), now);
+  assert.equal(c.eligible, false);
+  assert.match(c.reason, /too low/);
+});
+
+test('volatile both ways is not a pick', () => {
+  const c = scoreCandidate(base({ proj: 55, p10: 20, p90: 120, probOver: 0.4, bigMiss: bm({ bust: 0.2, boom: 0.24 }) }), now);
+  assert.equal(c.qualifies, false);
+});
+
+test('the model\'s own projection on the other side of the line blocks the pick', () => {
+  const c = scoreCandidate(base({ proj: 75, p10: 20, p90: 120, probOver: 0.55, bigMiss: bm({ bust: 0.24, boom: 0.1 }) }), now);
+  assert.equal(c.direction, 'UNDER');
+  assert.equal(c.qualifies, false);
+  assert.match(c.reason, /other side/);
+});
+
+test('the model\'s range must reach a big miss', () => {
+  const c = scoreCandidate(base({ proj: 60, p10: 45, p90: 80, probOver: 0.35, bigMiss: bm({ bust: 0.24, boom: 0.1 }) }), now);
+  assert.equal(c.qualifies, false);
+  assert.match(c.reason, /range doesn't reach/);
+});
+
+test('no forced pick: a weak big-miss signal gives "no real outlier" with the reason', () => {
+  const r = selectOutlier([base({ proj: 60, probOver: 0.4, bigMiss: bm({ bust: 0.1 }) }), base({ playerId: 'b' })], { now });
   assert.equal(r.pick, null);
-  assert.match(r.noPickReason, /No player prop lines/);
+  assert.match(r.noPickReason, /No real outlier/);
 });
 
-test('no forced pick when every gap is small', () => {
-  const r = selectOutlier([base({ proj: 61, probOver: 0.53 }), base({ playerId: 'b', proj: 57, probOver: 0.45 })], { now });
-  assert.equal(r.pick, null);
-  assert.match(r.noPickReason, /No credible disagreement/);
-  assert.equal(r.shortlist.length, 2);
-});
-
-test('quality gates: tiny sample, out/doubtful and stale lines are ineligible; questionable is penalised', () => {
-  assert.equal(scoreCandidate(base({ seasonGames: 1, proj: 20, probOver: 0.05 }), now).eligible, false);
-  assert.equal(scoreCandidate(base({ injuryStatus: 'Doubtful', proj: 20, probOver: 0.05 }), now).eligible, false);
-  assert.equal(scoreCandidate(base({ lineUpdated: '2026-09-27T00:00Z', proj: 20, probOver: 0.05 }), now).eligible, false);
-  const q = scoreCandidate(base({ injuryStatus: 'Questionable', proj: 30, probOver: 0.1 }), now);
-  const h = scoreCandidate(base({ proj: 30, probOver: 0.1 }), now);
-  assert.ok(q.eligible && q.score < h.score && q.flags.some((f) => /Questionable/.test(f)));
-});
-
-test('discrete stats cannot produce a huge z from a zero-width range (SD floor)', () => {
-  const c = scoreCandidate(base({ stat: 'pass_td', label: 'Passing TDs', proj: 1.9, p10: 2, p90: 2, line: 1.5, probOver: 0.62 }), now);
-  assert.ok(c.sd >= OUTLIER_RULES.sdFloor.td);
-  assert.ok(Math.abs(c.z) < 1.5);
+test('quality gates: tiny sample, out/doubtful and stale lines are ineligible; questionable is flagged, not folded into the score', () => {
+  const strong = { proj: 52, p10: 20, p90: 90, probOver: 0.3, bigMiss: bm({ bust: 0.22, boom: 0.1 }) };
+  assert.equal(scoreCandidate(base({ ...strong, seasonGames: 1 }), now).eligible, false);
+  assert.equal(scoreCandidate(base({ ...strong, injuryStatus: 'Doubtful' }), now).eligible, false);
+  assert.equal(scoreCandidate(base({ ...strong, lineUpdated: '2026-09-27T00:00Z' }), now).eligible, false);
+  const q = scoreCandidate(base({ ...strong, injuryStatus: 'Questionable' }), now), h = scoreCandidate(base(strong), now);
+  assert.ok(q.flags.some((f) => /Questionable/.test(f)) && q.score === h.score);
 });
 
 test('selection never modifies projections', () => {
-  const cands = [base({ proj: 38, p10: 18, p90: 60, probOver: 0.18 })];
+  const cands = [base({ proj: 52, p10: 20, p90: 90, bigMiss: bm({ bust: 0.22 }) })];
   const before = JSON.stringify(cands);
   selectOutlier(cands, { now });
   assert.equal(JSON.stringify(cands), before);
@@ -65,49 +80,33 @@ test('zero-role projection vs a posted line is a role conflict, never an outlier
   const r = selectOutlier([base({ pos: 'QB', stat: 'pass_yds', label: 'Passing yards', proj: 0, p10: 0, p50: 0, p90: 0, line: 213.5, probOver: 0 }), base({ proj: 61, probOver: 0.53 })], { now });
   assert.equal(r.pick, null);
   assert.equal(r.roleConflicts.length, 1);
-  assert.equal(r.roleConflicts[0].stat, 'pass_yds');
 });
 
 test('a role conflict on one stat excludes all of that player\'s stats', () => {
   const r = selectOutlier([
     base({ playerId: 'm', pos: 'QB', stat: 'pass_yds', proj: 0, p10: 0, p50: 0, p90: 0, line: 213.5, probOver: 0 }),
-    base({ playerId: 'm', pos: 'QB', stat: 'rush_yds', proj: 8, p10: 0, p90: 20, line: 26.5, probOver: 0.05 }),
+    base({ playerId: 'm', pos: 'QB', stat: 'rush_yds', proj: 8, p10: 0, p90: 20, line: 26.5, probOver: 0.05, bigMiss: bm({ bust: 0.3 }) }),
   ], { now });
   assert.equal(r.pick, null);
   assert.equal(r.shortlist.length, 0);
 });
 
-test('impossible line timestamp (after retrieval) is never treated as fresh', () => {
-  const c = scoreCandidate(base({ lineUpdated: '2026-10-02T22:08Z', retrievedAt: '2026-10-02T19:25Z', proj: 30, probOver: 0.1 }), now);
-  assert.ok(c.eligible);
-  assert.ok(c.flags.some((f) => /impossible/.test(f)));
-  assert.ok(c.quality < 1);
-  const ok = scoreCandidate(base({ lineUpdated: '2026-10-02T18:00Z', retrievedAt: '2026-10-02T19:25Z', proj: 30, probOver: 0.1 }), now);
-  assert.ok(!ok.flags.some((f) => /impossible/.test(f)));
+test('impossible line timestamp (after retrieval) is flagged, never treated as fresh', () => {
+  const c = scoreCandidate(base({ lineUpdated: '2026-10-02T22:08Z', retrievedAt: '2026-10-02T19:25Z' }), now);
+  assert.ok(c.eligible && c.flags.some((f) => /impossible/.test(f)));
 });
 
-test('minor-role OVER (pocket QB rushing) is penalized below the bar; a running QB with the same gap still qualifies', () => {
-  const pocket = base({ pos: 'QB', stat: 'rush_yds', proj: 13.1, p10: 0, p50: 7.3, p90: 34.8, line: 1.5, probOver: 0.65, expVolume: { carries: 2.9, targets: 0, attempts: 34 } });
-  const s = scoreCandidate(pocket, now);
-  assert.equal(s.eligible, true);
-  assert.equal(s.qualifies, false);
-  assert.ok(s.flags.some((f) => /minor role/.test(f)));
-  const runner = scoreCandidate(base({ pos: 'QB', stat: 'rush_yds', proj: 62, p10: 30, p50: 60, p90: 95, line: 44.5, probOver: 0.7, expVolume: { carries: 9, targets: 0, attempts: 30 } }), now);
+test('minor-role OVER (pocket QB rushing) is penalized below the bar; a running QB with the same signal qualifies', () => {
+  const sig = { proj: 38, p10: 0, p50: 30, p90: 75, line: 25.5, probOver: 0.65, bigMiss: bm({ boom: 0.3, bust: 0.07 }) };
+  const pocket = scoreCandidate(base({ pos: 'QB', ...sig, expVolume: { carries: 2.9, targets: 0, attempts: 34 } }), now);
+  assert.equal(pocket.qualifies, false);
+  assert.ok(pocket.flags.some((f) => /minor role/.test(f)));
+  const runner = scoreCandidate(base({ pos: 'QB', ...sig, p10: 12, expVolume: { carries: 9, targets: 0, attempts: 30 } }), now);
   assert.equal(runner.qualifies, true);
-  assert.equal(runner.quality, 1);
 });
 
-test('OVER on a stat that is not the player\'s role (WR rushing) is ineligible; UNDER is not affected', () => {
-  const wr = scoreCandidate(base({ pos: 'WR', stat: 'rush_yds', proj: 9, p10: 0, p50: 3, p90: 22, line: 1.5, probOver: 0.6, expVolume: { carries: 0.6, targets: 7, attempts: null } }), now);
+test('OVER on a stat that is not the player\'s role (WR rushing) is ineligible', () => {
+  const wr = scoreCandidate(base({ pos: 'WR', proj: 40, p10: 5, p90: 80, line: 25.5, probOver: 0.6, expVolume: { carries: 0.6, targets: 7, attempts: null }, bigMiss: bm({ boom: 0.3, bust: 0.05 }) }), now);
   assert.equal(wr.eligible, false);
   assert.match(wr.reason, /not his role/);
-  const under = scoreCandidate(base({ pos: 'QB', stat: 'rush_yds', proj: 3, p10: 0, p50: 1, p90: 10, line: 14.5, probOver: 0.2, expVolume: { carries: 2.5, targets: 0, attempts: 33 } }), now);
-  assert.equal(under.direction, 'UNDER');
-  assert.equal(under.quality, 1);
-  assert.equal(under.qualifies, true);
-});
-
-test('TD OVERs are exempt from the zero-game penalty (TDs are naturally zero most games)', () => {
-  const td = scoreCandidate(base({ pos: 'QB', stat: 'pass_td', proj: 2.4, p10: 0, p50: 2, p90: 4, line: 1.5, probOver: 0.62, expVolume: { carries: 3, targets: 0, attempts: 34 } }), now);
-  assert.equal(td.quality, 1);
 });

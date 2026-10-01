@@ -1,15 +1,20 @@
-// OUTLIER PICK: the largest *credible* disagreement between the model and an actual posted
-// book line, in either direction (OVER or UNDER). Pure and side-effect free: it only reads
-// projections that were already computed and never changes them.
+// OUTLIER PICK: a spot where the BOOK line is likely to miss BIG — a real outlier (e.g. a 90-yard line that
+// ends at 178), not one side of a coin flip (a 0.5 TD line, a 1.5-catch line). Pure: it only reads projections.
 //
-// Ranking: standardized gap z = (model mean - line) / model SD (SD from the simulated 10-90
-// range, with a per-stat floor so discrete stats can't produce huge z from a zero-width range),
-// multiplied by a quality factor from sample size / availability / line freshness.
-// A pick is only made when the adjusted score and the model's probability for that side both
-// clear minimum thresholds. No book line => not a candidate. Nothing clears => no pick.
+// Ranking (fbm-1.5): the learned chance of a big miss in each direction (src/bigmiss.js, walk-forward on every
+// 2024–26 pick with a line), relative to the typical rate for that stat ("lift"). The model's own gap from the
+// line is NOT the ranking: in the backtest it did not predict big misses (AUC ≈ 0.46–0.50). A pick also needs
+//   - a stat where a big miss is meaningful (no TDs / longest-play props) and a line that isn't tiny,
+//   - the model's projection on that side of the line, and its own range reaching a big miss,
+//   - the usual quality gates (sample, injury, stale line, role, skeptic).
+// Nothing qualifies => no pick (stated plainly).
+import { BIG, MIN_LINE, threshold } from './bigmiss.js';
 
 export const OUTLIER_RULES = {
-  minScore: 0.45,        // |z| after quality adjustment
+  minLift: 1.5,          // learned P(big miss) ≥ 1.5× the typical rate for this stat (after quality adjustment),
+                         // AND more likely our way than the other way. Out of sample (2024→2025 / 2025→2024): side
+                         // won 55.4% of 112 / 55.5% of 137 one-per-game picks (break-even ≈ 52.4%) — suggestive, not proven.
+  minScore: 0.45,        // (legacy z, still shown for reference)
   minSideProb: 0.58,     // model P(side) — simulation output, uncalibrated
   minGames: 2,           // current-season games for the player
   staleHours: 72,        // book line older than this => ineligible
@@ -28,6 +33,10 @@ const YARD_STATS = new Set(['pass_yds', 'rush_yds', 'rec_yds', 'long_rush', 'lon
 const RATIO = new Set(['ypc', 'ypr']);
 const VOLUME_OF = { rush_yds: 'carries', carries: 'carries', long_rush: 'carries', rush_td: 'carries', rec_yds: 'targets', receptions: 'targets', targets: 'targets', long_rec: 'targets', rec_td: 'targets', pass_yds: 'attempts', completions: 'attempts', pass_att: 'attempts', long_cmp: 'attempts', pass_td: 'attempts', ints: 'attempts' };
 const VOL_WORD = { carries: 'carries', targets: 'targets', attempts: 'pass attempts' };
+
+const pct = (x) => `${Math.round(x * 100)}%`;
+const round1 = (x) => Math.round(x * 10) / 10;
+const fmtT = (stat, T) => (/yds/.test(stat) ? `${Math.round(T)} yds` : `${round1(T)} ${stat === 'receptions' ? 'catches' : stat}`);
 
 export function sdFloor(stat) {
   if (TD_STATS.has(stat)) return OUTLIER_RULES.sdFloor.td;
@@ -52,9 +61,17 @@ export function scoreCandidate(c, now = Date.now()) {
   const sd = Math.max((c.p90 - c.p10) / 2.563, sdFloor(c.stat));
   const gap = c.proj - c.line;
   const z = gap / sd;
-  const direction = gap >= 0 ? 'OVER' : 'UNDER';
+  if (!BIG[c.stat]) return { ...c, eligible: false, reason: 'not an outlier stat — TDs and longest-play props are decided by a single play', z };
+  if (c.line < MIN_LINE[c.stat]) return { ...c, eligible: false, reason: `line ${c.line} is too low for a real outlier (min ${MIN_LINE[c.stat]})`, z };
+  if (!c.bigMiss) return { ...c, eligible: false, reason: 'no big-miss estimate available', z };
+  const bm = c.bigMiss;
+  const liftOver = bm.baseBoom ? bm.boom / bm.baseBoom : 0, liftUnder = bm.baseBust ? bm.bust / bm.baseBust : 0;
+  const direction = liftOver >= liftUnder ? 'OVER' : 'UNDER';
+  const bigProb = direction === 'OVER' ? bm.boom : bm.bust, baseProb = direction === 'OVER' ? bm.baseBoom : bm.baseBust, lift = direction === 'OVER' ? liftOver : liftUnder;
+  const againstProb = direction === 'OVER' ? bm.bust : bm.boom; // chance the line misses big the OTHER way
+  const T = threshold(c.stat, c.line);
   const sideProb = c.probOver == null ? null : direction === 'OVER' ? c.probOver : 1 - c.probOver;
-  let quality = 1;
+  let quality = 1, roleQuality = 1;
   if (direction === 'OVER') {
     const vk = VOLUME_OF[c.stat];
     const v = vk && c.expVolume ? c.expVolume[vk] : null;
@@ -63,8 +80,8 @@ export function scoreCandidate(c, now = Date.now()) {
     const minor = v != null && min != null && v < min;
     const zeroRisk = !TD_STATS.has(c.stat) && c.p10 <= 0;
     // The two risks are separate and stack: a minor role AND a real zero-game chance needs a huge gap.
-    if (minor) { quality *= OUTLIER_RULES.minorRolePenalty; flags.push(`minor role for this stat (${v.toFixed(1)} expected ${VOL_WORD[vk]})`); }
-    if (zeroRisk) { quality *= OUTLIER_RULES.minorRolePenalty; flags.push('real chance of a zero game (10th percentile is 0)'); }
+    if (minor) { quality *= OUTLIER_RULES.minorRolePenalty; roleQuality *= OUTLIER_RULES.minorRolePenalty; flags.push(`minor role for this stat (${v.toFixed(1)} expected ${VOL_WORD[vk]})`); }
+    if (zeroRisk) { quality *= OUTLIER_RULES.minorRolePenalty; roleQuality *= OUTLIER_RULES.minorRolePenalty; flags.push('real chance of a zero game (10th percentile is 0)'); }
   }
   if ((c.seasonGames ?? 0) < OUTLIER_RULES.minGames) return { ...c, eligible: false, reason: `only ${c.seasonGames ?? 0} game(s) this season`, z, direction };
   if (c.seasonGames < 4) { quality *= 0.85; flags.push(`small sample (${c.seasonGames} games)`); }
@@ -83,12 +100,20 @@ export function scoreCandidate(c, now = Date.now()) {
     if (ageH > OUTLIER_RULES.staleHours) return { ...c, eligible: false, reason: `book line ${Math.round(ageH)}h old`, z, direction };
     if (ageH > 24) { quality *= 0.9; flags.push(`line last updated ${Math.round(ageH)}h ago`); }
   } else flags.push('line timestamp not published');
-  const score = Math.abs(z) * quality;
-  const pass = score >= OUTLIER_RULES.minScore && (sideProb == null || sideProb >= OUTLIER_RULES.minSideProb);
+  // The rule was validated on lift alone; only the (evidence-backed) role penalties change the score. Sample size,
+  // questionable status, returning player and line age are shown as flags, not folded into the score.
+  const score = lift * roleQuality;
+  const agrees = direction === 'OVER' ? gap > 0 : gap < 0;
+  const tailReaches = direction === 'OVER' ? c.p90 >= c.line + T : c.p10 <= c.line - T;
+  const bigText = `${direction === 'OVER' ? `${fmtT(c.stat, T)}+ over` : `${fmtT(c.stat, T)}+ under`} the line`;
+  let reason = null;
+  if (score < OUTLIER_RULES.minLift) reason = `big-miss chance ${pct(bigProb)} is ${lift.toFixed(2)}× typical (${pct(baseProb)})${roleQuality < 1 ? `, ${score.toFixed(2)}× after the role penalty` : ''}; needs ${OUTLIER_RULES.minLift}×`;
+  else if (bigProb <= againstProb) reason = `a big miss is about as likely the other way (${pct(againstProb)} vs ${pct(bigProb)}) — volatile, not one-sided`;
+  else if (!agrees) reason = `the model's own projection (${round1(c.proj)}) is on the other side of the line`;
+  else if (!tailReaches) reason = `the model's range doesn't reach ${bigText}`;
   return {
-    ...c, eligible: true, qualifies: pass, direction, gap, gapPct: c.line !== 0 ? gap / Math.abs(c.line) : null,
-    sd, z, quality, score, sideProb, flags,
-    reason: pass ? null : score < OUTLIER_RULES.minScore ? `adjusted gap ${score.toFixed(2)} SD < ${OUTLIER_RULES.minScore}` : `model P(${direction.toLowerCase()}) ${(sideProb * 100).toFixed(0)}% < ${Math.round(OUTLIER_RULES.minSideProb * 100)}%`,
+    ...c, eligible: true, qualifies: reason == null, direction, gap, gapPct: c.line !== 0 ? gap / Math.abs(c.line) : null,
+    sd, z, quality, score, lift, bigProb, againstProb, baseProb, bigThreshold: T, bigText, sideProb, flags, reason,
   };
 }
 
@@ -120,7 +145,7 @@ export function selectOutlier(candidates, { now = Date.now(), top = 6 } = {}) {
   if (!pick) {
     if (!withLines) noPickReason = 'No player prop lines are posted for this game, so there is nothing to compare against.';
     else if (!eligible.length) noPickReason = 'Book lines exist, but none passed the sample/availability/freshness checks.';
-    else noPickReason = `No credible disagreement: the largest adjusted gap is ${eligible[0].score.toFixed(2)} SD (${eligible[0].name} ${eligible[0].label}); a pick needs ≥ ${OUTLIER_RULES.minScore} SD and model P(side) ≥ ${Math.round(OUTLIER_RULES.minSideProb * 100)}%.`;
+    else noPickReason = `No real outlier this game. The strongest big-miss signal is ${eligible[0].name} ${eligible[0].label} ${eligible[0].direction} ${eligible[0].line} (${pct(eligible[0].bigProb)} chance of ${eligible[0].bigText}, ${eligible[0].lift.toFixed(2)}× typical) — ${eligible[0].reason}.`;
   }
   return {
     pick: pick ? { ...pick, evidence: evidenceFor(pick) } : null,
