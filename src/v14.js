@@ -125,6 +125,8 @@ export function v14For(lg, pos, stat, role = null) {
 export function applyV14(arr, m, x) {
   if (!m || !arr?.length) return { arr, correction: null };
   let mean = 0; for (const v of arr) mean += v; mean /= arr.length;
+  // Outside the projection range it was trained on (e.g. a backup QB projected for 0 attempts): no correction.
+  if (m.domain?.minProj != null && mean < 0.5 * m.domain.minProj) return { arr, correction: null };
   const corr = predictCorr(m, x);
   const out = new Float64Array(arr.length);
   for (let i = 0; i < arr.length; i++) out[i] = Math.max(0, mean + corr + m.s * (arr[i] - mean));

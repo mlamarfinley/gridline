@@ -313,7 +313,7 @@ function outliersBlock(m) {
   if (!o || (!o.outliers?.length && !o.leans?.length)) return `<section class="outliers"><div class="k">Outliers · model vs book line</div><p class="faint">No player's projection differs from his line by a significant amount for that stat.</p></section>`;
   const row = (c) => `<details class="orow"><summary><span class="dir ${c.gapDir === 'OVER' ? 'over' : 'under'}">${c.gapDir}</span> <b>${esc(c.name)}</b> <span class="faint">${esc(c.team)} ${esc(c.pos)}</span> · ${esc(c.label)} · line <b class="b">${c.line}</b> · model <b class="m">${f1(c.proj)}</b> · gap ${sgn(Math.round(c.gap * 10) / 10)} <span class="faint">(${f2(c.sigStrength)}× the bar${c.tierRecord ? ` · gaps this size: ${pct(c.tierRecord[1])} of ${c.tierRecord[0]}` : ''})</span></summary>${c.why?.length ? whyList(c.why) : ''}</details>`;
   return `<section class="outliers"><div class="k">Outliers · model vs book line, biggest first</div>
-    <p class="exp">A gap counts as an outlier when it clears either bar for that stat: rushing/receiving 9 yds or 15% of the line · passing 20 yds or 8% · receptions 1 or 25% · carries 2.5 or 15%. Honest record: in 2024–25, gaps of every size won about 51% against the line (UNDERs 52–54%, OVERs 49–50%). The backtested pick above has the better record.</p>
+    <p class="exp">A gap counts as an outlier when it clears either bar for that stat: rushing/receiving 9 yds or 15% of the line · passing 20 yds or 8% · receptions 1 or 25% · carries 2.5 or 15%. Honest record (blind 2024–25, fbm-1.4.2): gaps of 1–2× won about 54% against the line, 2×+ gaps 51%; UNDERs 54–55% in every tier, OVERs 49–52%. The backtested pick above went 147–123 (54%) out of sample.</p>
     ${o.outliers.map(row).join('') || '<p class="faint">No full outliers this game.</p>'}
     ${o.leans?.length ? `<h5 class="leanh">Leans (0.6–1× the bar)</h5>${o.leans.map(row).join('')}` : ''}
   </section>`;
@@ -386,7 +386,7 @@ function cardBody(m, c, key) {
       </dl>
       ${s.probOver != null ? `<div class="prob">Model P(&gt; ${s.threshold}) <span class="p">${pct(s.probOver)}</span> · fair ${am(s.fairOdds?.over)}<br><span class="faint">threshold = ${esc(s.thresholdSource)}</span>${bk?.implied?.noVigOver != null ? `<br>Book no-vig P(over) ${pct(bk.implied.noVigOver)}` : ''}<br><span class="exp">experimental · uncalibrated</span></div>` : ''}
     </div>
-    <div class="chart">${last5Chart(s)}</div>
+    <div class="chart">${last5Chart(s)}${vsPosBlock(s)}</div>
   </div>
   ${s.explain ? `<details class="why"><summary>Why this projection</summary><div class="expl">${esc(s.explain)}</div></details>` : ''}
   ${c.notes?.length ? `<ul class="notes">${c.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}`;
@@ -397,6 +397,13 @@ function actualOf(a, k) {
   if (k === 'ypr') return a.receptions ? a.rec_yds / a.receptions : null;
   if (k === 'tds') return (a.rush_td || 0) + (a.rec_td || 0);
   return a[k] ?? 0;
+}
+
+function vsPosBlock(s) {
+  const v = s.vsPos;
+  if (!v || !v.games?.some((g) => g.value != null)) return '';
+  return `<div class="vspos"><div class="vspos-h">${esc(v.label)} · last ${v.games.length}${v.avg != null ? ` · avg <b>${f1(v.avg)}</b>` : ''}</div>
+    <table>${v.games.map((g) => `<tr><td class="faint">${g.week != null ? `Wk ${g.week}` : ET(g.date, { month: 'numeric', day: 'numeric' })}${g.season && g.season !== v.games[v.games.length - 1]?.season ? ` '${String(g.season).slice(2)}` : ''}</td><td class="faint">${esc(g.team || '')}</td><td>${g.name ? esc(g.name) : '<span class="faint">none</span>'}</td><td class="num">${g.value == null ? '—' : f1(g.value)}</td></tr>`).join('')}</table></div>`;
 }
 
 function last5Chart(s) {

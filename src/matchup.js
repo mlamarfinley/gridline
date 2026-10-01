@@ -6,7 +6,7 @@ import { LEAGUES, MODEL_VERSION, SHRINK, SIMS } from './config.js';
 import { getBaselines } from './baselines.js';
 import { loadTeamGames, teamContext, playerGameRows, STATES, normPos, finalizeDerived } from './history.js';
 import { selectRoles, keyPlayers, contextWeights, availability } from './roles.js';
-import { scenarioWeights, simulateTeam, simulateKicker, summarize, probOver, ratioSummary, shrink, clamp, seedFrom, makeRunDist, makeCatchDist } from './model.js';
+import { scenarioWeights, simulateTeam, simulateKicker, summarize, probOver, ratioSummary, shrink, clamp, seedFrom, makeRunDist, makeCatchDist, OPENING_CLOSE } from './model.js';
 import { impliedScore, noVig, probToAmerican, americanToProb } from './odds.js';
 import { kickoffWeather } from './weather.js';
 import { loadSnaps, snapsFor, normName } from './snaps.js';
@@ -392,8 +392,8 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
           carryShare += addC; targetShare += addT;
           redistribution.push({ fromId: k, from: nm, fromPos: posK, toPos: pos, addCarryShare: addC, addTargetShare: addT, questionable: vw < 1 || undefined });
           notes.push(vw < 1
-            ? `+${fmtPct(addC)} carry / +${fmtPct(addT)} target share because ${nm} is questionable (${posK}s listed questionable sat ${Math.round((1 - (Q_PLAY[posK] ?? 0.7)) * 100)}% of the time in 2023–25 and played at ~${Math.round((Q_USE[posK] ?? 0.92) * 100)}% usage when active).`
-            : `+${fmtPct(addC)} carry / +${fmtPct(addT)} target share from ${nm}'s absence (pro-rata redistribution; ${Math.round(measured * 100)}% of sample already without ${nm}).`);
+            ? `${addText(addC, addT)} because ${nm} is questionable (${posK}s listed questionable sat ${Math.round((1 - (Q_PLAY[posK] ?? 0.7)) * 100)}% of the time in 2023–25 and played at ~${Math.round((Q_USE[posK] ?? 0.92) * 100)}% usage when active).`
+            : `${addText(addC, addT)} from ${nm}'s absence (pro-rata redistribution; ${Math.round(measured * 100)}% of sample already without ${nm}).`);
         }
       }
       // State-specific shares, shrunk toward the overall share.
@@ -483,11 +483,11 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       const crPrior = shrink(prev.targets ? prev.receptions / prev.targets : null, (prev.targets || 0) * wP, P.catchRate[cp], kCr);
       const crPlayer = shrink(info.cur.targets ? info.cur.receptions / info.cur.targets : null, info.cur.targets || 0, crPrior, kCr);
       const oppPos = ox.defense.byPos[cp];
-      const crMult = clamp(oppPos.catchRateShrunk / P.catchRate[cp], 0.88, 1.12) * wx.catchRate;
+      const crMult = Math.pow(clamp(oppPos.catchRateShrunk / P.catchRate[cp], 0.88, 1.12), SHRINK.oppRecExp) * wx.catchRate;
       pl.catchRate = clamp(crPlayer * crMult, 0.3, 0.95);
       const ypPrior = shrink(prev.receptions ? prev.rec_yds / prev.receptions : null, (prev.receptions || 0) * wP, P.yardsPerCatch[cp], kYp);
       const ypPlayer = shrink(info.cur.receptions ? info.cur.rec_yds / info.cur.receptions : null, info.cur.receptions || 0, ypPrior, kYp);
-      const ypMult = Math.pow(clamp(oppPos.ypCatchShrunk / P.yardsPerCatch[cp], 0.8, 1.25), 0.8) * wx.passEff;
+      const ypMult = Math.pow(clamp(oppPos.ypCatchShrunk / P.yardsPerCatch[cp], 0.8, 1.25), SHRINK.oppRecExp) * wx.passEff;
       const c20p = shrink(info.pbp.rec ? info.pbp.c20 / info.pbp.rec : null, info.pbp.rec || 0, P.catch20[cp], SHRINK.explosiveCatch);
       const c40p = shrink(info.pbp.rec ? info.pbp.c40 / info.pbp.rec : null, info.pbp.rec || 0, P.catch40[cp], SHRINK.explosiveCatch * 1.5);
       const mc20 = clamp(exR.catch20[cp].shrunk / P.catch20[cp], 0.7, 1.45), mc40 = clamp(exR.catch40[cp].shrunk / P.catch40[cp], 0.6, 1.6);
@@ -663,6 +663,47 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
     } catch (e) { for (const t of Object.values(teams)) t.units = { error: `matchup data unavailable: ${e.message}` }; }
   }
 
+  // ---------- SAME-POSITION LOG vs this opponent (display only) ----------
+  // Under each stat: what the opponent's last 5 opponents got from the player in the same slot (e.g. the RB1 —
+  // the RB with the most carries in that game). Positions for other teams' players come from nflverse players.csv.
+  // Live NFL only, like the matchup engine (it reads a file the blind harness may not).
+  if (lg === 'nfl' && !blind) {
+    try {
+      const nvIds = await loadPlayerIds();
+      const posAny = (id) => normPos(posMap.get(id) || nvIds.byEspn.get(String(id))?.pos || null);
+      const USE = { RB: (st) => st.carries || 0, WR: (st) => (st.targets ?? st.receptions) || 0, TE: (st) => (st.targets ?? st.receptions) || 0, QB: (st) => st.pass_att || 0 };
+      const MYUSE = { RB: (c) => c.opportunity?.carries || 0, WR: (c) => c.opportunity?.targets || 0, TE: (c) => c.opportunity?.targets || 0, QB: (c) => c.opportunity?.dropbacks || 0 };
+      for (const t of Object.values(teams)) {
+        const opp = Object.values(teams).find((x) => x !== t);
+        // Last 5 games of the opponent; early in the season, fill from the end of last season.
+        let oppGames = (teamGames[opp.id] || []).slice(-5).map((g) => ({ ...g, season }));
+        if (oppGames.length < 5) {
+          try {
+            const prevG = await loadTeamGames(lg, opp.id, season - 1, cutoff, prov, { maxGames: 5 - oppGames.length });
+            oppGames = [...prevG.games.map((g) => ({ ...g, season: season - 1 })), ...oppGames];
+          } catch { /* keep what this season has */ }
+        }
+        const all = [...t.cards, ...t._support];
+        for (const c of all) {
+          const pos = normPos(c.pos);
+          if (!USE[pos]) continue;
+          const rank = all.filter((x) => normPos(x.pos) === pos).sort((a, b) => MYUSE[pos](b) - MYUSE[pos](a)).findIndex((x) => x.id === c.id) + 1;
+          if (rank < 1 || rank > 3 || (pos === 'QB' && rank > 1)) continue;
+          const slot = oppGames.map((g) => {
+            const rows = [...g.box.values()].filter((r) => r.teamId === String(g.oppId) && posAny(r.athleteId) === pos && USE[pos](r.stats) > 0).sort((a, b) => USE[pos](b.stats) - USE[pos](a.stats));
+            return { week: g.week, season: g.season, date: g.date, team: g.oppAbbr, row: rows[rank - 1] || null };
+          });
+          for (const [k, st] of Object.entries(c.stats)) {
+            if (!st.available || STAT_DEFS[k]?.ratio) continue;
+            const games = slot.map((x) => ({ week: x.week, season: x.season, date: x.date, team: x.team, name: x.row?.name || null, value: x.row ? (x.row.stats[k] ?? 0) : null }));
+            const v = games.filter((x) => x.value != null).map((x) => x.value);
+            st.vsPos = { label: `${pos}${pos === 'QB' ? '' : rank}s vs ${opp.abbr}`, games, avg: v.length ? Math.round((v.reduce((a, b) => a + b, 0) / v.length) * 10) / 10 : null };
+          }
+        }
+      }
+    } catch { /* display-only: leave it out if positions are unavailable */ }
+  }
+
   // ---------- OUTLIER PICK (compares to posted lines; never alters projections) ----------
   const candidates = [];
   for (const t of Object.values(teams)) {
@@ -823,8 +864,15 @@ function sumStats(list) {
   for (const s of list) for (const [k, v] of Object.entries(s)) if (typeof v === 'number') o[k] = (o[k] || 0) + v;
   return o;
 }
+const addText = (c, t) => [c >= 0.005 ? `+${fmtPct(c)} carry share` : null, t >= 0.005 ? `+${fmtPct(t)} target share` : null].filter(Boolean).join(' and ');
+// The simulator plays the opening OPENING_CLOSE share of every game in the 'close' state before the script
+// takes over, so the share a player actually gets is averaged over these effective weights — not the raw script mix.
+function effectiveWeights(weights) {
+  const tot = STATES.reduce((a, s) => a + (weights[s] || 0), 0) || 1;
+  return Object.fromEntries(STATES.map((s) => [s, (1 - OPENING_CLOSE) * (weights[s] || 0) / tot + (s === 'close' ? OPENING_CLOSE : 0)]));
+}
 function normalizeStates(byState, overall, weights) {
-  const w = weighted(byState, weights);
+  const w = weighted(byState, effectiveWeights(weights));
   if (!w || !overall) return;
   const k = overall / w;
   for (const s of Object.keys(byState)) byState[s] *= k;

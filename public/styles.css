@@ -348,3 +348,11 @@ details.why .expl, details.why p { margin: 6px 0 0; font-size: 12px; color: var(
 .chart text.halo, .chart text.val { paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; }
 .outlier .conflict { font-size: 12px; color: var(--warn); margin: 8px 0 0; }
 .staticbar { max-width: 1320px; margin: 10px auto 0; padding: 6px 24px; font-size: 12px; color: var(--warn); }
+
+/* Same-position log vs this opponent, under the last-5 chart */
+.vspos { margin-top: 10px; border-top: 1px solid var(--rule-2); padding-top: 6px; font-size: 12px; }
+.vspos-h { color: var(--muted); margin-bottom: 3px; letter-spacing: .02em; }
+.vspos table { width: 100%; border-collapse: collapse; }
+.vspos td { padding: 2px 6px 2px 0; white-space: nowrap; }
+.vspos td:nth-child(3) { white-space: normal; width: 100%; }
+.vspos td.num { text-align: right; font-variant-numeric: tabular-nums; padding-right: 0; }

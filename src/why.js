@@ -33,6 +33,14 @@ export function whyPick(c) {
   const histVol = vk ? h[vk] : null;
   const runStat = /rush|carries/.test(c.stat);
 
+  // 0. The line vs his record this season (the most direct case for either side of a line).
+  const vals = seasonValues(card.stats?.[c.stat]?.last5);
+  if (c.line != null && vals.length >= 2) {
+    const avgV = vals.reduce((a, b) => a + b, 0) / vals.length, over = vals.filter((v) => v > c.line).length;
+    const d = avgV - c.line, meaningful = Math.abs(d) >= 0.1 * Math.max(1, c.line);
+    add(`Line vs his season: ${c.line} vs his ${f1(avgV)} average; he went over it in ${over} of ${vals.length} games (${vals.join(', ')}).`, meaningful ? (d > 0 ? 1 : -1) : 0);
+  }
+
   // 1. Volume
   if (projVol != null && histVol != null && h.games >= 1) {
     const word = VOL_WORD[vk];
@@ -78,17 +86,20 @@ export function whyPick(c) {
   if ((c.stat === 'receptions' || c.stat === 'rec_yds') && e.catchRate?.final) {
     const cr = e.catchRate.final, ypc = e.ypCatch?.final;
     if (c.stat === 'receptions') {
-      add(`Line math: at his ${pct(cr)} catch rate, ${line} catches takes about ${f1((Math.floor(line) + 1) / cr)} targets; his targets this season: ${listOf(c.card?.stats?.targets?.last5)}.`);
+      const need = (Math.floor(line) + 1) / cr;
+      add(`Line math: at his ${pct(cr)} catch rate, ${line} catches takes about ${f1(need)} targets; the model expects ${f1(projVol)}. His targets this season: ${listOf(c.card?.stats?.targets?.last5)}.`, mathEffect(projVol, need));
     } else if (ypc) {
       const ypt = cr * ypc, m = e.ypCatch?.oppMult ?? 1;
-      add(`Efficiency: ${pct(cr)} catch rate × ${f1(ypc)} yds/catch ≈ ${f1(ypt)} yds per target${Math.abs(m - 1) >= 0.04 ? ` (opponent adjustment ×${m.toFixed(2)})` : ''}. Line math: ${line} yards needs about ${f1(line / ypt)} targets at that rate.`, Math.abs(m - 1) >= 0.04 ? (m > 1 ? 1 : -1) : 0);
+      if (Math.abs(m - 1) >= 0.04) add(`Matchup efficiency: this defense moves his yards per catch ×${m.toFixed(2)} (applied to the projection).`, m > 1 ? 1 : -1);
+      add(`Line math: ${pct(cr)} catch rate × ${f1(ypc)} yds/catch ≈ ${f1(ypt)} yds per target, so ${line} yards needs about ${f1(line / ypt)} targets; the model expects ${f1(projVol)}.`, mathEffect(projVol, line / ypt));
     }
   } else if (c.stat === 'rush_yds' && e.ypc?.final) {
     const m = e.ypc.oppMult ?? 1;
-    add(`Efficiency: ${f1(e.ypc.final)} yds/carry${Math.abs(m - 1) >= 0.04 ? ` (opponent run defense ×${m.toFixed(2)})` : ''}. Line math: ${line} yards needs about ${f1(line / e.ypc.final)} carries at that rate; his carries this season: ${listOf(c.card?.stats?.carries?.last5)}.`, Math.abs(m - 1) >= 0.04 ? (m > 1 ? 1 : -1) : 0);
+    if (Math.abs(m - 1) >= 0.04) add(`Matchup efficiency: this run defense moves his yards per carry ×${m.toFixed(2)} (applied to the projection).`, m > 1 ? 1 : -1);
+    add(`Line math: at ${f1(e.ypc.final)} yds/carry, ${line} yards needs about ${f1(line / e.ypc.final)} carries; the model expects ${f1(projVol)}. His carries this season: ${listOf(c.card?.stats?.carries?.last5)}.`, mathEffect(projVol, line / e.ypc.final));
   } else if (c.stat === 'pass_yds' && projVol) {
     const ypa = c.proj / projVol;
-    add(`Efficiency: about ${f1(ypa)} yds per attempt projected. Line math: ${line} yards needs ${f1(line / ypa)} attempts at that rate.`);
+    add(`Line math: about ${f1(ypa)} yds per attempt projected, so ${line} yards needs ${f1(line / ypa)} attempts; the model expects ${f1(projVol)}.`, mathEffect(projVol, line / ypa));
   }
 
   // 4. Matchup (defense vs his position/style + unit edge)
@@ -96,12 +107,22 @@ export function whyPick(c) {
   let favorableRec = false;
   for (const r of fit?.reasons || []) if ((r.kind === 'run') === runStat) { add(`Matchup: ${r.text}`, r.effect || 0); if (!runStat && r.effect > 0) favorableRec = true; }
   if (c.unitEdge) add(`Unit ratings: ${c.unitEdge.label} — ${c.team} offense ${c.unitEdge.offense} vs ${c.opponent} defense ${c.unitEdge.defense} (${c.unitEdge.verdict}).`, c.unitEdge.verdict === 'offense advantage' ? 1 : c.unitEdge.verdict === 'defense advantage' ? -1 : 0);
-  if (favorableRec && sign < 0) add('Note: the model doesn\'t shift targets toward a favorable matchup. When tested, that made projections less accurate. So a soft spot in the defense shows up here only in yards per target, not in more targets.');
+  if (favorableRec && sign < 0) add('Note: a soft matchup raises his yards per target (applied above), not his number of targets. Across 7,600 receiver-games (2022–25), receivers did not get more targets against defenses that allow more to their position or zones (scripts/matchup_volume_test.mjs).');
   if (card.matchup?.style?.length) add(`Player type: ${card.matchup.style.join(', ')}.`);
   const order = { for: 0, against: 1, info: 2 };
   return out.sort((a, b) => order[a.stance] - order[b.stance]);
 }
 
+// Volume clears what the line needs → supports OVER (+1); well short → supports UNDER (−1); within 5% → no lean.
+function mathEffect(have, need) {
+  if (!(have > 0) || !(need > 0)) return 0;
+  const r = have / need - 1;
+  return Math.abs(r) < 0.05 ? 0 : r > 0 ? 1 : -1;
+}
+function seasonValues(l5) {
+  const cur = (l5 || []).filter((x) => x && x.season && String(x.season) === String(l5[l5.length - 1]?.season));
+  return cur.map((x) => x.value ?? 0);
+}
 function listOf(l5) {
   const v = (l5 || []).filter((x) => x && x.season && String(x.season) === String(l5[l5.length - 1]?.season)).map((x) => x.value ?? 0);
   return v.length ? v.join(', ') : 'n/a';

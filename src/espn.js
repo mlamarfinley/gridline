@@ -182,7 +182,8 @@ export function parseBoxscore(sum) {
 }
 
 // ---------- Play-by-play ----------
-const NAME = "[A-Z][A-Za-z'\\-]*\\.\\s?[A-Z][A-Za-z'\\-]*(?:\\s(?:St\\.|Jr\\.|II|III|IV|[A-Z][a-z]+))?";
+// Last names can carry "St." ("A.St. Brown", "E.St. Brown") — without that the parse stops at "A.St".
+const NAME = "[A-Z][A-Za-z'\\-]*\\.\\s?(?:St\\.\\s?)?[A-Z][A-Za-z'\\-]*(?:\\s(?:St\\.|Jr\\.|II|III|IV|[A-Z][a-z]+))?";
 const RE_PASS = new RegExp(`(?:#(\\d+)\\s)?(${NAME})\\s(?:pass|sacked)(?:[^.]*?\\sto\\s(?:#(\\d+)\\s)?(${NAME}))?`);
 const RE_RUSH = new RegExp(`(?:#(\\d+)\\s)?(${NAME})\\s(?:up the middle|left|right|rush|run|scrambles|kneels|middle)`);
 
@@ -247,7 +248,10 @@ export function extractPlays(sum) {
 
 /** Name key used in play-by-play text: "J.Cook", "A.St. Brown" → normalized. */
 export function playNameKey(name) {
-  return String(name || '').replace(/\s+/g, '').replace(/[^A-Za-z.]/g, '').toLowerCase();
+  // Keep only the first dot (initial separator): "A.St. Brown", "A.St.Brown" and roster "St Brown" all → "a.stbrown".
+  const k = String(name || '').replace(/[^A-Za-z.]/g, '').toLowerCase();
+  const i = k.indexOf('.');
+  return i < 0 ? k : k.slice(0, i + 1) + k.slice(i + 1).replace(/\./g, '');
 }
 export function nameKeysFor(displayName) {
   const parts = String(displayName || '').replace(/\b(Jr\.?|Sr\.?|II|III|IV|V)$/i, '').trim().split(/\s+/);

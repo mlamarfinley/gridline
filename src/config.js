@@ -33,7 +33,9 @@ export const CFBD_API_KEY = process.env.CFBD_API_KEY || '';
 // 1.4.0 NFL: v1.4 correction learned from every miss (src/fitted_v14.json); partial-game exclusion.
 // 1.4.1 NFL: questionable players (own usage, expected share to teammates, questionable-QB receiving yards) and
 //            the run/pass mix shift when a lead RB / WR1 is missing — rates measured from 2022–25 nflverse data.
-export const MODEL_VERSION = 'fbm-1.4.1';
+// 1.4.2 NFL: play-by-play name fix ("A.St. Brown"), game-state shares averaged with the simulator's real weights,
+//            receiver matchup multipliers damped (oppRecExp); v1.3/v1.4/big-miss re-learned on blind batch 9.
+export const MODEL_VERSION = 'fbm-1.4.2';
 
 // Weeks inspected while tuning each model version. Results on these weeks are IN-SAMPLE
 // (development) and must never be presented as independent validation.
@@ -47,6 +49,7 @@ export const DEV_WEEKS = {
   // v1.4 corrections were learned from every scored 2024+2025 pick; 2026 weeks 2-3 were inspected earlier.
   'fbm-1.4.0': { nfl: [2, 3], cfb: [4] },
   'fbm-1.4.1': { nfl: [2, 3, 4], cfb: [4] },
+  'fbm-1.4.2': { nfl: [2, 3, 4], cfb: [4] },
 };
 
 export const LEAGUES = {
@@ -114,4 +117,7 @@ export const SHRINK = {
   defense: 3,        // games (opponent context)
   tdRate: 80,
   scenarioShare: 18, // team plays in a game-state bucket
+  // Exponent on the opponent's receiving-efficiency multipliers (catch rate, yds/catch). 2022–25 data: only ~15% of a
+  // defense's yds/target deviation shows up in the next receiver's (scripts/matchup_volume_test.mjs).
+  oppRecExp: 0.4,
 };

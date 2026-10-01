@@ -115,6 +115,7 @@ const drawCatch = (d, R) => drawYards(d, R, d.c20, 20);
 export const WORKLOAD_K = { carry: 11, target: 22 }; // gamma shape => CV = 1/sqrt(k)
 export const PLAYS_CV = 0.12;
 export const PASS_RATE_SD = 0.04;
+export const OPENING_CLOSE = 0.4; // share of each simulated game played in the 'close' state before the script applies
 /**
  * team: { plays, passRate:{state}, sackRate, intRate, tdScale, blowFactor:{lead,trail},
  *         other:{run, catchRate, catch, rushTd, recTd} , fgPerGame, xpRate, qbFumblePerSack }
@@ -122,7 +123,7 @@ export const PASS_RATE_SD = 0.04;
  *             run: dist, catchRate, catch: dist, rushTd, recTd, fumLost, dispersion }]
  * weights: script weights {state: w}
  */
-export function simulateTeam(team, players, weights, { sims = SIMS, seed = 1, openingCloseShare = 0.4 } = {}) {
+export function simulateTeam(team, players, weights, { sims = SIMS, seed = 1, openingCloseShare = OPENING_CLOSE } = {}) {
   const R = rng(seed);
   const states = STATES;
   const cum = []; let acc = 0;

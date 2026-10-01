@@ -89,3 +89,28 @@ Measured from nflverse 2022–25, then built in:
 **Tested and not shipped:**
 - **Context-aware run/pass engine.** `src/volume.js` builds situation-adjusted pass rate over expected, opponent-adjusted defensive pass rate, and a clock/plays model where run-heavy teams hold the ball longer. Its team-volume misses were no smaller than the current estimator's: rushes 5.66 → 5.72 and 5.50 → 5.49, attempts about equal. The plays coefficients flipped between folds.
 - **Carries bias by role × game-script bucket for backups on big favorites.** Walk-forward miss improved only 4.074 → 4.064, so it wasn't shipped. The game-script model already captures favorites running more; favorites' rush bias was about 0.
+
+## fbm-1.4.2: two real bugs, a matchup test, and recalibration (2026-10-01)
+
+Every change below was validated on market-blind batches over every 2024–26 NFL game.
+
+| Batch | Change | Result vs previous | Shipped |
+|---|---|---|---|
+| 7 | Play-by-play name fix: "A.St. Brown" was parsed as "A.St", so he had zero play-by-play targets. Game-state shares are now averaged with the simulator's real weights (the first 40% of every game is "close"). | Better on 10 of 11 stats vs batch 6. QB passing-yards miss 61.4 → 58.5; model-vs-line information β 0.15 → 0.30 (t = 11.9). | yes |
+| 8 | When team shares sum above 100%, take the excess from part-timers first | Tie, within noise | no |
+| 9 | Receiver matchup multipliers damped (exponent 0.4) | Receiving misses better: WR yds 27.44 → 27.39, TE yds 21.44 → 21.30; QB completions slightly worse | yes |
+| 10 | Heavier recency weighting for rising roles (share up 3 straight games) | Worse on the affected players: WR targets 2.44 → 2.69, RB rush yds 24.2 → 24.7. Rising roles fall back partway. | no |
+
+**Matchup and volume** (`scripts/matchup_volume_test.mjs`, 7,603 receiver-games, 2022–25):
+- Defenses that allow more to a position, or to a receiver's usual zones, do not give him more targets. Slope ≈ 0, walk-forward change 0.00%.
+- They do give more yards per target: about 0.15 yd/target per 1 yd/target the defense allows.
+- RB YPC carries over 20–43% of a run defense's deviation.
+
+**Recalibration on batch 9:**
+- v1.3 calibration: 2026 out-of-sample miss 6.30 → 6.25.
+- v1.4: only QB completions keeps a learned correction. The old corrections were largely compensating for the bugs above.
+- Outlier gap tiers now win 53.6–53.8% at 1–2× significance and 54–55% for UNDERs (they were ~51%).
+- The backtested pick rule went **147–123 (54.4%)**. It was 143–108 (57%) on the old model, so its edge is thinner after the fixes.
+
+**Guards added:**
+- No calibration shift and no v1.4 correction for a player with no simulated opportunity. Backup QBs had been getting 0.3 completions.

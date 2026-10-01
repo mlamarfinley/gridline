@@ -20,6 +20,8 @@ export function calibrationFor(lg, pos, stat) {
 export function calibrateSample(arr, c) {
   if (!c || !arr?.length) return arr;
   const sorted = Float64Array.from(arr).sort();
+  // No simulated opportunity at all (e.g. a backup QB): a calibration shift would invent production from nothing.
+  if (sorted[sorted.length - 1] === 0) return arr;
   const med = sorted[Math.floor((sorted.length - 1) / 2)] + c.a;
   const out = new Float64Array(arr.length);
   for (let i = 0; i < arr.length; i++) out[i] = Math.max(0, med + c.s * (arr[i] + c.a - med));

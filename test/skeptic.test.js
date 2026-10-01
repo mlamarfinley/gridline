@@ -74,7 +74,9 @@ test('why: each reason says whether it supports or works against the pick (a sof
   const w = whyPick({ direction: 'UNDER', stat: 'receptions', line: 5.5, proj: 4.2, card, team: 'JAX', opponent: 'CIN', expMargin: 11.5, scriptWeights: { lead: 0.33, blowLead: 0.15, trail: 0.06, blowTrail: 0.01 } });
   assert.equal(w.find((x) => /short outside/.test(x.text)).stance, 'against');
   assert.equal(w.find((x) => /Game script/.test(x.text)).stance, 'for'); // favored → throws less → supports the receiving UNDER
-  assert.ok(w.some((x) => /doesn't shift targets/.test(x.text)));
+  assert.ok(w.some((x) => /raises his yards per target.*not his number of targets/.test(x.text)));
+  // Line math has a direction: 7.5 targets × 58% ≈ 4.4 catches, short of the 6 needed → supports the UNDER.
+  assert.equal(w.find((x) => /^Line math/.test(x.text)).stance, 'for');
 });
 
 test('partial games: an early exit (16% of snaps vs usual 71%) is detected; a normal game is not', async () => {
@@ -103,4 +105,26 @@ test('why: a questionable QB whose usage is unchanged (props void if he sits) is
   const { whyPick } = await import('../src/why.js');
   const card = { notes: ['Listed Questionable: QBs listed questionable played 43% of the time in 2023–25 and got ~100% of their usual usage when active. Projection assumes he plays (props are void if he doesn\'t), at 100% usage; range widened.'] };
   assert.equal(whyPick({ direction: 'UNDER', stat: 'rush_yds', line: 30.5, card }).find((x) => /^Injury/.test(x.text)).stance, 'info');
+});
+
+test('why: the line vs his season record is a reason (a 3.5-catch line on a 5.5-catch receiver supports the OVER)', async () => {
+  const { whyPick } = await import('../src/why.js');
+  const l5 = [6, 5, 5, 6].map((value) => ({ season: 2026, value }));
+  const card = { opportunity: { targets: 7.5 }, usageHistory: { games: 3, targets: 9 }, efficiency: { catchRate: { final: 0.63 } }, stats: { receptions: { last5: l5 }, targets: { last5: [] } }, notes: [] };
+  const w = whyPick({ direction: 'OVER', stat: 'receptions', line: 3.5, proj: 4.6, card });
+  assert.equal(w.find((x) => /^Line vs his season/.test(x.text)).stance, 'for');
+  assert.match(w.find((x) => /^Line vs his season/.test(x.text)).text, /over it in 4 of 4/);
+  assert.equal(w.find((x) => /^Line math/.test(x.text)).stance, 'for');
+});
+
+test('v1.4 correction is not applied outside its trained projection range (backup QB on 0 attempts)', async () => {
+  const { applyV14 } = await import('../src/v14.js');
+  const m = { beta: [0.3], mu: [], sd: [], s: 1, domain: { minProj: 18.7 } };
+  assert.equal(applyV14(new Float64Array([0, 0, 0]), m, []).correction, null);
+  assert.notEqual(applyV14(new Float64Array([20, 22, 24]), m, []).correction, null);
+});
+
+test('v1.3 calibration never adds production to an all-zero sample', async () => {
+  const { calibrateSample } = await import('../src/calibrate.js');
+  assert.deepEqual([...calibrateSample(new Float64Array([0, 0, 0]), { a: 0.29, s: 1 })], [0, 0, 0]);
 });
