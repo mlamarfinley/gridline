@@ -5,37 +5,13 @@
   "week": 4,
   "game": "401671755",
   "teams": "ARI–WSH",
-  "pick": {
-   "name": "Kyler Murray",
-   "team": "ARI",
-   "opp": "WSH",
-   "pos": "QB",
-   "stat": "pass_yds",
+  "pick": null,
+  "strongest": {
+   "name": "Brian Robinson Jr.",
+   "stat": "rush_yds",
    "dir": "OVER",
-   "line": 224.5,
-   "proj": 228.9,
-   "threshold": 75,
-   "ourP": 0.24,
-   "othP": 0.139,
-   "base": 0.132,
-   "lift": 1.81,
-   "drivers": [
-    "opp unit rating (rel)",
-    "range width / line",
-    "small sample"
-   ],
-   "recent": [
-    266,
-    207
-   ],
-   "expVol": 31.5,
-   "actVol": 22,
-   "fitReasons": [],
-   "style": [],
-   "actual": 142,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": true
+   "line": 69.5,
+   "lift": 2.03
   }
  },
  {
@@ -164,39 +140,13 @@
   "week": 4,
   "game": "401671643",
   "teams": "GB–MIN",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Aaron Jones Sr.",
-   "team": "MIN",
-   "opp": "GB",
-   "pos": "RB",
-   "stat": "carries",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 13.5,
-   "proj": 12.7,
-   "threshold": 6,
-   "ourP": 0.168,
-   "othP": 0.121,
-   "base": 0.081,
-   "lift": 2.06,
-   "drivers": [
-    "range width / line",
-    "projected usage share",
-    "explosive runner"
-   ],
-   "recent": [
-    9,
-    19
-   ],
-   "expVol": 12.7,
-   "actVol": 22,
-   "fitReasons": [],
-   "style": [
-    "Receiving back"
-   ],
-   "actual": 22,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": true
+   "line": 59.5,
+   "lift": 2.98
   }
  },
  {
@@ -235,39 +185,13 @@
   "week": 4,
   "game": "401671674",
   "teams": "KC–LAC",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "J.K. Dobbins",
-   "team": "LAC",
-   "opp": "KC",
-   "pos": "RB",
-   "stat": "carries",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 14.5,
-   "proj": 14.1,
-   "threshold": 6,
-   "ourP": 0.168,
-   "othP": 0.097,
-   "base": 0.081,
-   "lift": 2.06,
-   "drivers": [
-    "range width / line",
-    "explosive runner",
-    "projected usage share"
-   ],
-   "recent": [
-    17,
-    15
-   ],
-   "expVol": 14.1,
-   "actVol": 14,
-   "fitReasons": [],
-   "style": [
-    "Explosive runner"
-   ],
-   "actual": 14,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 59.5,
+   "lift": 2.63
   }
  },
  {
@@ -375,38 +299,13 @@
   "week": 5,
   "game": "401671756",
   "teams": "ARI–SF",
-  "pick": {
-   "name": "James Conner",
-   "team": "ARI",
-   "opp": "SF",
-   "pos": "RB",
-   "stat": "rush_yds",
-   "dir": "OVER",
+  "pick": null,
+  "strongest": {
+   "name": "Marvin Harrison Jr.",
+   "stat": "rec_yds",
+   "dir": "UNDER",
    "line": 59.5,
-   "proj": 61.4,
-   "threshold": 30,
-   "ourP": 0.215,
-   "othP": 0.094,
-   "base": 0.14,
-   "lift": 1.54,
-   "drivers": [
-    "expected margin",
-    "teammate out: freed share",
-    "small sample"
-   ],
-   "recent": [
-    122,
-    17,
-    104
-   ],
-   "expVol": 13.7,
-   "actVol": 19,
-   "fitReasons": [],
-   "style": [],
-   "actual": 86,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 2.02
   }
  },
  {
@@ -490,40 +389,13 @@
   "week": 5,
   "game": "401671784",
   "teams": "DAL–PIT",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "CeeDee Lamb",
-   "team": "DAL",
-   "opp": "PIT",
-   "pos": "WR",
    "stat": "receptions",
    "dir": "UNDER",
    "line": 6.5,
-   "proj": 6.1,
-   "threshold": 3.3,
-   "ourP": 0.182,
-   "othP": 0.111,
-   "base": 0.046,
-   "lift": 3.93,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    4,
-    4,
-    7
-   ],
-   "expVol": 9,
-   "actVol": 9,
-   "fitReasons": [],
-   "style": [
-    "Middle-of-field target"
-   ],
-   "actual": 5,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 3.93
   }
  },
  {
@@ -637,39 +509,13 @@
   "week": 6,
   "game": "401671722",
   "teams": "ARI–GB",
-  "pick": {
-   "name": "Kyler Murray",
-   "team": "ARI",
-   "opp": "GB",
-   "pos": "QB",
-   "stat": "pass_yds",
+  "pick": null,
+  "strongest": {
+   "name": "Jayden Reed",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 224.5,
-   "proj": 219.9,
-   "threshold": 75,
-   "ourP": 0.242,
-   "othP": 0.143,
-   "base": 0.119,
-   "lift": 2.04,
-   "drivers": [
-    "range width / line",
-    "deep-target share",
-    "small sample"
-   ],
-   "recent": [
-    266,
-    207,
-    142,
-    195
-   ],
-   "expVol": 31.1,
-   "actVol": 32,
-   "fitReasons": [],
-   "style": [],
-   "actual": 214,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 59.5,
+   "lift": 3.04
   }
  },
  {
@@ -723,39 +569,13 @@
   "week": 6,
   "game": "401671802",
   "teams": "CHI–JAX",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "DJ Moore",
-   "team": "CHI",
-   "opp": "JAX",
-   "pos": "WR",
    "stat": "rec_yds",
    "dir": "UNDER",
    "line": 69.5,
-   "proj": 64,
-   "threshold": 34.8,
-   "ourP": 0.204,
-   "othP": 0.199,
-   "base": 0.075,
-   "lift": 2.73,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    53,
-    78,
-    22,
-    105
-   ],
-   "expVol": 7.7,
-   "actVol": 5,
-   "fitReasons": [],
-   "style": [],
-   "actual": 20,
-   "won": true,
-   "bigOurWay": true,
-   "bigAgainst": false
+   "lift": 2.73
   }
  },
  {
@@ -838,40 +658,37 @@
   "game": "401671655",
   "teams": "DEN–LAC",
   "pick": {
-   "name": "Courtland Sutton",
-   "team": "DEN",
-   "opp": "LAC",
-   "pos": "WR",
-   "stat": "receptions",
+   "name": "J.K. Dobbins",
+   "team": "LAC",
+   "opp": "DEN",
+   "pos": "RB",
+   "stat": "carries",
    "dir": "UNDER",
-   "line": 4.5,
-   "proj": 4,
-   "threshold": 3,
-   "ourP": 0.108,
-   "othP": 0.073,
-   "base": 0.046,
-   "lift": 2.31,
+   "line": 16.5,
+   "proj": 13.3,
+   "threshold": 6.6,
+   "ourP": 0.182,
+   "othP": 0.15,
+   "base": 0.081,
+   "lift": 2.24,
    "drivers": [
-    "projected usage share",
-    "deep-target share",
-    "range width / line"
+    "range width / line",
+    "explosive runner",
+    "teammate out: freed share"
    ],
    "recent": [
-    1,
-    7,
-    3,
-    2
+    17,
+    15,
+    14
    ],
-   "expVol": 6.9,
-   "actVol": 6,
+   "expVol": 13.3,
+   "actVol": 25,
    "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 4,
-   "won": true,
+   "style": [],
+   "actual": 25,
+   "won": false,
    "bigOurWay": false,
-   "bigAgainst": false
+   "bigAgainst": true
   }
  },
  {
@@ -880,39 +697,13 @@
   "week": 6,
   "game": "401671619",
   "teams": "HOU–NE",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Stefon Diggs",
-   "team": "HOU",
-   "opp": "NE",
-   "pos": "WR",
-   "stat": "receptions",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 5.5,
-   "proj": 4.6,
-   "threshold": 3,
-   "ourP": 0.083,
-   "othP": 0.078,
-   "base": 0.046,
-   "lift": 1.78,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    4,
-    10,
-    5,
-    6
-   ],
-   "expVol": 6.6,
-   "actVol": 7,
-   "fitReasons": [],
-   "style": [],
-   "actual": 6,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 59.5,
+   "lift": 1.97
   }
  },
  {
@@ -951,41 +742,13 @@
   "week": 6,
   "game": "401671735",
   "teams": "NO–TB",
-  "pick": {
-   "name": "Alvin Kamara",
-   "team": "NO",
-   "opp": "TB",
-   "pos": "RB",
-   "stat": "carries",
+  "pick": null,
+  "strongest": {
+   "name": "Mike Evans",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 16.5,
-   "proj": 14.5,
-   "threshold": 6.6,
-   "ourP": 0.154,
-   "othP": 0.124,
-   "base": 0.081,
-   "lift": 1.9,
-   "drivers": [
-    "range width / line",
-    "projected usage share",
-    "small sample"
-   ],
-   "recent": [
-    20,
-    26,
-    19,
-    11
-   ],
-   "expVol": 14.5,
-   "actVol": 13,
-   "fitReasons": [],
-   "style": [
-    "Receiving back"
-   ],
-   "actual": 13,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 59.5,
+   "lift": 2.97
   }
  },
  {
@@ -1009,39 +772,13 @@
   "week": 7,
   "game": "401671699",
   "teams": "ARI–LAC",
-  "pick": {
-   "name": "Kyler Murray",
-   "team": "ARI",
-   "opp": "LAC",
-   "pos": "QB",
-   "stat": "pass_yds",
+  "pick": null,
+  "strongest": {
+   "name": "J.K. Dobbins",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 224.5,
-   "proj": 210.5,
-   "threshold": 75,
-   "ourP": 0.237,
-   "othP": 0.128,
-   "base": 0.119,
-   "lift": 2,
-   "drivers": [
-    "range width / line",
-    "team implied pts",
-    "deep-target share"
-   ],
-   "recent": [
-    207,
-    142,
-    195,
-    214
-   ],
-   "expVol": 30.4,
-   "actVol": 26,
-   "fitReasons": [],
-   "style": [],
-   "actual": 145,
-   "won": true,
-   "bigOurWay": true,
-   "bigAgainst": false
+   "line": 79.5,
+   "lift": 2.42
   }
  },
  {
@@ -1065,39 +802,13 @@
   "week": 7,
   "game": "401671695",
   "teams": "BAL–TB",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Chris Godwin Jr.",
-   "team": "TB",
-   "opp": "BAL",
-   "pos": "WR",
-   "stat": "receptions",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 6.5,
-   "proj": 6.1,
-   "threshold": 3.3,
-   "ourP": 0.119,
-   "othP": 0.105,
-   "base": 0.046,
-   "lift": 2.55,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "man/zone fit"
-   ],
-   "recent": [
-    6,
-    6,
-    5,
-    11
-   ],
-   "expVol": 8.7,
-   "actVol": 9,
-   "fitReasons": [],
-   "style": [],
-   "actual": 7,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 79.5,
+   "lift": 2.81
   }
  },
  {
@@ -1106,43 +817,13 @@
   "week": 7,
   "game": "401671616",
   "teams": "BUF–TEN",
-  "pick": {
-   "name": "Calvin Ridley",
-   "team": "TEN",
-   "opp": "BUF",
-   "pos": "WR",
-   "stat": "rec_yds",
+  "pick": null,
+  "strongest": {
+   "name": "Tony Pollard",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 39.5,
-   "proj": 35.4,
-   "threshold": 30,
-   "ourP": 0.197,
-   "othP": 0.191,
-   "base": 0.075,
-   "lift": 2.65,
-   "drivers": [
-    "deep-target share",
-    "projected usage share",
-    "team implied pts"
-   ],
-   "recent": [
-    77,
-    9,
-    5,
-    0
-   ],
-   "expVol": 5.1,
-   "actVol": 9,
-   "fitReasons": [],
-   "style": [
-    "Deep threat",
-    "Outside receiver",
-    "Better vs zone"
-   ],
-   "actual": 42,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 69.5,
+   "lift": 3.4
   }
  },
  {
@@ -1151,43 +832,13 @@
   "week": 7,
   "game": "401671640",
   "teams": "CAR–WSH",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Diontae Johnson",
-   "team": "CAR",
-   "opp": "WSH",
-   "pos": "WR",
    "stat": "rec_yds",
    "dir": "UNDER",
    "line": 69.5,
-   "proj": 64.5,
-   "threshold": 34.8,
-   "ourP": 0.253,
-   "othP": 0.239,
-   "base": 0.075,
-   "lift": 3.39,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    122,
-    83,
-    23,
-    78
-   ],
-   "expVol": 8.7,
-   "actVol": 3,
-   "fitReasons": [
-    "This defense allows 8.7 yds/target to WRs (league 7.9)."
-   ],
-   "style": [
-    "Beats man coverage"
-   ],
-   "actual": 17,
-   "won": true,
-   "bigOurWay": true,
-   "bigAgainst": false
+   "lift": 3.39
   }
  },
  {
@@ -1625,38 +1276,13 @@
   "week": 8,
   "game": "401671795",
   "teams": "DAL–SF",
-  "pick": {
-   "name": "George Kittle",
-   "team": "SF",
-   "opp": "DAL",
-   "pos": "TE",
-   "stat": "rec_yds",
-   "dir": "OVER",
-   "line": 54.5,
-   "proj": 55.2,
-   "threshold": 30,
-   "ourP": 0.232,
-   "othP": 0.091,
-   "base": 0.141,
-   "lift": 1.65,
-   "drivers": [
-    "projected usage share",
-    "teammate out: freed share",
-    "small sample"
-   ],
-   "recent": [
-    76,
-    58,
-    92
-   ],
-   "expVol": 5.7,
-   "actVol": 7,
-   "fitReasons": [],
-   "style": [],
-   "actual": 128,
-   "won": true,
-   "bigOurWay": true,
-   "bigAgainst": false
+  "pick": null,
+  "strongest": {
+   "name": "CeeDee Lamb",
+   "stat": "receptions",
+   "dir": "UNDER",
+   "line": 6.5,
+   "lift": 4.89
   }
  },
  {
@@ -1725,39 +1351,13 @@
   "week": 8,
   "game": "401671856",
   "teams": "HOU–IND",
-  "pick": {
-   "name": "Joe Mixon",
-   "team": "HOU",
-   "opp": "IND",
-   "pos": "RB",
-   "stat": "carries",
-   "dir": "UNDER",
-   "line": 17.5,
-   "proj": 17.2,
-   "threshold": 7,
-   "ourP": 0.131,
-   "othP": 0.113,
-   "base": 0.081,
-   "lift": 1.61,
-   "drivers": [
-    "range width / line",
-    "explosive runner",
-    "projected usage share"
-   ],
-   "recent": [
-    9,
-    25
-   ],
-   "expVol": 17.2,
-   "actVol": 25,
-   "fitReasons": [],
-   "style": [
-    "Receiving back"
-   ],
-   "actual": 25,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": true
+  "pick": null,
+  "strongest": {
+   "name": "Anthony Richardson Sr.",
+   "stat": "completions",
+   "dir": "OVER",
+   "line": 15.5,
+   "lift": 3.53
   }
  },
  {
@@ -1868,38 +1468,40 @@
   "game": "401671618",
   "teams": "NE–NYJ",
   "pick": {
-   "name": "Garrett Wilson",
+   "name": "Breece Hall",
    "team": "NYJ",
    "opp": "NE",
-   "pos": "WR",
-   "stat": "rec_yds",
+   "pos": "RB",
+   "stat": "carries",
    "dir": "UNDER",
-   "line": 59.5,
-   "proj": 54,
-   "threshold": 30,
-   "ourP": 0.23,
-   "othP": 0.155,
-   "base": 0.075,
-   "lift": 3.09,
+   "line": 17.5,
+   "proj": 14.7,
+   "threshold": 7,
+   "ourP": 0.13,
+   "othP": 0.091,
+   "base": 0.081,
+   "lift": 1.6,
    "drivers": [
-    "projected usage share",
     "range width / line",
-    "deep-target share"
+    "projected usage share",
+    "team implied pts"
    ],
    "recent": [
-    41,
-    101,
-    107,
-    61
+    10,
+    9,
+    18,
+    12
    ],
-   "expVol": 8.3,
-   "actVol": 8,
+   "expVol": 14.7,
+   "actVol": 16,
    "fitReasons": [],
-   "style": [],
-   "actual": 113,
-   "won": false,
+   "style": [
+    "Receiving back"
+   ],
+   "actual": 16,
+   "won": true,
    "bigOurWay": false,
-   "bigAgainst": true
+   "bigAgainst": false
   }
  },
  {
@@ -1908,41 +1510,13 @@
   "week": 8,
   "game": "401671685",
   "teams": "NYG–PIT",
-  "pick": {
-   "name": "Wan'Dale Robinson",
-   "team": "NYG",
-   "opp": "PIT",
-   "pos": "WR",
-   "stat": "receptions",
+  "pick": null,
+  "strongest": {
+   "name": "George Pickens",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 5.5,
-   "proj": 5.3,
-   "threshold": 3,
-   "ourP": 0.09,
-   "othP": 0.07,
-   "base": 0.046,
-   "lift": 1.94,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "team implied pts"
-   ],
-   "recent": [
-    11,
-    6,
-    5,
-    6
-   ],
-   "expVol": 8,
-   "actVol": 5,
-   "fitReasons": [],
-   "style": [
-    "Underneath / short-area"
-   ],
-   "actual": 5,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 61.5,
+   "lift": 3.46
   }
  },
  {
@@ -1951,39 +1525,13 @@
   "week": 9,
   "game": "401671661",
   "teams": "ARI–CHI",
-  "pick": {
-   "name": "Kyler Murray",
-   "team": "ARI",
-   "opp": "CHI",
-   "pos": "QB",
-   "stat": "pass_yds",
+  "pick": null,
+  "strongest": {
+   "name": "DJ Moore",
+   "stat": "receptions",
    "dir": "UNDER",
-   "line": 224.5,
-   "proj": 218.9,
-   "threshold": 75,
-   "ourP": 0.238,
-   "othP": 0.124,
-   "base": 0.119,
-   "lift": 2,
-   "drivers": [
-    "range width / line",
-    "team implied pts",
-    "deep-target share"
-   ],
-   "recent": [
-    195,
-    214,
-    145,
-    307
-   ],
-   "expVol": 30.9,
-   "actVol": 20,
-   "fitReasons": [],
-   "style": [],
-   "actual": 154,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 4.5,
+   "lift": 2.21
   }
  },
  {
@@ -1992,42 +1540,13 @@
   "week": 9,
   "game": "401671728",
   "teams": "ATL–DAL",
-  "pick": {
-   "name": "Darnell Mooney",
-   "team": "ATL",
-   "opp": "DAL",
-   "pos": "WR",
-   "stat": "rec_yds",
+  "pick": null,
+  "strongest": {
+   "name": "CeeDee Lamb",
+   "stat": "receptions",
    "dir": "UNDER",
-   "line": 59.5,
-   "proj": 50.9,
-   "threshold": 30,
-   "ourP": 0.205,
-   "othP": 0.165,
-   "base": 0.075,
-   "lift": 2.74,
-   "drivers": [
-    "projected usage share",
-    "deep-target share",
-    "man/zone fit"
-   ],
-   "recent": [
-    105,
-    38,
-    46,
-    86
-   ],
-   "expVol": 6.5,
-   "actVol": 9,
-   "fitReasons": [],
-   "style": [
-    "Deep threat",
-    "Better vs zone"
-   ],
-   "actual": 88,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 7.5,
+   "lift": 6.28
   }
  },
  {
@@ -2056,25 +1575,25 @@
    "team": "MIA",
    "opp": "BUF",
    "pos": "WR",
-   "stat": "rec_yds",
+   "stat": "receptions",
    "dir": "UNDER",
-   "line": 79.5,
-   "proj": 71.3,
-   "threshold": 39.8,
-   "ourP": 0.372,
-   "othP": 0.2,
-   "base": 0.075,
-   "lift": 4.99,
+   "line": 6.5,
+   "proj": 5.3,
+   "threshold": 3.3,
+   "ourP": 0.203,
+   "othP": 0.101,
+   "base": 0.046,
+   "lift": 4.37,
    "drivers": [
     "projected usage share",
-    "deep-target share",
-    "range width / line"
+    "range width / line",
+    "deep-target share"
    ],
    "recent": [
-    23,
-    69,
-    8,
-    72
+    4,
+    6,
+    1,
+    6
    ],
    "expVol": 8,
    "actVol": 5,
@@ -2083,8 +1602,8 @@
     "Deep threat",
     "Beats man coverage"
    ],
-   "actual": 80,
-   "won": false,
+   "actual": 4,
+   "won": true,
    "bigOurWay": false,
    "bigAgainst": false
   }
@@ -2155,41 +1674,13 @@
   "week": 9,
   "game": "401671809",
   "teams": "HOU–NYJ",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Garrett Wilson",
-   "team": "NYJ",
-   "opp": "HOU",
-   "pos": "WR",
-   "stat": "receptions",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 5.5,
-   "proj": 5.1,
-   "threshold": 3,
-   "ourP": 0.166,
-   "othP": 0.096,
-   "base": 0.046,
-   "lift": 3.56,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    13,
-    8,
-    5,
-    5
-   ],
-   "expVol": 9,
-   "actVol": 10,
-   "fitReasons": [
-    "25% of his targets are deep outside; this defense allows 10.2 yds/target there (league 11.7)."
-   ],
-   "style": [],
-   "actual": 9,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": true
+   "line": 59.5,
+   "lift": 3.82
   }
  },
  {
@@ -2198,41 +1689,13 @@
   "week": 9,
   "game": "401671647",
   "teams": "IND–MIN",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Justin Jefferson",
-   "team": "MIN",
-   "opp": "IND",
-   "pos": "WR",
    "stat": "receptions",
    "dir": "UNDER",
    "line": 6.5,
-   "proj": 6.4,
-   "threshold": 3.3,
-   "ourP": 0.233,
-   "othP": 0.096,
-   "base": 0.046,
-   "lift": 5.01,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    6,
-    6,
-    7,
-    8
-   ],
-   "expVol": 9.4,
-   "actVol": 9,
-   "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 7,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 5.01
   }
  },
  {
@@ -2301,43 +1764,13 @@
   "week": 9,
   "game": "401671711",
   "teams": "NYG–WSH",
-  "pick": {
-   "name": "Terry McLaurin",
-   "team": "WSH",
-   "opp": "NYG",
-   "pos": "WR",
+  "pick": null,
+  "strongest": {
+   "name": "Malik Nabers",
    "stat": "receptions",
    "dir": "UNDER",
-   "line": 4.5,
-   "proj": 4.3,
-   "threshold": 3,
-   "ourP": 0.081,
-   "othP": 0.072,
-   "base": 0.046,
-   "lift": 1.74,
-   "drivers": [
-    "projected usage share",
-    "deep-target share",
-    "range width / line"
-   ],
-   "recent": [
-    4,
-    6,
-    6,
-    5
-   ],
-   "expVol": 6.5,
-   "actVol": 3,
-   "fitReasons": [
-    "28% of his targets are deep outside; this defense allows 13.4 yds/target there (league 11.7)."
-   ],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 2,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 6.5,
+   "lift": 4.09
   }
  },
  {
@@ -2347,35 +1780,37 @@
   "game": "401671678",
   "teams": "ARI–NYJ",
   "pick": {
-   "name": "Garrett Wilson",
-   "team": "NYJ",
-   "opp": "ARI",
-   "pos": "WR",
-   "stat": "rec_yds",
+   "name": "James Conner",
+   "team": "ARI",
+   "opp": "NYJ",
+   "pos": "RB",
+   "stat": "carries",
    "dir": "UNDER",
-   "line": 69.5,
-   "proj": 63.9,
-   "threshold": 34.8,
-   "ourP": 0.249,
-   "othP": 0.198,
-   "base": 0.075,
-   "lift": 3.34,
+   "line": 17.5,
+   "proj": 14.8,
+   "threshold": 7,
+   "ourP": 0.125,
+   "othP": 0.095,
+   "base": 0.081,
+   "lift": 1.53,
    "drivers": [
-    "projected usage share",
     "range width / line",
-    "deep-target share"
+    "explosive runner",
+    "team implied pts"
    ],
    "recent": [
-    107,
-    61,
-    113,
-    90
+    7,
+    19,
+    20,
+    18
    ],
-   "expVol": 9.1,
-   "actVol": 6,
+   "expVol": 14.8,
+   "actVol": 12,
    "fitReasons": [],
-   "style": [],
-   "actual": 41,
+   "style": [
+    "Explosive runner"
+   ],
+   "actual": 12,
    "won": true,
    "bigOurWay": false,
    "bigAgainst": false
@@ -2387,43 +1822,13 @@
   "week": 10,
   "game": "401671733",
   "teams": "ATL–NO",
-  "pick": {
-   "name": "Drake London",
-   "team": "ATL",
-   "opp": "NO",
-   "pos": "WR",
-   "stat": "receptions",
+  "pick": null,
+  "strongest": {
+   "name": "Alvin Kamara",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 5.5,
-   "proj": 5.1,
-   "threshold": 3,
-   "ourP": 0.107,
-   "othP": 0.073,
-   "base": 0.046,
-   "lift": 2.31,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    6,
-    6,
-    4,
-    2
-   ],
-   "expVol": 7.4,
-   "actVol": 13,
-   "fitReasons": [
-    "43% of his targets are short outside; this defense allows 6.4 yds/target there (league 5.5)."
-   ],
-   "style": [
-    "Better vs zone"
-   ],
-   "actual": 8,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 69.5,
+   "lift": 3.68
   }
  },
  {
@@ -2476,37 +1881,39 @@
   "game": "401671863",
   "teams": "BUF–IND",
   "pick": {
-   "name": "James Cook III",
-   "team": "BUF",
-   "opp": "IND",
+   "name": "Jonathan Taylor",
+   "team": "IND",
+   "opp": "BUF",
    "pos": "RB",
-   "stat": "rush_yds",
+   "stat": "carries",
    "dir": "UNDER",
-   "line": 59.5,
-   "proj": 52.6,
-   "threshold": 30,
-   "ourP": 0.137,
-   "othP": 0.132,
-   "base": 0.064,
-   "lift": 2.16,
+   "line": 17.5,
+   "proj": 12.6,
+   "threshold": 7,
+   "ourP": 0.158,
+   "othP": 0.144,
+   "base": 0.081,
+   "lift": 1.95,
    "drivers": [
     "range width / line",
-    "run fit",
-    "small sample"
+    "explosive runner",
+    "run fit"
    ],
    "recent": [
-    82,
-    32,
-    111,
-    44
+    12,
+    23,
+    21,
+    13
    ],
-   "expVol": 12.4,
-   "actVol": 19,
-   "fitReasons": [],
+   "expVol": 12.6,
+   "actVol": 21,
+   "fitReasons": [
+    "Explosive runner vs a defense that gives up 10+ yard runs 13% of the time (league 11%)."
+   ],
    "style": [
-    "Receiving back"
+    "Explosive runner"
    ],
-   "actual": 80,
+   "actual": 21,
    "won": false,
    "bigOurWay": false,
    "bigAgainst": false
@@ -2746,23 +2153,23 @@
    "team": "SF",
    "opp": "TB",
    "pos": "WR",
-   "stat": "receptions",
+   "stat": "rec_yds",
    "dir": "OVER",
-   "line": 4.5,
-   "proj": 5,
-   "threshold": 3,
-   "ourP": 0.134,
-   "othP": 0.04,
-   "base": 0.07,
-   "lift": 1.9,
+   "line": 59.5,
+   "proj": 74,
+   "threshold": 30,
+   "ourP": 0.229,
+   "othP": 0.062,
+   "base": 0.141,
+   "lift": 1.62,
    "drivers": [
     "projected usage share",
     "small sample",
     "team implied pts"
    ],
    "recent": [
-    8,
-    1,
+    110,
+    11,
     0
    ],
    "expVol": 7.6,
@@ -2771,7 +2178,7 @@
    "style": [
     "Better vs zone"
    ],
-   "actual": 5,
+   "actual": 62,
    "won": true,
    "bigOurWay": false,
    "bigAgainst": false
@@ -2783,41 +2190,13 @@
   "week": 11,
   "game": "401671748",
   "teams": "ATL–DEN",
-  "pick": {
-   "name": "Courtland Sutton",
-   "team": "DEN",
-   "opp": "ATL",
-   "pos": "WR",
-   "stat": "rec_yds",
+  "pick": null,
+  "strongest": {
+   "name": "Darnell Mooney",
+   "stat": "receptions",
    "dir": "UNDER",
-   "line": 59.5,
-   "proj": 59.3,
-   "threshold": 30,
-   "ourP": 0.222,
-   "othP": 0.169,
-   "base": 0.075,
-   "lift": 2.97,
-   "drivers": [
-    "projected usage share",
-    "deep-target share",
-    "range width / line"
-   ],
-   "recent": [
-    53,
-    100,
-    122,
-    70
-   ],
-   "expVol": 8.3,
-   "actVol": 8,
-   "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 78,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 4.5,
+   "lift": 3.51
   }
  },
  {
@@ -2841,41 +2220,13 @@
   "week": 11,
   "game": "401671665",
   "teams": "BUF–KC",
-  "pick": {
-   "name": "Kareem Hunt",
-   "team": "KC",
-   "opp": "BUF",
-   "pos": "RB",
-   "stat": "rush_yds",
+  "pick": null,
+  "strongest": {
+   "name": "Travis Kelce",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 69.5,
-   "proj": 68.1,
-   "threshold": 31.3,
-   "ourP": 0.105,
-   "othP": 0.092,
-   "base": 0.064,
-   "lift": 1.66,
-   "drivers": [
-    "range width / line",
-    "explosive fit",
-    "run fit"
-   ],
-   "recent": [
-    78,
-    59,
-    106,
-    35
-   ],
-   "expVol": 16.5,
-   "actVol": 14,
-   "fitReasons": [],
-   "style": [
-    "Grinder (few long runs)"
-   ],
-   "actual": 60,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 59.5,
+   "lift": 2.15
   }
  },
  {
@@ -2914,41 +2265,13 @@
   "week": 11,
   "game": "401671746",
   "teams": "CLE–NO",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Alvin Kamara",
-   "team": "NO",
-   "opp": "CLE",
-   "pos": "RB",
-   "stat": "carries",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 16.5,
-   "proj": 15.5,
-   "threshold": 6.6,
-   "ourP": 0.166,
-   "othP": 0.131,
-   "base": 0.081,
-   "lift": 2.04,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "small sample"
-   ],
-   "recent": [
-    7,
-    10,
-    29,
-    17
-   ],
-   "expVol": 15.5,
-   "actVol": 16,
-   "fitReasons": [],
-   "style": [
-    "Receiving back"
-   ],
-   "actual": 16,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 69.5,
+   "lift": 2.86
   }
  },
  {
@@ -2972,42 +2295,13 @@
   "week": 11,
   "game": "401671642",
   "teams": "DET–JAX",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Jahmyr Gibbs",
-   "team": "DET",
-   "opp": "JAX",
-   "pos": "RB",
-   "stat": "carries",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 14.5,
-   "proj": 13.1,
-   "threshold": 6,
-   "ourP": 0.148,
-   "othP": 0.087,
-   "base": 0.081,
-   "lift": 1.81,
-   "drivers": [
-    "range width / line",
-    "explosive runner",
-    "expected margin"
-   ],
-   "recent": [
-    15,
-    11,
-    11,
-    19
-   ],
-   "expVol": 13.1,
-   "actVol": 11,
-   "fitReasons": [],
-   "style": [
-    "Explosive runner",
-    "Receiving back"
-   ],
-   "actual": 11,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 69.5,
+   "lift": 2.38
   }
  },
  {
@@ -3016,39 +2310,13 @@
   "week": 11,
   "game": "401671782",
   "teams": "IND–NYJ",
-  "pick": {
-   "name": "Garrett Wilson",
-   "team": "NYJ",
-   "opp": "IND",
-   "pos": "WR",
+  "pick": null,
+  "strongest": {
+   "name": "Davante Adams",
    "stat": "receptions",
    "dir": "UNDER",
    "line": 5.5,
-   "proj": 5.4,
-   "threshold": 3,
-   "ourP": 0.096,
-   "othP": 0.08,
-   "base": 0.046,
-   "lift": 2.06,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    5,
-    5,
-    9,
-    5
-   ],
-   "expVol": 8.4,
-   "actVol": 8,
-   "fitReasons": [],
-   "style": [],
-   "actual": 4,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 3
   }
  },
  {
@@ -3202,39 +2470,13 @@
   "week": 11,
   "game": "401671757",
   "teams": "SEA–SF",
-  "pick": {
-   "name": "Jauan Jennings",
-   "team": "SF",
-   "opp": "SEA",
-   "pos": "WR",
+  "pick": null,
+  "strongest": {
+   "name": "Jaxon Smith-Njigba",
    "stat": "rec_yds",
-   "dir": "OVER",
-   "line": 59.5,
-   "proj": 62.3,
-   "threshold": 30,
-   "ourP": 0.223,
-   "othP": 0.113,
-   "base": 0.141,
-   "lift": 1.58,
-   "drivers": [
-    "projected usage share",
-    "opp unit rating (rel)",
-    "team implied pts"
-   ],
-   "recent": [
-    37,
-    88,
-    13,
-    27
-   ],
-   "expVol": 6.6,
-   "actVol": 11,
-   "fitReasons": [],
-   "style": [],
-   "actual": 91,
-   "won": true,
-   "bigOurWay": true,
-   "bigAgainst": false
+   "dir": "UNDER",
+   "line": 49.5,
+   "lift": 2.62
   }
  },
  {
@@ -3243,41 +2485,13 @@
   "week": 12,
   "game": "401671775",
   "teams": "ARI–SEA",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "DK Metcalf",
-   "team": "SEA",
-   "opp": "ARI",
-   "pos": "WR",
-   "stat": "receptions",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 5.5,
-   "proj": 4.9,
-   "threshold": 3,
-   "ourP": 0.124,
-   "othP": 0.093,
-   "base": 0.046,
-   "lift": 2.68,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    7,
-    4,
-    3,
-    4
-   ],
-   "expVol": 8.1,
-   "actVol": 5,
-   "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 4,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 69.5,
+   "lift": 2.84
   }
  },
  {
@@ -3287,38 +2501,40 @@
   "game": "401671689",
   "teams": "BAL–LAC",
   "pick": {
-   "name": "Ladd McConkey",
+   "name": "J.K. Dobbins",
    "team": "LAC",
    "opp": "BAL",
-   "pos": "WR",
-   "stat": "rec_yds",
+   "pos": "RB",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 69.5,
-   "proj": 61.3,
-   "threshold": 34.8,
-   "ourP": 0.161,
-   "othP": 0.156,
-   "base": 0.075,
-   "lift": 2.16,
+   "line": 44.5,
+   "proj": 35.5,
+   "threshold": 30,
+   "ourP": 0.123,
+   "othP": 0.115,
+   "base": 0.064,
+   "lift": 1.94,
    "drivers": [
-    "projected usage share",
     "range width / line",
-    "deep-target share"
+    "explosive runner",
+    "explosive fit"
    ],
    "recent": [
-    111,
-    64,
-    52,
-    123
+    57,
+    85,
+    50,
+    56
    ],
-   "expVol": 7.2,
+   "expVol": 9.2,
    "actVol": 6,
-   "fitReasons": [],
-   "style": [
-    "Middle-of-field target"
+   "fitReasons": [
+    "Runs 81% inside; this defense allows 3.6 yds/carry inside and 4.8 outside (league 4.1 / 4.9)."
    ],
-   "actual": 83,
-   "won": false,
+   "style": [
+    "Explosive runner"
+   ],
+   "actual": 40,
+   "won": true,
    "bigOurWay": false,
    "bigAgainst": false
   }
@@ -3344,41 +2560,13 @@
   "week": 12,
   "game": "401671870",
   "teams": "CHI–MIN",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Justin Jefferson",
-   "team": "MIN",
-   "opp": "CHI",
-   "pos": "WR",
    "stat": "receptions",
    "dir": "UNDER",
    "line": 5.5,
-   "proj": 5,
-   "threshold": 3,
-   "ourP": 0.161,
-   "othP": 0.086,
-   "base": 0.046,
-   "lift": 3.45,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    8,
-    7,
-    5,
-    6
-   ],
-   "expVol": 7.5,
-   "actVol": 5,
-   "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 2,
-   "won": true,
-   "bigOurWay": true,
-   "bigAgainst": false
+   "lift": 3.45
   }
  },
  {
@@ -3402,41 +2590,13 @@
   "week": 12,
   "game": "401671715",
   "teams": "DAL–WSH",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "CeeDee Lamb",
-   "team": "DAL",
-   "opp": "WSH",
-   "pos": "WR",
-   "stat": "receptions",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 6.5,
-   "proj": 5.9,
-   "threshold": 3.3,
-   "ourP": 0.172,
-   "othP": 0.152,
-   "base": 0.046,
-   "lift": 3.7,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    13,
-    8,
-    6,
-    8
-   ],
-   "expVol": 8.8,
-   "actVol": 12,
-   "fitReasons": [],
-   "style": [
-    "Middle-of-field target"
-   ],
-   "actual": 10,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": true
+   "line": 69.5,
+   "lift": 3.8
   }
  },
  {
@@ -3445,41 +2605,13 @@
   "week": 12,
   "game": "401671656",
   "teams": "DEN–LV",
-  "pick": {
-   "name": "Courtland Sutton",
-   "team": "DEN",
-   "opp": "LV",
-   "pos": "WR",
-   "stat": "rec_yds",
+  "pick": null,
+  "strongest": {
+   "name": "Brock Bowers",
+   "stat": "receptions",
    "dir": "UNDER",
-   "line": 59.5,
-   "proj": 57.7,
-   "threshold": 30,
-   "ourP": 0.207,
-   "othP": 0.139,
-   "base": 0.075,
-   "lift": 2.78,
-   "drivers": [
-    "projected usage share",
-    "deep-target share",
-    "range width / line"
-   ],
-   "recent": [
-    100,
-    122,
-    70,
-    78
-   ],
-   "expVol": 7.7,
-   "actVol": 10,
-   "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 97,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": true
+   "line": 6.5,
+   "lift": 3.17
   }
  },
  {
@@ -3519,39 +2651,37 @@
   "game": "401671858",
   "teams": "HOU–TEN",
   "pick": {
-   "name": "Calvin Ridley",
-   "team": "TEN",
-   "opp": "HOU",
+   "name": "Nico Collins",
+   "team": "HOU",
+   "opp": "TEN",
    "pos": "WR",
-   "stat": "receptions",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 4.5,
-   "proj": 3.6,
-   "threshold": 3,
-   "ourP": 0.187,
-   "othP": 0.097,
-   "base": 0.046,
-   "lift": 4.03,
+   "line": 79.5,
+   "proj": 67.4,
+   "threshold": 39.8,
+   "ourP": 0.175,
+   "othP": 0.161,
+   "base": 0.075,
+   "lift": 2.35,
    "drivers": [
-    "deep-target share",
     "projected usage share",
+    "deep-target share",
     "range width / line"
    ],
    "recent": [
-    10,
-    5,
-    5,
-    4
+    135,
+    86,
+    151,
+    78
    ],
-   "expVol": 6.9,
-   "actVol": 6,
+   "expVol": 6.6,
+   "actVol": 9,
    "fitReasons": [],
    "style": [
-    "Deep threat",
-    "Outside receiver",
-    "Better vs zone"
+    "Deep threat"
    ],
-   "actual": 5,
+   "actual": 92,
    "won": false,
    "bigOurWay": false,
    "bigAgainst": false
@@ -3665,42 +2795,13 @@
   "week": 13,
   "game": "401671726",
   "teams": "ARI–MIN",
-  "pick": {
-   "name": "Marvin Harrison Jr.",
-   "team": "ARI",
-   "opp": "MIN",
-   "pos": "WR",
+  "pick": null,
+  "strongest": {
+   "name": "Trey McBride",
    "stat": "rec_yds",
    "dir": "UNDER",
    "line": 59.5,
-   "proj": 50.9,
-   "threshold": 30,
-   "ourP": 0.168,
-   "othP": 0.164,
-   "base": 0.075,
-   "lift": 2.26,
-   "drivers": [
-    "deep-target share",
-    "projected usage share",
-    "range width / line"
-   ],
-   "recent": [
-    111,
-    34,
-    54,
-    47
-   ],
-   "expVol": 6.1,
-   "actVol": 12,
-   "fitReasons": [],
-   "style": [
-    "Deep threat",
-    "Outside receiver"
-   ],
-   "actual": 60,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 2.45
   }
  },
  {
@@ -3710,40 +2811,41 @@
   "game": "401671649",
   "teams": "ATL–LAC",
   "pick": {
-   "name": "Drake London",
+   "name": "Darnell Mooney",
    "team": "ATL",
    "opp": "LAC",
    "pos": "WR",
-   "stat": "rec_yds",
+   "stat": "receptions",
    "dir": "UNDER",
-   "line": 69.5,
-   "proj": 60.9,
-   "threshold": 34.8,
-   "ourP": 0.238,
-   "othP": 0.17,
-   "base": 0.075,
-   "lift": 3.19,
+   "line": 4.5,
+   "proj": 3.5,
+   "threshold": 3,
+   "ourP": 0.126,
+   "othP": 0.063,
+   "base": 0.046,
+   "lift": 2.72,
    "drivers": [
-    "projected usage share",
     "range width / line",
+    "projected usage share",
     "deep-target share"
    ],
    "recent": [
-    34,
-    27,
-    97,
-    61
+    4,
+    5,
+    5,
+    2
    ],
-   "expVol": 7.3,
-   "actVol": 16,
+   "expVol": 6.1,
+   "actVol": 6,
    "fitReasons": [
-    "40% of his targets are short outside; this defense allows 4.8 yds/target there (league 5.5)."
+    "33% of his targets are short outside; this defense allows 4.8 yds/target there (league 5.5)."
    ],
    "style": [
+    "Deep threat",
     "Better vs zone"
    ],
-   "actual": 86,
-   "won": false,
+   "actual": 3,
+   "won": true,
    "bigOurWay": false,
    "bigAgainst": false
   }
@@ -3851,42 +2953,13 @@
   "week": 13,
   "game": "401671492",
   "teams": "CHI–DET",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Jahmyr Gibbs",
-   "team": "DET",
-   "opp": "CHI",
-   "pos": "RB",
    "stat": "rush_yds",
    "dir": "UNDER",
    "line": 69.5,
-   "proj": 64.6,
-   "threshold": 31.3,
-   "ourP": 0.17,
-   "othP": 0.147,
-   "base": 0.064,
-   "lift": 2.68,
-   "drivers": [
-    "explosive runner",
-    "range width / line",
-    "run fit"
-   ],
-   "recent": [
-    65,
-    71,
-    69,
-    90
-   ],
-   "expVol": 12.5,
-   "actVol": 9,
-   "fitReasons": [],
-   "style": [
-    "Explosive runner",
-    "Receiving back"
-   ],
-   "actual": 87,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 2.68
   }
  },
  {
@@ -3895,41 +2968,13 @@
   "week": 13,
   "game": "401671627",
   "teams": "CIN–PIT",
-  "pick": {
-   "name": "Ja'Marr Chase",
-   "team": "CIN",
-   "opp": "PIT",
-   "pos": "WR",
-   "stat": "receptions",
+  "pick": null,
+  "strongest": {
+   "name": "George Pickens",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 6.5,
-   "proj": 6,
-   "threshold": 3.3,
-   "ourP": 0.147,
-   "othP": 0.085,
-   "base": 0.046,
-   "lift": 3.17,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    9,
-    7,
-    11,
-    7
-   ],
-   "expVol": 8.7,
-   "actVol": 9,
-   "fitReasons": [],
-   "style": [
-    "Better vs zone"
-   ],
-   "actual": 6,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 69.5,
+   "lift": 3.24
   }
  },
  {
@@ -3981,39 +3026,13 @@
   "week": 13,
   "game": "401671779",
   "teams": "DAL–NYG",
-  "pick": {
-   "name": "Malik Nabers",
-   "team": "NYG",
-   "opp": "DAL",
-   "pos": "WR",
-   "stat": "rec_yds",
+  "pick": null,
+  "strongest": {
+   "name": "CeeDee Lamb",
+   "stat": "receptions",
    "dir": "UNDER",
-   "line": 69.5,
-   "proj": 61.6,
-   "threshold": 34.8,
-   "ourP": 0.254,
-   "othP": 0.22,
-   "base": 0.075,
-   "lift": 3.41,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    115,
-    59,
-    50,
-    64
-   ],
-   "expVol": 9.1,
-   "actVol": 13,
-   "fitReasons": [],
-   "style": [],
-   "actual": 69,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 6.5,
+   "lift": 5.75
   }
  },
  {
@@ -4027,25 +3046,25 @@
    "team": "MIA",
    "opp": "GB",
    "pos": "WR",
-   "stat": "rec_yds",
+   "stat": "receptions",
    "dir": "UNDER",
-   "line": 59.5,
-   "proj": 51.2,
-   "threshold": 30,
-   "ourP": 0.198,
-   "othP": 0.175,
-   "base": 0.075,
-   "lift": 2.65,
+   "line": 5.5,
+   "proj": 4,
+   "threshold": 3,
+   "ourP": 0.11,
+   "othP": 0.092,
+   "base": 0.046,
+   "lift": 2.37,
    "drivers": [
     "projected usage share",
-    "deep-target share",
-    "range width / line"
+    "range width / line",
+    "deep-target share"
    ],
    "recent": [
-    80,
-    16,
-    61,
-    48
+    4,
+    3,
+    7,
+    5
    ],
    "expVol": 6,
    "actVol": 9,
@@ -4054,7 +3073,7 @@
     "Deep threat",
     "Beats man coverage"
    ],
-   "actual": 83,
+   "actual": 6,
    "won": false,
    "bigOurWay": false,
    "bigAgainst": false
@@ -4111,39 +3130,13 @@
   "week": 13,
   "game": "401671620",
   "teams": "IND–NE",
-  "pick": {
-   "name": "Anthony Richardson Sr.",
-   "team": "IND",
-   "opp": "NE",
-   "pos": "QB",
-   "stat": "rush_yds",
+  "pick": null,
+  "strongest": {
+   "name": "Michael Pittman Jr.",
+   "stat": "receptions",
    "dir": "UNDER",
-   "line": 44.5,
-   "proj": 38.2,
-   "threshold": 30,
-   "ourP": 0.115,
-   "othP": 0.095,
-   "base": 0.064,
-   "lift": 1.81,
-   "drivers": [
-    "explosive runner",
-    "range width / line",
-    "small sample"
-   ],
-   "recent": [
-    24,
-    24,
-    45,
-    61
-   ],
-   "expVol": 8.6,
-   "actVol": 9,
-   "fitReasons": [],
-   "style": [],
-   "actual": 48,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 4.5,
+   "lift": 2.73
   }
  },
  {
@@ -4167,43 +3160,13 @@
   "week": 13,
   "game": "401671753",
   "teams": "LAR–NO",
-  "pick": {
-   "name": "Cooper Kupp",
-   "team": "LAR",
-   "opp": "NO",
-   "pos": "WR",
-   "stat": "receptions",
+  "pick": null,
+  "strongest": {
+   "name": "Puka Nacua",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 6.5,
-   "proj": 5.9,
-   "threshold": 3.3,
-   "ourP": 0.141,
-   "othP": 0.084,
-   "base": 0.046,
-   "lift": 3.04,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "man/zone fit"
-   ],
-   "recent": [
-    4,
-    7,
-    6,
-    8
-   ],
-   "expVol": 8.7,
-   "actVol": 6,
-   "fitReasons": [
-    "59% of his targets are short outside; this defense allows 6.4 yds/target there (league 5.5)."
-   ],
-   "style": [
-    "Better vs zone"
-   ],
-   "actual": 3,
-   "won": true,
-   "bigOurWay": true,
-   "bigAgainst": false
+   "line": 79.5,
+   "lift": 3.39
   }
  },
  {
@@ -4212,41 +3175,13 @@
   "week": 13,
   "game": "401671703",
   "teams": "NYJ–SEA",
-  "pick": {
-   "name": "DK Metcalf",
-   "team": "SEA",
-   "opp": "NYJ",
-   "pos": "WR",
-   "stat": "rec_yds",
+  "pick": null,
+  "strongest": {
+   "name": "Davante Adams",
+   "stat": "receptions",
    "dir": "UNDER",
-   "line": 59.5,
-   "proj": 59.3,
-   "threshold": 30,
-   "ourP": 0.15,
-   "othP": 0.134,
-   "base": 0.075,
-   "lift": 2.02,
-   "drivers": [
-    "projected usage share",
-    "deep-target share",
-    "small sample"
-   ],
-   "recent": [
-    55,
-    48,
-    99,
-    59
-   ],
-   "expVol": 6.9,
-   "actVol": 9,
-   "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 66,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 5.5,
+   "lift": 2.66
   }
  },
  {
@@ -4301,39 +3236,38 @@
   "game": "401671660",
   "teams": "ARI–SEA",
   "pick": {
-   "name": "Marvin Harrison Jr.",
+   "name": "James Conner",
    "team": "ARI",
    "opp": "SEA",
-   "pos": "WR",
-   "stat": "rec_yds",
+   "pos": "RB",
+   "stat": "carries",
    "dir": "UNDER",
-   "line": 49.5,
-   "proj": 49,
-   "threshold": 30,
-   "ourP": 0.176,
-   "othP": 0.157,
-   "base": 0.075,
-   "lift": 2.36,
+   "line": 15.5,
+   "proj": 13,
+   "threshold": 6.2,
+   "ourP": 0.122,
+   "othP": 0.105,
+   "base": 0.081,
+   "lift": 1.5,
    "drivers": [
-    "deep-target share",
-    "projected usage share",
-    "range width / line"
+    "range width / line",
+    "explosive runner",
+    "run fit"
    ],
    "recent": [
-    34,
-    54,
-    47,
-    60
+    18,
+    12,
+    7,
+    17
    ],
-   "expVol": 6.6,
-   "actVol": 8,
+   "expVol": 13,
+   "actVol": 18,
    "fitReasons": [],
    "style": [
-    "Deep threat",
-    "Outside receiver"
+    "Receiving back"
    ],
-   "actual": 49,
-   "won": true,
+   "actual": 18,
+   "won": false,
    "bigOurWay": false,
    "bigAgainst": false
   }
@@ -4402,41 +3336,13 @@
   "week": 14,
   "game": "401671713",
   "teams": "CAR–PHI",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Saquon Barkley",
-   "team": "PHI",
-   "opp": "CAR",
-   "pos": "RB",
-   "stat": "carries",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 20.5,
-   "proj": 19,
-   "threshold": 8.2,
-   "ourP": 0.214,
-   "othP": 0.134,
-   "base": 0.081,
-   "lift": 2.63,
-   "drivers": [
-    "range width / line",
-    "projected usage share",
-    "run fit"
-   ],
-   "recent": [
-    14,
-    26,
-    26,
-    23
-   ],
-   "expVol": 19,
-   "actVol": 20,
-   "fitReasons": [
-    "Runs 82% inside; this defense allows 4.4 yds/carry inside and 5.4 outside (league 4.2 / 4.9)."
-   ],
-   "style": [],
-   "actual": 20,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 99.5,
+   "lift": 3.82
   }
  },
  {
@@ -4445,41 +3351,13 @@
   "week": 14,
   "game": "401671774",
   "teams": "CHI–SF",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "DJ Moore",
-   "team": "CHI",
-   "opp": "SF",
-   "pos": "WR",
    "stat": "rec_yds",
    "dir": "UNDER",
    "line": 59.5,
-   "proj": 58.4,
-   "threshold": 30,
-   "ourP": 0.257,
-   "othP": 0.157,
-   "base": 0.075,
-   "lift": 3.45,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    33,
-    24,
-    62,
-    106
-   ],
-   "expVol": 7.9,
-   "actVol": 8,
-   "fitReasons": [
-    "18% of his targets are deep outside; this defense allows 9.7 yds/target there (league 11.6)."
-   ],
-   "style": [],
-   "actual": 49,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 3.45
   }
  },
  {
@@ -4488,39 +3366,13 @@
   "week": 14,
   "game": "401671690",
   "teams": "CIN–DAL",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "CeeDee Lamb",
-   "team": "DAL",
-   "opp": "CIN",
-   "pos": "WR",
-   "stat": "receptions",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 6.5,
-   "proj": 5.8,
-   "threshold": 3.3,
-   "ourP": 0.13,
-   "othP": 0.114,
-   "base": 0.046,
-   "lift": 2.79,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    6,
-    8,
-    10,
-    2
-   ],
-   "expVol": 8.7,
-   "actVol": 7,
-   "fitReasons": [],
-   "style": [],
-   "actual": 6,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 69.5,
+   "lift": 3.1
   }
  },
  {
@@ -4529,41 +3381,13 @@
   "week": 14,
   "game": "401671631",
   "teams": "CLE–PIT",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Jerry Jeudy",
-   "team": "CLE",
-   "opp": "PIT",
-   "pos": "WR",
-   "stat": "receptions",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 5.5,
-   "proj": 4.7,
-   "threshold": 3,
-   "ourP": 0.133,
-   "othP": 0.083,
-   "base": 0.046,
-   "lift": 2.85,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    1,
-    6,
-    6,
-    9
-   ],
-   "expVol": 7.7,
-   "actVol": 6,
-   "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 5,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 69.5,
+   "lift": 3.22
   }
  },
  {
@@ -4573,39 +3397,40 @@
   "game": "401671814",
   "teams": "DET–GB",
   "pick": {
-   "name": "Jayden Reed",
-   "team": "GB",
-   "opp": "DET",
-   "pos": "WR",
-   "stat": "receptions",
+   "name": "Jahmyr Gibbs",
+   "team": "DET",
+   "opp": "GB",
+   "pos": "RB",
+   "stat": "carries",
    "dir": "UNDER",
-   "line": 4.5,
-   "proj": 3.8,
-   "threshold": 3,
-   "ourP": 0.106,
-   "othP": 0.08,
-   "base": 0.046,
-   "lift": 2.29,
+   "line": 12.5,
+   "proj": 10.1,
+   "threshold": 6,
+   "ourP": 0.126,
+   "othP": 0.096,
+   "base": 0.081,
+   "lift": 1.55,
    "drivers": [
     "range width / line",
-    "projected usage share",
-    "deep-target share"
+    "explosive runner",
+    "small sample"
    ],
    "recent": [
-    7,
-    4,
-    6,
-    2
+    19,
+    11,
+    21,
+    9
    ],
-   "expVol": 5.6,
-   "actVol": 1,
+   "expVol": 10.1,
+   "actVol": 15,
    "fitReasons": [],
    "style": [
-    "Better vs zone"
+    "Explosive runner",
+    "Receiving back"
    ],
-   "actual": 0,
-   "won": true,
-   "bigOurWay": true,
+   "actual": 15,
+   "won": false,
+   "bigOurWay": false,
    "bigAgainst": false
   }
  },
@@ -4661,42 +3486,13 @@
   "week": 14,
   "game": "401671788",
   "teams": "KC–LAC",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Travis Kelce",
-   "team": "KC",
-   "opp": "LAC",
-   "pos": "TE",
    "stat": "rec_yds",
    "dir": "UNDER",
    "line": 59.5,
-   "proj": 53.8,
-   "threshold": 30,
-   "ourP": 0.175,
-   "othP": 0.152,
-   "base": 0.075,
-   "lift": 2.35,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "man/zone fit"
-   ],
-   "recent": [
-    64,
-    8,
-    62,
-    68
-   ],
-   "expVol": 8,
-   "actVol": 6,
-   "fitReasons": [],
-   "style": [
-    "Middle-of-field target",
-    "Better vs zone"
-   ],
-   "actual": 45,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 2.35
   }
  },
  {
@@ -4705,42 +3501,13 @@
   "week": 14,
   "game": "401671654",
   "teams": "LV–TB",
-  "pick": {
-   "name": "Mike Evans",
-   "team": "TB",
-   "opp": "LV",
-   "pos": "WR",
-   "stat": "receptions",
+  "pick": null,
+  "strongest": {
+   "name": "Brock Bowers",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 5.5,
-   "proj": 4.8,
-   "threshold": 3,
-   "ourP": 0.11,
-   "othP": 0.098,
-   "base": 0.046,
-   "lift": 2.37,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    5,
-    2,
-    1,
-    8
-   ],
-   "expVol": 8,
-   "actVol": 5,
-   "fitReasons": [],
-   "style": [
-    "Deep threat",
-    "Better vs zone"
-   ],
-   "actual": 4,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 69.5,
+   "lift": 4.1
   }
  },
  {
@@ -4749,42 +3516,13 @@
   "week": 14,
   "game": "401671848",
   "teams": "MIA–NYJ",
-  "pick": {
-   "name": "Tyreek Hill",
-   "team": "MIA",
-   "opp": "NYJ",
-   "pos": "WR",
-   "stat": "rec_yds",
+  "pick": null,
+  "strongest": {
+   "name": "Davante Adams",
+   "stat": "receptions",
    "dir": "UNDER",
-   "line": 59.5,
-   "proj": 55.3,
-   "threshold": 30,
-   "ourP": 0.189,
-   "othP": 0.154,
-   "base": 0.075,
-   "lift": 2.54,
-   "drivers": [
-    "projected usage share",
-    "deep-target share",
-    "range width / line"
-   ],
-   "recent": [
-    16,
-    61,
-    48,
-    83
-   ],
-   "expVol": 6.3,
-   "actVol": 14,
-   "fitReasons": [],
-   "style": [
-    "Deep threat",
-    "Beats man coverage"
-   ],
-   "actual": 115,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": true
+   "line": 5.5,
+   "lift": 4.02
   }
  },
  {
@@ -4793,43 +3531,13 @@
   "week": 14,
   "game": "401671601",
   "teams": "NO–NYG",
-  "pick": {
-   "name": "Alvin Kamara",
-   "team": "NO",
-   "opp": "NYG",
-   "pos": "RB",
-   "stat": "carries",
+  "pick": null,
+  "strongest": {
+   "name": "Malik Nabers",
+   "stat": "receptions",
    "dir": "UNDER",
-   "line": 18.5,
-   "proj": 16.2,
-   "threshold": 7.4,
-   "ourP": 0.194,
-   "othP": 0.15,
-   "base": 0.081,
-   "lift": 2.39,
-   "drivers": [
-    "range width / line",
-    "projected usage share",
-    "run fit"
-   ],
-   "recent": [
-    29,
-    17,
-    16,
-    23
-   ],
-   "expVol": 16.2,
-   "actVol": 17,
-   "fitReasons": [
-    "Runs 71% inside; this defense allows 4.4 yds/carry inside and 5.3 outside (league 4.2 / 4.9)."
-   ],
-   "style": [
-    "Receiving back"
-   ],
-   "actual": 17,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 5.5,
+   "lift": 6.01
   }
  },
  {
@@ -4843,25 +3551,25 @@
    "team": "ARI",
    "opp": "NE",
    "pos": "WR",
-   "stat": "receptions",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 4.5,
-   "proj": 3.7,
-   "threshold": 3,
-   "ourP": 0.142,
-   "othP": 0.061,
-   "base": 0.046,
-   "lift": 3.05,
+   "line": 59.5,
+   "proj": 48.7,
+   "threshold": 30,
+   "ourP": 0.221,
+   "othP": 0.135,
+   "base": 0.075,
+   "lift": 2.96,
    "drivers": [
     "deep-target share",
     "projected usage share",
     "range width / line"
    ],
    "recent": [
-    5,
-    3,
-    5,
-    4
+    54,
+    47,
+    60,
+    49
    ],
    "expVol": 6.2,
    "actVol": 6,
@@ -4870,7 +3578,7 @@
     "Deep threat",
     "Outside receiver"
    ],
-   "actual": 2,
+   "actual": 32,
    "won": true,
    "bigOurWay": false,
    "bigAgainst": false
@@ -4897,44 +3605,13 @@
   "week": 15,
   "game": "401671639",
   "teams": "BAL–NYG",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Zay Flowers",
-   "team": "BAL",
-   "opp": "NYG",
-   "pos": "WR",
    "stat": "rec_yds",
    "dir": "UNDER",
    "line": 59.5,
-   "proj": 58.8,
-   "threshold": 30,
-   "ourP": 0.188,
-   "othP": 0.135,
-   "base": 0.075,
-   "lift": 2.52,
-   "drivers": [
-    "projected usage share",
-    "deep-target share",
-    "man/zone fit"
-   ],
-   "recent": [
-    34,
-    39,
-    62,
-    74
-   ],
-   "expVol": 6.5,
-   "actVol": 7,
-   "fitReasons": [
-    "25% of his targets are deep outside; this defense allows 13.2 yds/target there (league 11.5)."
-   ],
-   "style": [
-    "Deep threat",
-    "Better vs zone"
-   ],
-   "actual": 53,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 2.52
   }
  },
  {
@@ -4943,44 +3620,13 @@
   "week": 15,
   "game": "401671681",
   "teams": "BUF–DET",
-  "pick": {
-   "name": "Jahmyr Gibbs",
-   "team": "DET",
-   "opp": "BUF",
-   "pos": "RB",
-   "stat": "carries",
+  "pick": null,
+  "strongest": {
+   "name": "Jameson Williams",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 12.5,
-   "proj": 10.8,
-   "threshold": 6,
-   "ourP": 0.134,
-   "othP": 0.125,
-   "base": 0.081,
-   "lift": 1.65,
-   "drivers": [
-    "range width / line",
-    "explosive runner",
-    "run fit"
-   ],
-   "recent": [
-    11,
-    21,
-    9,
-    15
-   ],
-   "expVol": 10.8,
-   "actVol": 8,
-   "fitReasons": [
-    "Explosive runner vs a defense that gives up 10+ yard runs 13% of the time (league 11%)."
-   ],
-   "style": [
-    "Explosive runner",
-    "Receiving back"
-   ],
-   "actual": 8,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 49.5,
+   "lift": 2.21
   }
  },
  {
@@ -5030,43 +3676,13 @@
   "week": 15,
   "game": "401671489",
   "teams": "CHI–MIN",
-  "pick": {
-   "name": "Justin Jefferson",
-   "team": "MIN",
-   "opp": "CHI",
-   "pos": "WR",
+  "pick": null,
+  "strongest": {
+   "name": "DJ Moore",
    "stat": "receptions",
    "dir": "UNDER",
    "line": 5.5,
-   "proj": 5,
-   "threshold": 3,
-   "ourP": 0.136,
-   "othP": 0.085,
-   "base": 0.046,
-   "lift": 2.92,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    6,
-    2,
-    7,
-    7
-   ],
-   "expVol": 7.4,
-   "actVol": 14,
-   "fitReasons": [
-    "24% of his targets are deep outside; this defense allows 13.5 yds/target there (league 11.5)."
-   ],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 7,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 3.79
   }
  },
  {
@@ -5075,42 +3691,13 @@
   "week": 15,
   "game": "401671825",
   "teams": "CIN–TEN",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Calvin Ridley",
-   "team": "TEN",
-   "opp": "CIN",
-   "pos": "WR",
-   "stat": "rec_yds",
+   "stat": "receptions",
    "dir": "UNDER",
-   "line": 69.5,
-   "proj": 64.4,
-   "threshold": 34.8,
-   "ourP": 0.408,
-   "othP": 0.217,
-   "base": 0.075,
-   "lift": 5.47,
-   "drivers": [
-    "projected usage share",
-    "deep-target share",
-    "range width / line"
-   ],
-   "recent": [
-    58,
-    93,
-    45,
-    59
-   ],
-   "expVol": 8.5,
-   "actVol": 5,
-   "fitReasons": [],
-   "style": [
-    "Deep threat",
-    "Better vs zone"
-   ],
-   "actual": 41,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 4.5,
+   "lift": 6.41
   }
  },
  {
@@ -5134,41 +3721,13 @@
   "week": 15,
   "game": "401671669",
   "teams": "DEN–IND",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Courtland Sutton",
-   "team": "DEN",
-   "opp": "IND",
-   "pos": "WR",
    "stat": "rec_yds",
    "dir": "UNDER",
    "line": 69.5,
-   "proj": 65.3,
-   "threshold": 34.8,
-   "ourP": 0.27,
-   "othP": 0.157,
-   "base": 0.075,
-   "lift": 3.62,
-   "drivers": [
-    "projected usage share",
-    "deep-target share",
-    "range width / line"
-   ],
-   "recent": [
-    70,
-    78,
-    97,
-    102
-   ],
-   "expVol": 8.2,
-   "actVol": 9,
-   "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 32,
-   "won": true,
-   "bigOurWay": true,
-   "bigAgainst": false
+   "lift": 3.62
   }
  },
  {
@@ -5192,42 +3751,13 @@
   "week": 15,
   "game": "401671860",
   "teams": "HOU–MIA",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Tyreek Hill",
-   "team": "MIA",
-   "opp": "HOU",
-   "pos": "WR",
    "stat": "rec_yds",
    "dir": "UNDER",
    "line": 79.5,
-   "proj": 78.7,
-   "threshold": 39.8,
-   "ourP": 0.34,
-   "othP": 0.194,
-   "base": 0.075,
-   "lift": 4.56,
-   "drivers": [
-    "projected usage share",
-    "deep-target share",
-    "range width / line"
-   ],
-   "recent": [
-    61,
-    48,
-    83,
-    115
-   ],
-   "expVol": 9.2,
-   "actVol": 7,
-   "fitReasons": [],
-   "style": [
-    "Deep threat",
-    "Beats man coverage"
-   ],
-   "actual": 36,
-   "won": true,
-   "bigOurWay": true,
-   "bigAgainst": false
+   "lift": 4.56
   }
  },
  {
@@ -5236,41 +3766,13 @@
   "week": 15,
   "game": "401671706",
   "teams": "JAX–NYJ",
-  "pick": {
-   "name": "Garrett Wilson",
-   "team": "NYJ",
-   "opp": "JAX",
-   "pos": "WR",
-   "stat": "receptions",
+  "pick": null,
+  "strongest": {
+   "name": "Davante Adams",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 5.5,
-   "proj": 4.8,
-   "threshold": 3,
-   "ourP": 0.101,
-   "othP": 0.096,
-   "base": 0.046,
-   "lift": 2.18,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    5,
-    4,
-    5,
-    7
-   ],
-   "expVol": 7.6,
-   "actVol": 6,
-   "fitReasons": [
-    "22% of his targets are deep outside; this defense allows 13.9 yds/target there (league 11.5)."
-   ],
-   "style": [],
-   "actual": 3,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 69.5,
+   "lift": 2.27
   }
  },
  {
@@ -5279,42 +3781,13 @@
   "week": 15,
   "game": "401671762",
   "teams": "LAC–TB",
-  "pick": {
-   "name": "Mike Evans",
-   "team": "TB",
-   "opp": "LAC",
-   "pos": "WR",
+  "pick": null,
+  "strongest": {
+   "name": "Ladd McConkey",
    "stat": "rec_yds",
    "dir": "UNDER",
    "line": 69.5,
-   "proj": 67.9,
-   "threshold": 34.8,
-   "ourP": 0.237,
-   "othP": 0.146,
-   "base": 0.075,
-   "lift": 3.18,
-   "drivers": [
-    "projected usage share",
-    "deep-target share",
-    "range width / line"
-   ],
-   "recent": [
-    34,
-    25,
-    118,
-    69
-   ],
-   "expVol": 7.2,
-   "actVol": 11,
-   "fitReasons": [],
-   "style": [
-    "Deep threat",
-    "Better vs zone"
-   ],
-   "actual": 159,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": true
+   "lift": 4.61
   }
  },
  {
@@ -5426,42 +3899,13 @@
   "week": 16,
   "game": "401671732",
   "teams": "ARI–CAR",
-  "pick": {
-   "name": "Marvin Harrison Jr.",
-   "team": "ARI",
-   "opp": "CAR",
-   "pos": "WR",
-   "stat": "rec_yds",
+  "pick": null,
+  "strongest": {
+   "name": "James Conner",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 49.5,
-   "proj": 44.1,
-   "threshold": 30,
-   "ourP": 0.16,
-   "othP": 0.134,
-   "base": 0.075,
-   "lift": 2.15,
-   "drivers": [
-    "deep-target share",
-    "projected usage share",
-    "range width / line"
-   ],
-   "recent": [
-    47,
-    60,
-    49,
-    32
-   ],
-   "expVol": 5.9,
-   "actVol": 8,
-   "fitReasons": [],
-   "style": [
-    "Deep threat",
-    "Outside receiver"
-   ],
-   "actual": 39,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 79.5,
+   "lift": 2.85
   }
  },
  {
@@ -5470,43 +3914,13 @@
   "week": 16,
   "game": "401671729",
   "teams": "ATL–NYG",
-  "pick": {
-   "name": "Drake London",
-   "team": "ATL",
-   "opp": "NYG",
-   "pos": "WR",
-   "stat": "rec_yds",
+  "pick": null,
+  "strongest": {
+   "name": "Malik Nabers",
+   "stat": "receptions",
    "dir": "UNDER",
-   "line": 69.5,
-   "proj": 65.5,
-   "threshold": 34.8,
-   "ourP": 0.237,
-   "othP": 0.182,
-   "base": 0.075,
-   "lift": 3.18,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    61,
-    86,
-    70,
-    53
-   ],
-   "expVol": 8.2,
-   "actVol": 8,
-   "fitReasons": [
-    "22% of his targets are deep outside; this defense allows 13.6 yds/target there (league 11.4)."
-   ],
-   "style": [
-    "Better vs zone"
-   ],
-   "actual": 59,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 6.5,
+   "lift": 4.8
   }
  },
  {
@@ -5545,39 +3959,13 @@
   "week": 16,
   "game": "401671868",
   "teams": "CHI–DET",
-  "pick": {
-   "name": "DJ Moore",
-   "team": "CHI",
-   "opp": "DET",
-   "pos": "WR",
-   "stat": "receptions",
+  "pick": null,
+  "strongest": {
+   "name": "Jahmyr Gibbs",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 5.5,
-   "proj": 5.4,
-   "threshold": 3,
-   "ourP": 0.098,
-   "othP": 0.089,
-   "base": 0.046,
-   "lift": 2.11,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "team implied pts"
-   ],
-   "recent": [
-    7,
-    7,
-    6,
-    8
-   ],
-   "expVol": 8,
-   "actVol": 10,
-   "fitReasons": [],
-   "style": [],
-   "actual": 7,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 89.5,
+   "lift": 3.35
   }
  },
  {
@@ -5586,41 +3974,13 @@
   "week": 16,
   "game": "401671811",
   "teams": "CIN–CLE",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Ja'Marr Chase",
-   "team": "CIN",
-   "opp": "CLE",
-   "pos": "WR",
    "stat": "receptions",
    "dir": "UNDER",
    "line": 7.5,
-   "proj": 6.9,
-   "threshold": 3.8,
-   "ourP": 0.204,
-   "othP": 0.106,
-   "base": 0.046,
-   "lift": 4.39,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    7,
-    6,
-    14,
-    9
-   ],
-   "expVol": 9.9,
-   "actVol": 8,
-   "fitReasons": [],
-   "style": [
-    "Better vs zone"
-   ],
-   "actual": 6,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 4.39
   }
  },
  {
@@ -5629,42 +3989,13 @@
   "week": 16,
   "game": "401671790",
   "teams": "DAL–TB",
-  "pick": {
-   "name": "Mike Evans",
-   "team": "TB",
-   "opp": "DAL",
-   "pos": "WR",
-   "stat": "rec_yds",
+  "pick": null,
+  "strongest": {
+   "name": "CeeDee Lamb",
+   "stat": "receptions",
    "dir": "UNDER",
-   "line": 79.5,
-   "proj": 73.4,
-   "threshold": 39.8,
-   "ourP": 0.307,
-   "othP": 0.232,
-   "base": 0.075,
-   "lift": 4.12,
-   "drivers": [
-    "projected usage share",
-    "deep-target share",
-    "range width / line"
-   ],
-   "recent": [
-    25,
-    118,
-    69,
-    159
-   ],
-   "expVol": 7.9,
-   "actVol": 8,
-   "fitReasons": [],
-   "style": [
-    "Deep threat",
-    "Better vs zone"
-   ],
-   "actual": 69,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 6.5,
+   "lift": 5.91
   }
  },
  {
@@ -5673,41 +4004,13 @@
   "week": 16,
   "game": "401671749",
   "teams": "DEN–LAC",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Courtland Sutton",
-   "team": "DEN",
-   "opp": "LAC",
-   "pos": "WR",
    "stat": "receptions",
    "dir": "UNDER",
    "line": 5.5,
-   "proj": 5.2,
-   "threshold": 3,
-   "ourP": 0.153,
-   "othP": 0.069,
-   "base": 0.046,
-   "lift": 3.29,
-   "drivers": [
-    "projected usage share",
-    "deep-target share",
-    "range width / line"
-   ],
-   "recent": [
-    7,
-    8,
-    6,
-    3
-   ],
-   "expVol": 8.4,
-   "actVol": 6,
-   "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 5,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 3.29
   }
  },
  {
@@ -5805,39 +4108,13 @@
   "week": 16,
   "game": "401671621",
   "teams": "LAR–NYJ",
-  "pick": {
-   "name": "Puka Nacua",
-   "team": "LAR",
-   "opp": "NYJ",
-   "pos": "WR",
+  "pick": null,
+  "strongest": {
+   "name": "Davante Adams",
    "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 89.5,
-   "proj": 87,
-   "threshold": 44.8,
-   "ourP": 0.222,
-   "othP": 0.215,
-   "base": 0.075,
-   "lift": 2.97,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    117,
-    56,
-    162,
-    97
-   ],
-   "expVol": 9.7,
-   "actVol": 9,
-   "fitReasons": [],
-   "style": [],
-   "actual": 56,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 69.5,
+   "lift": 4.93
   }
  },
  {
@@ -5893,40 +4170,40 @@
   "game": "401671759",
   "teams": "MIN–SEA",
   "pick": {
-   "name": "Justin Jefferson",
-   "team": "MIN",
-   "opp": "SEA",
+   "name": "DK Metcalf",
+   "team": "SEA",
+   "opp": "MIN",
    "pos": "WR",
-   "stat": "receptions",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 6.5,
-   "proj": 5.8,
-   "threshold": 3.3,
-   "ourP": 0.169,
-   "othP": 0.104,
-   "base": 0.046,
-   "lift": 3.64,
+   "line": 59.5,
+   "proj": 49.7,
+   "threshold": 30,
+   "ourP": 0.146,
+   "othP": 0.13,
+   "base": 0.075,
+   "lift": 1.96,
    "drivers": [
+    "deep-target share",
     "projected usage share",
-    "range width / line",
-    "deep-target share"
+    "range width / line"
    ],
    "recent": [
-    2,
-    7,
-    7,
-    7
+    59,
+    66,
+    49,
+    28
    ],
-   "expVol": 8.6,
-   "actVol": 13,
+   "expVol": 5.5,
+   "actVol": 7,
    "fitReasons": [],
    "style": [
     "Deep threat"
    ],
-   "actual": 10,
-   "won": false,
+   "actual": 57,
+   "won": true,
    "bigOurWay": false,
-   "bigAgainst": true
+   "bigAgainst": false
   }
  },
  {
@@ -5935,39 +4212,13 @@
   "week": 16,
   "game": "401671717",
   "teams": "PHI–WSH",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "A.J. Brown",
-   "team": "PHI",
-   "opp": "WSH",
-   "pos": "WR",
    "stat": "rec_yds",
    "dir": "UNDER",
    "line": 79.5,
-   "proj": 75.6,
-   "threshold": 39.8,
-   "ourP": 0.264,
-   "othP": 0.228,
-   "base": 0.075,
-   "lift": 3.54,
-   "drivers": [
-    "projected usage share",
-    "deep-target share",
-    "range width / line"
-   ],
-   "recent": [
-    109,
-    66,
-    43,
-    110
-   ],
-   "expVol": 7.9,
-   "actVol": 15,
-   "fitReasons": [],
-   "style": [],
-   "actual": 97,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 3.54
   }
  },
  {
@@ -5976,39 +4227,13 @@
   "week": 17,
   "game": "401671829",
   "teams": "ARI–LAR",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Puka Nacua",
-   "team": "LAR",
-   "opp": "ARI",
-   "pos": "WR",
    "stat": "receptions",
    "dir": "UNDER",
    "line": 7.5,
-   "proj": 6.7,
-   "threshold": 3.8,
-   "ourP": 0.239,
-   "othP": 0.125,
-   "base": 0.046,
-   "lift": 5.14,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    5,
-    12,
-    7,
-    8
-   ],
-   "expVol": 9.3,
-   "actVol": 14,
-   "fitReasons": [],
-   "style": [],
-   "actual": 10,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 5.14
   }
  },
  {
@@ -6032,41 +4257,13 @@
   "week": 17,
   "game": "401671800",
   "teams": "BAL–HOU",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Nico Collins",
-   "team": "HOU",
-   "opp": "BAL",
-   "pos": "WR",
    "stat": "rec_yds",
    "dir": "UNDER",
    "line": 89.5,
-   "proj": 85.2,
-   "threshold": 44.8,
-   "ourP": 0.212,
-   "othP": 0.206,
-   "base": 0.075,
-   "lift": 2.85,
-   "drivers": [
-    "projected usage share",
-    "deep-target share",
-    "range width / line"
-   ],
-   "recent": [
-    92,
-    119,
-    17,
-    60
-   ],
-   "expVol": 8.9,
-   "actVol": 6,
-   "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 59,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 2.85
   }
  },
  {
@@ -6105,39 +4302,13 @@
   "week": 17,
   "game": "401671876",
   "teams": "CHI–SEA",
-  "pick": {
-   "name": "DJ Moore",
-   "team": "CHI",
-   "opp": "SEA",
-   "pos": "WR",
-   "stat": "receptions",
+  "pick": null,
+  "strongest": {
+   "name": "Keenan Allen",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 5.5,
-   "proj": 5.2,
-   "threshold": 3,
-   "ourP": 0.127,
-   "othP": 0.089,
-   "base": 0.046,
-   "lift": 2.73,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    7,
-    6,
-    8,
-    7
-   ],
-   "expVol": 7.5,
-   "actVol": 8,
-   "fitReasons": [],
-   "style": [],
-   "actual": 6,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 59.5,
+   "lift": 2.83
   }
  },
  {
@@ -6146,41 +4317,13 @@
   "week": 17,
   "game": "401671835",
   "teams": "CIN–DEN",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Ja'Marr Chase",
-   "team": "CIN",
-   "opp": "DEN",
-   "pos": "WR",
-   "stat": "rec_yds",
+   "stat": "receptions",
    "dir": "UNDER",
-   "line": 99.5,
-   "proj": 98.3,
-   "threshold": 49.8,
-   "ourP": 0.305,
-   "othP": 0.204,
-   "base": 0.075,
-   "lift": 4.09,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    86,
-    177,
-    94,
-    97
-   ],
-   "expVol": 10.9,
-   "actVol": 15,
-   "fitReasons": [],
-   "style": [
-    "Better vs zone"
-   ],
-   "actual": 102,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 7.5,
+   "lift": 4.2
   }
  },
  {
@@ -6189,41 +4332,13 @@
   "week": 17,
   "game": "401671877",
   "teams": "CLE–MIA",
-  "pick": {
-   "name": "De'Von Achane",
-   "team": "MIA",
-   "opp": "CLE",
-   "pos": "RB",
-   "stat": "carries",
+  "pick": null,
+  "strongest": {
+   "name": "Tyreek Hill",
+   "stat": "receptions",
    "dir": "UNDER",
-   "line": 14.5,
-   "proj": 12.6,
-   "threshold": 6,
-   "ourP": 0.142,
-   "othP": 0.099,
-   "base": 0.081,
-   "lift": 1.74,
-   "drivers": [
-    "range width / line",
-    "projected usage share",
-    "run fit"
-   ],
-   "recent": [
-    7,
-    14,
-    12,
-    17
-   ],
-   "expVol": 12.6,
-   "actVol": 10,
-   "fitReasons": [],
-   "style": [
-    "Receiving back"
-   ],
-   "actual": 10,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 3.5,
+   "lift": 2.71
   }
  },
  {
@@ -6291,41 +4406,13 @@
   "week": 17,
   "game": "401671725",
   "teams": "GB–MIN",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Justin Jefferson",
-   "team": "MIN",
-   "opp": "GB",
-   "pos": "WR",
    "stat": "rec_yds",
    "dir": "UNDER",
    "line": 89.5,
-   "proj": 86.1,
-   "threshold": 44.8,
-   "ourP": 0.33,
-   "othP": 0.198,
-   "base": 0.075,
-   "lift": 4.42,
-   "drivers": [
-    "projected usage share",
-    "deep-target share",
-    "range width / line"
-   ],
-   "recent": [
-    99,
-    132,
-    73,
-    144
-   ],
-   "expVol": 8.9,
-   "actVol": 11,
-   "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 92,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 4.42
   }
  },
  {
@@ -6334,39 +4421,13 @@
   "week": 17,
   "game": "401671846",
   "teams": "IND–NYG",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Malik Nabers",
-   "team": "NYG",
-   "opp": "IND",
-   "pos": "WR",
    "stat": "receptions",
    "dir": "UNDER",
    "line": 6.5,
-   "proj": 6.4,
-   "threshold": 3.3,
-   "ourP": 0.142,
-   "othP": 0.092,
-   "base": 0.046,
-   "lift": 3.06,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    8,
-    5,
-    10,
-    7
-   ],
-   "expVol": 9.8,
-   "actVol": 8,
-   "fitReasons": [],
-   "style": [],
-   "actual": 7,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 3.06
   }
  },
  {
@@ -6522,44 +4583,13 @@
   "week": 18,
   "game": "401671845",
   "teams": "ARI–SF",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Marvin Harrison Jr.",
-   "team": "ARI",
-   "opp": "SF",
-   "pos": "WR",
-   "stat": "receptions",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 4.5,
-   "proj": 3.8,
-   "threshold": 3,
-   "ourP": 0.122,
-   "othP": 0.089,
-   "base": 0.046,
-   "lift": 2.63,
-   "drivers": [
-    "projected usage share",
-    "deep-target share",
-    "range width / line"
-   ],
-   "recent": [
-    4,
-    2,
-    4,
-    6
-   ],
-   "expVol": 6.8,
-   "actVol": 6,
-   "fitReasons": [
-    "38% of his targets are deep outside; this defense allows 9.4 yds/target there (league 11.5)."
-   ],
-   "style": [
-    "Deep threat",
-    "Outside receiver"
-   ],
-   "actual": 5,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 49.5,
+   "lift": 2.99
   }
  },
  {
@@ -6652,39 +4682,13 @@
   "week": 18,
   "game": "401671844",
   "teams": "CHI–GB",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "DJ Moore",
-   "team": "CHI",
-   "opp": "GB",
-   "pos": "WR",
    "stat": "rec_yds",
    "dir": "UNDER",
    "line": 59.5,
-   "proj": 55.9,
-   "threshold": 30,
-   "ourP": 0.191,
-   "othP": 0.183,
-   "base": 0.075,
-   "lift": 2.56,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "team implied pts"
-   ],
-   "recent": [
-    49,
-    46,
-    68,
-    54
-   ],
-   "expVol": 7.9,
-   "actVol": 10,
-   "fitReasons": [],
-   "style": [],
-   "actual": 86,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 2.56
   }
  },
  {
@@ -6693,41 +4697,13 @@
   "week": 18,
   "game": "401671836",
   "teams": "CIN–PIT",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Ja'Marr Chase",
-   "team": "CIN",
-   "opp": "PIT",
-   "pos": "WR",
    "stat": "rec_yds",
    "dir": "UNDER",
    "line": 99.5,
-   "proj": 95.2,
-   "threshold": 49.8,
-   "ourP": 0.284,
-   "othP": 0.225,
-   "base": 0.075,
-   "lift": 3.81,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    177,
-    94,
-    97,
-    102
-   ],
-   "expVol": 10.4,
-   "actVol": 14,
-   "fitReasons": [],
-   "style": [
-    "Better vs zone"
-   ],
-   "actual": 96,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 3.81
   }
  },
  {
@@ -6839,41 +4815,13 @@
   "week": 18,
   "game": "401671837",
   "teams": "IND–JAX",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Michael Pittman Jr.",
-   "team": "IND",
-   "opp": "JAX",
-   "pos": "WR",
    "stat": "receptions",
    "dir": "UNDER",
    "line": 5.5,
-   "proj": 5,
-   "threshold": 3,
-   "ourP": 0.11,
-   "othP": 0.098,
-   "base": 0.046,
-   "lift": 2.36,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "deep-target share"
-   ],
-   "recent": [
-    5,
-    6,
-    2,
-    9
-   ],
-   "expVol": 7.7,
-   "actVol": 10,
-   "fitReasons": [
-    "18% of his targets are intermediate outside; this defense allows 6.9 yds/target there (league 7.8)."
-   ],
-   "style": [],
-   "actual": 6,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 2.36
   }
  },
  {
@@ -7043,41 +4991,13 @@
   "week": 18,
   "game": "401671841",
   "teams": "NYG",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Malik Nabers",
-   "team": "NYG",
-   "opp": "PHI",
-   "pos": "WR",
-   "stat": "receptions",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 7.5,
-   "proj": 7,
-   "threshold": 3.8,
-   "ourP": 0.16,
-   "othP": 0.123,
-   "base": 0.046,
-   "lift": 3.44,
-   "drivers": [
-    "projected usage share",
-    "range width / line",
-    "team implied pts"
-   ],
-   "recent": [
-    5,
-    10,
-    7,
-    7
-   ],
-   "expVol": 11.2,
-   "actVol": 8,
-   "fitReasons": [
-    "45% of his targets are short outside; this defense allows 4.9 yds/target there (league 5.6)."
-   ],
-   "style": [],
-   "actual": 5,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 79.5,
+   "lift": 4.48
   }
  },
  {
@@ -7208,39 +5128,13 @@
   "week": 4,
   "game": "401772741",
   "teams": "BAL–KC",
-  "pick": {
-   "name": "Derrick Henry",
-   "team": "BAL",
-   "opp": "KC",
-   "pos": "RB",
-   "stat": "rush_yds",
+  "pick": null,
+  "strongest": {
+   "name": "Zay Flowers",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 79.5,
-   "proj": 74.2,
-   "threshold": 35.8,
-   "ourP": 0.178,
-   "othP": 0.167,
-   "base": 0.093,
-   "lift": 1.91,
-   "drivers": [
-    "range width / line",
-    "team implied pts",
-    "small sample"
-   ],
-   "recent": [
-    23,
-    50
-   ],
-   "expVol": 14.8,
-   "actVol": 8,
-   "fitReasons": [],
-   "style": [
-    "Explosive runner"
-   ],
-   "actual": 42,
-   "won": true,
-   "bigOurWay": true,
-   "bigAgainst": false
+   "line": 63.5,
+   "lift": 3.52
   }
  },
  {
@@ -7250,36 +5144,38 @@
   "game": "401772740",
   "teams": "BUF–NO",
   "pick": {
-   "name": "Chris Olave",
-   "team": "NO",
-   "opp": "BUF",
-   "pos": "WR",
-   "stat": "receptions",
+   "name": "James Cook III",
+   "team": "BUF",
+   "opp": "NO",
+   "pos": "RB",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 5.5,
-   "proj": 5,
-   "threshold": 3,
-   "ourP": 0.173,
-   "othP": 0.109,
-   "base": 0.054,
-   "lift": 3.23,
+   "line": 76.5,
+   "proj": 63.2,
+   "threshold": 34.4,
+   "ourP": 0.216,
+   "othP": 0.187,
+   "base": 0.093,
+   "lift": 2.32,
    "drivers": [
     "range width / line",
-    "expected margin",
-    "projected usage share"
+    "team implied pts",
+    "small sample"
    ],
    "recent": [
-    6,
-    10
+    132,
+    108
    ],
-   "expVol": 7.7,
-   "actVol": 6,
+   "expVol": 14.4,
+   "actVol": 22,
    "fitReasons": [],
-   "style": [],
-   "actual": 3,
-   "won": true,
+   "style": [
+    "Inside / between-the-tackles runner"
+   ],
+   "actual": 117,
+   "won": false,
    "bigOurWay": false,
-   "bigAgainst": false
+   "bigAgainst": true
   }
  },
  {
@@ -7303,40 +5199,13 @@
   "week": 4,
   "game": "401772742",
   "teams": "CHI–LV",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Jakobi Meyers",
-   "team": "LV",
-   "opp": "CHI",
-   "pos": "WR",
    "stat": "receptions",
    "dir": "UNDER",
    "line": 5.5,
-   "proj": 5,
-   "threshold": 3,
-   "ourP": 0.185,
-   "othP": 0.116,
-   "base": 0.054,
-   "lift": 3.44,
-   "drivers": [
-    "range width / line",
-    "projected usage share",
-    "opp unit rating (rel)"
-   ],
-   "recent": [
-    6,
-    3
-   ],
-   "expVol": 7.6,
-   "actVol": 7,
-   "fitReasons": [
-    "22% of his targets are deep outside; this defense allows 13.4 yds/target there (league 11.0).",
-    "This defense allows 8.9 yds/target to WRs (league 7.9)."
-   ],
-   "style": [],
-   "actual": 4,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 3.44
   }
  },
  {
@@ -7346,38 +5215,39 @@
   "game": "401772716",
   "teams": "CIN–DEN",
   "pick": {
-   "name": "J.K. Dobbins",
-   "team": "DEN",
-   "opp": "CIN",
+   "name": "Chase Brown",
+   "team": "CIN",
+   "opp": "DEN",
    "pos": "RB",
-   "stat": "rush_yds",
+   "stat": "carries",
    "dir": "UNDER",
-   "line": 64.5,
-   "proj": 56.9,
-   "threshold": 30,
-   "ourP": 0.194,
-   "othP": 0.157,
-   "base": 0.093,
-   "lift": 2.08,
+   "line": 16.5,
+   "proj": 12.7,
+   "threshold": 6.6,
+   "ourP": 0.188,
+   "othP": 0.085,
+   "base": 0.097,
+   "lift": 1.95,
    "drivers": [
     "range width / line",
-    "team implied pts",
+    "expected margin",
     "small sample"
    ],
    "recent": [
-    76,
-    83
+    16,
+    10
    ],
    "expVol": 12.7,
-   "actVol": 16,
+   "actVol": 10,
    "fitReasons": [],
    "style": [
-    "Explosive runner"
+    "Grinder (few long runs)",
+    "Receiving back"
    ],
-   "actual": 101,
-   "won": false,
+   "actual": 10,
+   "won": true,
    "bigOurWay": false,
-   "bigAgainst": true
+   "bigAgainst": false
   }
  },
  {
@@ -7387,36 +5257,39 @@
   "game": "401772846",
   "teams": "CLE–DET",
   "pick": {
-   "name": "Jerry Jeudy",
-   "team": "CLE",
-   "opp": "DET",
-   "pos": "WR",
-   "stat": "receptions",
+   "name": "Jahmyr Gibbs",
+   "team": "DET",
+   "opp": "CLE",
+   "pos": "RB",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 4.5,
-   "proj": 4,
-   "threshold": 3,
-   "ourP": 0.122,
-   "othP": 0.11,
-   "base": 0.054,
-   "lift": 2.28,
+   "line": 62.5,
+   "proj": 49.2,
+   "threshold": 30,
+   "ourP": 0.196,
+   "othP": 0.176,
+   "base": 0.093,
+   "lift": 2.1,
    "drivers": [
-    "expected margin",
-    "deep-target share",
-    "projected usage share"
+    "range width / line",
+    "team implied pts",
+    "small sample"
    ],
    "recent": [
-    4,
-    1
+    94,
+    67
    ],
-   "expVol": 6.6,
-   "actVol": 9,
-   "fitReasons": [],
+   "expVol": 12.4,
+   "actVol": 15,
+   "fitReasons": [
+    "Runs 66% inside; this defense allows 3.6 yds/carry inside and 4.9 outside (league 4.1 / 4.9)."
+   ],
    "style": [
-    "Deep threat"
+    "Explosive runner",
+    "Receiving back"
    ],
-   "actual": 3,
-   "won": true,
+   "actual": 91,
+   "won": false,
    "bigOurWay": false,
    "bigAgainst": false
   }
@@ -7428,36 +5301,33 @@
   "game": "401772921",
   "teams": "DAL–GB",
   "pick": {
-   "name": "Jake Ferguson",
-   "team": "DAL",
-   "opp": "GB",
-   "pos": "TE",
-   "stat": "receptions",
+   "name": "Josh Jacobs",
+   "team": "GB",
+   "opp": "DAL",
+   "pos": "RB",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 6.5,
-   "proj": 6.1,
-   "threshold": 3.3,
-   "ourP": 0.181,
-   "othP": 0.107,
-   "base": 0.054,
-   "lift": 3.38,
+   "line": 74.5,
+   "proj": 62.1,
+   "threshold": 33.5,
+   "ourP": 0.232,
+   "othP": 0.189,
+   "base": 0.093,
+   "lift": 2.48,
    "drivers": [
     "range width / line",
-    "expected margin",
-    "projected usage share"
+    "team implied pts",
+    "small sample"
    ],
    "recent": [
-    9,
-    13
+    84,
+    30
    ],
-   "expVol": 8.2,
-   "actVol": 7,
+   "expVol": 16.3,
+   "actVol": 22,
    "fitReasons": [],
-   "style": [
-    "Underneath / short-area",
-    "Better vs zone"
-   ],
-   "actual": 7,
+   "style": [],
+   "actual": 86,
    "won": false,
    "bigOurWay": false,
    "bigAgainst": false
@@ -7469,39 +5339,13 @@
   "week": 4,
   "game": "401772738",
   "teams": "HOU–TEN",
-  "pick": {
-   "name": "Calvin Ridley",
-   "team": "TEN",
-   "opp": "HOU",
-   "pos": "WR",
+  "pick": null,
+  "strongest": {
+   "name": "Nico Collins",
    "stat": "rec_yds",
-   "dir": "OVER",
-   "line": 45.5,
-   "proj": 49.9,
-   "threshold": 30,
-   "ourP": 0.253,
-   "othP": 0.102,
-   "base": 0.168,
-   "lift": 1.51,
-   "drivers": [
-    "projected usage share",
-    "model gap / line",
-    "deep-target share"
-   ],
-   "recent": [
-    57,
-    27
-   ],
-   "expVol": 7,
-   "actVol": 3,
-   "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 30,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "dir": "UNDER",
+   "line": 70.5,
+   "lift": 2.35
   }
  },
  {
@@ -7511,36 +5355,36 @@
   "game": "401772849",
   "teams": "IND–LAR",
   "pick": {
-   "name": "Puka Nacua",
-   "team": "LAR",
-   "opp": "IND",
-   "pos": "WR",
-   "stat": "rec_yds",
+   "name": "Jonathan Taylor",
+   "team": "IND",
+   "opp": "LAR",
+   "pos": "RB",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 90.5,
-   "proj": 83.9,
-   "threshold": 45.3,
-   "ourP": 0.375,
-   "othP": 0.276,
-   "base": 0.091,
-   "lift": 4.1,
+   "line": 86.5,
+   "proj": 65.7,
+   "threshold": 38.9,
+   "ourP": 0.302,
+   "othP": 0.209,
+   "base": 0.093,
+   "lift": 3.24,
    "drivers": [
-    "projected usage share",
     "range width / line",
-    "small sample"
+    "small sample",
+    "line vs his recent avg"
    ],
    "recent": [
-    91,
-    112
+    165,
+    102
    ],
-   "expVol": 9.9,
-   "actVol": 15,
+   "expVol": 15.2,
+   "actVol": 17,
    "fitReasons": [],
    "style": [],
-   "actual": 170,
-   "won": false,
+   "actual": 76,
+   "won": true,
    "bigOurWay": false,
-   "bigAgainst": true
+   "bigAgainst": false
   }
  },
  {
@@ -7634,38 +5478,34 @@
   "game": "401772813",
   "teams": "MIA–NYJ",
   "pick": {
-   "name": "Tyreek Hill",
+   "name": "Jaylen Waddle",
    "team": "MIA",
    "opp": "NYJ",
    "pos": "WR",
    "stat": "receptions",
    "dir": "UNDER",
-   "line": 5.5,
-   "proj": 4.6,
+   "line": 4.5,
+   "proj": 3.5,
    "threshold": 3,
-   "ourP": 0.183,
-   "othP": 0.112,
+   "ourP": 0.114,
+   "othP": 0.078,
    "base": 0.054,
-   "lift": 3.4,
+   "lift": 2.12,
    "drivers": [
     "range width / line",
-    "deep-target share",
+    "small sample",
     "projected usage share"
    ],
    "recent": [
-    6,
+    5,
     5
    ],
-   "expVol": 7.1,
+   "expVol": 5.2,
    "actVol": 6,
    "fitReasons": [],
-   "style": [
-    "Deep threat",
-    "Outside receiver",
-    "Better vs zone"
-   ],
-   "actual": 6,
-   "won": false,
+   "style": [],
+   "actual": 3,
+   "won": true,
    "bigOurWay": false,
    "bigAgainst": false
   }
@@ -7677,35 +5517,35 @@
   "game": "401772632",
   "teams": "MIN–PIT",
   "pick": {
-   "name": "Justin Jefferson",
-   "team": "MIN",
-   "opp": "PIT",
-   "pos": "WR",
-   "stat": "rec_yds",
+   "name": "Kenny Gainwell",
+   "team": "PIT",
+   "opp": "MIN",
+   "pos": "RB",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 74.5,
-   "proj": 69.2,
-   "threshold": 37.3,
-   "ourP": 0.259,
-   "othP": 0.223,
-   "base": 0.091,
-   "lift": 2.84,
+   "line": 50.5,
+   "proj": 24.4,
+   "threshold": 30,
+   "ourP": 0.226,
+   "othP": 0.131,
+   "base": 0.093,
+   "lift": 2.42,
    "drivers": [
-    "projected usage share",
-    "deep-target share",
+    "range width / line",
+    "expected margin",
     "small sample"
    ],
    "recent": [
-    81,
-    75
+    20,
+    16
    ],
-   "expVol": 8,
-   "actVol": 11,
+   "expVol": 5.8,
+   "actVol": 19,
    "fitReasons": [],
    "style": [
-    "Deep threat"
+    "Receiving back"
    ],
-   "actual": 126,
+   "actual": 99,
    "won": false,
    "bigOurWay": false,
    "bigAgainst": true
@@ -7761,39 +5601,38 @@
   "game": "401772747",
   "teams": "ARI–TEN",
   "pick": {
-   "name": "Marvin Harrison Jr.",
-   "team": "ARI",
-   "opp": "TEN",
+   "name": "Calvin Ridley",
+   "team": "TEN",
+   "opp": "ARI",
    "pos": "WR",
-   "stat": "receptions",
-   "dir": "UNDER",
-   "line": 4.5,
-   "proj": 3.8,
-   "threshold": 3,
-   "ourP": 0.116,
-   "othP": 0.113,
-   "base": 0.054,
-   "lift": 2.16,
+   "stat": "rec_yds",
+   "dir": "OVER",
+   "line": 30.5,
+   "proj": 45.8,
+   "threshold": 30,
+   "ourP": 0.264,
+   "othP": 0.033,
+   "base": 0.168,
+   "lift": 1.57,
    "drivers": [
-    "range width / line",
+    "model gap / line",
     "projected usage share",
     "deep-target share"
    ],
    "recent": [
-    2,
-    3,
-    6
+    57,
+    27,
+    30
    ],
-   "expVol": 6.3,
-   "actVol": 5,
+   "expVol": 6.8,
+   "actVol": 10,
    "fitReasons": [],
    "style": [
-    "Deep threat",
-    "Better vs zone"
+    "Deep threat"
    ],
-   "actual": 4,
+   "actual": 131,
    "won": true,
-   "bigOurWay": false,
+   "bigOurWay": true,
    "bigAgainst": false
   }
  },
@@ -7977,32 +5816,32 @@
    "team": "CLE",
    "opp": "MIN",
    "pos": "RB",
-   "stat": "rush_yds",
+   "stat": "carries",
    "dir": "UNDER",
-   "line": 73.5,
-   "proj": 65.6,
-   "threshold": 33.1,
-   "ourP": 0.235,
-   "othP": 0.175,
-   "base": 0.093,
-   "lift": 2.51,
+   "line": 19.5,
+   "proj": 15.2,
+   "threshold": 7.8,
+   "ourP": 0.197,
+   "othP": 0.087,
+   "base": 0.097,
+   "lift": 2.04,
    "drivers": [
     "range width / line",
     "expected margin",
     "small sample"
    ],
    "recent": [
-    94,
-    82
+    18,
+    21
    ],
    "expVol": 15.2,
    "actVol": 23,
    "fitReasons": [],
    "style": [],
-   "actual": 110,
+   "actual": 23,
    "won": false,
    "bigOurWay": false,
-   "bigAgainst": true
+   "bigAgainst": false
   }
  },
  {
@@ -8012,40 +5851,39 @@
   "game": "401772850",
   "teams": "DAL–NYJ",
   "pick": {
-   "name": "George Pickens",
-   "team": "DAL",
-   "opp": "NYJ",
-   "pos": "WR",
-   "stat": "receptions",
+   "name": "Breece Hall",
+   "team": "NYJ",
+   "opp": "DAL",
+   "pos": "RB",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 5.5,
-   "proj": 4.8,
-   "threshold": 3,
-   "ourP": 0.199,
-   "othP": 0.113,
-   "base": 0.054,
-   "lift": 3.72,
+   "line": 71.5,
+   "proj": 42.8,
+   "threshold": 32.2,
+   "ourP": 0.332,
+   "othP": 0.138,
+   "base": 0.093,
+   "lift": 3.56,
    "drivers": [
     "range width / line",
-    "projected usage share",
-    "deep-target share"
+    "team implied pts",
+    "small sample"
    ],
    "recent": [
-    5,
-    5,
-    8
+    29,
+    21,
+    81
    ],
-   "expVol": 7.7,
-   "actVol": 4,
+   "expVol": 11.2,
+   "actVol": 14,
    "fitReasons": [],
    "style": [
-    "Deep threat",
-    "Outside receiver"
+    "Receiving back"
    ],
-   "actual": 2,
-   "won": true,
-   "bigOurWay": true,
-   "bigAgainst": false
+   "actual": 113,
+   "won": false,
+   "bigOurWay": false,
+   "bigAgainst": true
   }
  },
  {
@@ -8150,35 +5988,36 @@
   "game": "401772853",
   "teams": "LAC–WSH",
   "pick": {
-   "name": "Omarion Hampton",
+   "name": "Keenan Allen",
    "team": "LAC",
    "opp": "WSH",
-   "pos": "RB",
-   "stat": "rush_yds",
+   "pos": "WR",
+   "stat": "receptions",
    "dir": "UNDER",
-   "line": 68.5,
-   "proj": 66.8,
-   "threshold": 30.8,
-   "ourP": 0.194,
-   "othP": 0.179,
-   "base": 0.093,
-   "lift": 2.08,
+   "line": 5.5,
+   "proj": 3.9,
+   "threshold": 3,
+   "ourP": 0.11,
+   "othP": 0.086,
+   "base": 0.054,
+   "lift": 2.04,
    "drivers": [
     "range width / line",
+    "projected usage share",
     "small sample"
    ],
    "recent": [
-    24,
-    70,
-    128
+    5,
+    7,
+    5
    ],
-   "expVol": 16.7,
-   "actVol": 12,
+   "expVol": 6.3,
+   "actVol": 9,
    "fitReasons": [],
    "style": [
-    "Receiving back"
+    "Better vs zone"
    ],
-   "actual": 44,
+   "actual": 5,
    "won": true,
    "bigOurWay": false,
    "bigAgainst": false
@@ -8191,35 +6030,37 @@
   "game": "401772939",
   "teams": "LAR–SF",
   "pick": {
-   "name": "Puka Nacua",
-   "team": "LAR",
-   "opp": "SF",
-   "pos": "WR",
+   "name": "Christian McCaffrey",
+   "team": "SF",
+   "opp": "LAR",
+   "pos": "RB",
    "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 93.5,
-   "proj": 93.1,
-   "threshold": 46.8,
-   "ourP": 0.315,
-   "othP": 0.312,
+   "line": 57.5,
+   "proj": 46.1,
+   "threshold": 30,
+   "ourP": 0.214,
+   "othP": 0.187,
    "base": 0.091,
-   "lift": 3.44,
+   "lift": 2.34,
    "drivers": [
-    "projected usage share",
     "range width / line",
+    "projected usage share",
     "small sample"
    ],
    "recent": [
-    91,
-    112,
-    170
+    52,
+    88,
+    92
    ],
-   "expVol": 10.3,
-   "actVol": 12,
+   "expVol": 7.7,
+   "actVol": 9,
    "fitReasons": [],
-   "style": [],
-   "actual": 85,
-   "won": true,
+   "style": [
+    "Receiving back"
+   ],
+   "actual": 82,
+   "won": false,
    "bigOurWay": false,
    "bigAgainst": false
   }
@@ -8393,37 +6234,39 @@
   "game": "401772855",
   "teams": "BAL–LAR",
   "pick": {
-   "name": "Puka Nacua",
-   "team": "LAR",
-   "opp": "BAL",
+   "name": "Zay Flowers",
+   "team": "BAL",
+   "opp": "LAR",
    "pos": "WR",
-   "stat": "receptions",
-   "dir": "UNDER",
-   "line": 8.5,
-   "proj": 8.4,
-   "threshold": 4.3,
-   "ourP": 0.203,
-   "othP": 0.162,
-   "base": 0.054,
-   "lift": 3.79,
+   "stat": "rec_yds",
+   "dir": "OVER",
+   "line": 46.5,
+   "proj": 69.6,
+   "threshold": 30,
+   "ourP": 0.312,
+   "othP": 0.101,
+   "base": 0.168,
+   "lift": 1.86,
    "drivers": [
-    "range width / line",
+    "model gap / line",
     "projected usage share",
     "team implied pts"
    ],
    "recent": [
-    8,
-    11,
+    75,
     13,
-    10
+    74,
+    72
    ],
-   "expVol": 11.2,
-   "actVol": 3,
+   "expVol": 7.1,
+   "actVol": 10,
    "fitReasons": [],
-   "style": [],
-   "actual": 2,
-   "won": true,
-   "bigOurWay": true,
+   "style": [
+    "Deep threat"
+   ],
+   "actual": 46,
+   "won": false,
+   "bigOurWay": false,
    "bigAgainst": false
   }
  },
@@ -8434,42 +6277,41 @@
   "game": "401772858",
   "teams": "CAR–DAL",
   "pick": {
-   "name": "Tetairoa McMillan",
-   "team": "CAR",
-   "opp": "DAL",
-   "pos": "WR",
-   "stat": "receptions",
+   "name": "Javonte Williams",
+   "team": "DAL",
+   "opp": "CAR",
+   "pos": "RB",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 5.5,
-   "proj": 5.3,
-   "threshold": 3,
-   "ourP": 0.166,
-   "othP": 0.102,
-   "base": 0.054,
-   "lift": 3.1,
+   "line": 74.5,
+   "proj": 51.6,
+   "threshold": 33.5,
+   "ourP": 0.217,
+   "othP": 0.175,
+   "base": 0.093,
+   "lift": 2.32,
    "drivers": [
-    "projected usage share",
     "range width / line",
+    "team implied pts",
     "opp unit rating (rel)"
    ],
    "recent": [
-    6,
-    3,
-    4,
-    6
+    97,
+    76,
+    85,
+    135
    ],
-   "expVol": 8.3,
-   "actVol": 5,
+   "expVol": 11.9,
+   "actVol": 13,
    "fitReasons": [
-    "25% of his targets are deep outside; this defense allows 12.9 yds/target there (league 11.4).",
-    "This defense allows 9.0 yds/target to WRs (league 8.0)."
+    "Runs 85% inside; this defense allows 4.5 yds/carry inside and 5.2 outside (league 4.1 / 5.0)."
    ],
    "style": [
-    "Deep threat"
+    "Receiving back"
    ],
-   "actual": 3,
+   "actual": 29,
    "won": true,
-   "bigOurWay": false,
+   "bigOurWay": true,
    "bigAgainst": false
   }
  },
@@ -8659,41 +6501,13 @@
   "week": 6,
   "game": "401772857",
   "teams": "JAX–SEA",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Jaxon Smith-Njigba",
-   "team": "SEA",
-   "opp": "JAX",
-   "pos": "WR",
    "stat": "receptions",
    "dir": "UNDER",
    "line": 6.5,
-   "proj": 5.9,
-   "threshold": 3.3,
-   "ourP": 0.134,
-   "othP": 0.13,
-   "base": 0.054,
-   "lift": 2.49,
-   "drivers": [
-    "range width / line",
-    "projected usage share",
-    "deep-target share"
-   ],
-   "recent": [
-    8,
-    5,
-    4,
-    8
-   ],
-   "expVol": 8.2,
-   "actVol": 13,
-   "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 8,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 2.49
   }
  },
  {
@@ -9117,37 +6931,37 @@
   "game": "401772816",
   "teams": "DET–TB",
   "pick": {
-   "name": "Amon-Ra St. Brown",
-   "team": "DET",
-   "opp": "TB",
+   "name": "Emeka Egbuka",
+   "team": "TB",
+   "opp": "DET",
    "pos": "WR",
-   "stat": "receptions",
-   "dir": "UNDER",
-   "line": 7.5,
-   "proj": 7.3,
-   "threshold": 3.8,
-   "ourP": 0.138,
-   "othP": 0.126,
-   "base": 0.054,
-   "lift": 2.58,
+   "stat": "rec_yds",
+   "dir": "OVER",
+   "line": 50.5,
+   "proj": 58.8,
+   "threshold": 30,
+   "ourP": 0.334,
+   "othP": 0.145,
+   "base": 0.168,
+   "lift": 1.99,
    "drivers": [
-    "team implied pts",
-    "projected usage share",
-    "range width / line"
+    "line vs his best recent",
+    "model gap / line",
+    "projected usage share"
    ],
    "recent": [
-    7,
-    7,
-    8,
-    9
+    85,
+    101,
+    163,
+    24
    ],
-   "expVol": 9.4,
-   "actVol": 10,
+   "expVol": 6.1,
+   "actVol": 12,
    "fitReasons": [],
    "style": [
-    "Better vs zone"
+    "Deep threat"
    ],
-   "actual": 6,
+   "actual": 58,
    "won": true,
    "bigOurWay": false,
    "bigAgainst": false
@@ -9159,41 +6973,13 @@
   "week": 7,
   "game": "401772826",
   "teams": "HOU–SEA",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Jaxon Smith-Njigba",
-   "team": "SEA",
-   "opp": "HOU",
-   "pos": "WR",
-   "stat": "rec_yds",
-   "dir": "OVER",
-   "line": 86.5,
-   "proj": 93.9,
-   "threshold": 43.3,
-   "ourP": 0.264,
-   "othP": 0.121,
-   "base": 0.168,
-   "lift": 1.58,
-   "drivers": [
-    "projected usage share",
-    "line vs his best recent",
-    "zone fit"
-   ],
-   "recent": [
-    96,
-    79,
-    132,
-    162
-   ],
-   "expVol": 8.8,
-   "actVol": 14,
-   "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 123,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "stat": "receptions",
+   "dir": "UNDER",
+   "line": 6.5,
+   "lift": 2.24
   }
  },
  {
@@ -9260,40 +7046,13 @@
   "week": 7,
   "game": "401772753",
   "teams": "KC–LV",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Tre Tucker",
-   "team": "LV",
-   "opp": "KC",
-   "pos": "WR",
    "stat": "receptions",
    "dir": "UNDER",
    "line": 4.5,
-   "proj": 3.6,
-   "threshold": 3,
-   "ourP": 0.127,
-   "othP": 0.103,
-   "base": 0.054,
-   "lift": 2.37,
-   "drivers": [
-    "range width / line",
-    "expected margin",
-    "deep-target share"
-   ],
-   "recent": [
-    8,
-    2,
-    5
-   ],
-   "expVol": 5.5,
-   "actVol": 6,
-   "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 5,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 2.37
   }
  },
  {
@@ -9302,41 +7061,13 @@
   "week": 7,
   "game": "401772862",
   "teams": "MIN–PHI",
-  "pick": {
-   "name": "A.J. Brown",
-   "team": "PHI",
-   "opp": "MIN",
-   "pos": "WR",
+  "pick": null,
+  "strongest": {
+   "name": "Justin Jefferson",
    "stat": "rec_yds",
-   "dir": "OVER",
-   "line": 61.5,
-   "proj": 62.1,
-   "threshold": 30.8,
-   "ourP": 0.279,
-   "othP": 0.143,
-   "base": 0.168,
-   "lift": 1.66,
-   "drivers": [
-    "projected usage share",
-    "line vs his best recent",
-    "zone fit"
-   ],
-   "recent": [
-    109,
-    7,
-    43,
-    80
-   ],
-   "expVol": 8,
-   "actVol": 6,
-   "fitReasons": [],
-   "style": [
-    "Outside receiver"
-   ],
-   "actual": 121,
-   "won": true,
-   "bigOurWay": true,
-   "bigAgainst": false
+   "dir": "UNDER",
+   "line": 84.5,
+   "lift": 2.57
   }
  },
  {
@@ -9520,40 +7251,42 @@
   "game": "401772762",
   "teams": "DAL–DEN",
   "pick": {
-   "name": "Javonte Williams",
-   "team": "DAL",
-   "opp": "DEN",
+   "name": "J.K. Dobbins",
+   "team": "DEN",
+   "opp": "DAL",
    "pos": "RB",
    "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 62.5,
-   "proj": 55.4,
-   "threshold": 30,
-   "ourP": 0.19,
-   "othP": 0.158,
+   "line": 71.5,
+   "proj": 59.2,
+   "threshold": 32.2,
+   "ourP": 0.173,
+   "othP": 0.146,
    "base": 0.093,
-   "lift": 2.04,
+   "lift": 1.85,
    "drivers": [
     "range width / line",
-    "expected margin",
-    "line vs his recent avg"
+    "team implied pts",
+    "opp unit rating (rel)"
    ],
    "recent": [
-    85,
-    135,
-    29,
-    116
+    101,
+    79,
+    40,
+    81
    ],
-   "expVol": 13,
-   "actVol": 13,
-   "fitReasons": [],
+   "expVol": 13.1,
+   "actVol": 15,
+   "fitReasons": [
+    "Explosive runner vs a defense that gives up 10+ yard runs 12% of the time (league 10%)."
+   ],
    "style": [
-    "Receiving back"
+    "Explosive runner"
    ],
-   "actual": 41,
-   "won": true,
+   "actual": 111,
+   "won": false,
    "bigOurWay": false,
-   "bigAgainst": false
+   "bigAgainst": true
   }
  },
  {
@@ -9562,38 +7295,13 @@
   "week": 8,
   "game": "401772925",
   "teams": "GB–PIT",
-  "pick": {
-   "name": "Tucker Kraft",
-   "team": "GB",
-   "opp": "PIT",
-   "pos": "TE",
-   "stat": "rec_yds",
-   "dir": "OVER",
-   "line": 51.5,
-   "proj": 53.3,
-   "threshold": 30,
-   "ourP": 0.261,
-   "othP": 0.111,
-   "base": 0.168,
-   "lift": 1.55,
-   "drivers": [
-    "line vs his best recent",
-    "projected usage share"
-   ],
-   "recent": [
-    124,
-    29,
-    56,
-    43
-   ],
-   "expVol": 5.8,
-   "actVol": 9,
-   "fitReasons": [],
-   "style": [],
-   "actual": 143,
-   "won": true,
-   "bigOurWay": true,
-   "bigAgainst": false
+  "pick": null,
+  "strongest": {
+   "name": "DK Metcalf",
+   "stat": "receptions",
+   "dir": "UNDER",
+   "line": 4.5,
+   "lift": 1.74
   }
  },
  {
@@ -9645,41 +7353,13 @@
   "week": 8,
   "game": "401772761",
   "teams": "IND–TEN",
-  "pick": {
-   "name": "Michael Pittman Jr.",
-   "team": "IND",
-   "opp": "TEN",
-   "pos": "WR",
-   "stat": "rec_yds",
-   "dir": "OVER",
-   "line": 48.5,
-   "proj": 54.1,
-   "threshold": 30,
-   "ourP": 0.264,
-   "othP": 0.101,
-   "base": 0.168,
-   "lift": 1.58,
-   "drivers": [
-    "projected usage share",
-    "team implied pts",
-    "model gap / line"
-   ],
-   "recent": [
-    73,
-    41,
-    39,
-    20
-   ],
-   "expVol": 7.2,
-   "actVol": 9,
-   "fitReasons": [],
-   "style": [
-    "Better vs zone"
-   ],
-   "actual": 95,
-   "won": true,
-   "bigOurWay": true,
-   "bigAgainst": false
+  "pick": null,
+  "strongest": {
+   "name": "Jonathan Taylor",
+   "stat": "rush_yds",
+   "dir": "UNDER",
+   "line": 103.5,
+   "lift": 1.73
   }
  },
  {
@@ -9832,29 +7512,29 @@
    "team": "DAL",
    "opp": "ARI",
    "pos": "WR",
-   "stat": "receptions",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 6.5,
-   "proj": 6,
-   "threshold": 3.3,
-   "ourP": 0.206,
-   "othP": 0.154,
-   "base": 0.054,
-   "lift": 3.84,
+   "line": 83.5,
+   "proj": 71.1,
+   "threshold": 41.8,
+   "ourP": 0.345,
+   "othP": 0.272,
+   "base": 0.091,
+   "lift": 3.77,
    "drivers": [
-    "range width / line",
     "projected usage share",
+    "range width / line",
     "team implied pts"
    ],
    "recent": [
-    9,
-    7
+    112,
+    74
    ],
    "expVol": 9.2,
    "actVol": 12,
    "fitReasons": [],
    "style": [],
-   "actual": 7,
+   "actual": 85,
    "won": false,
    "bigOurWay": false,
    "bigAgainst": false
@@ -9866,39 +7546,13 @@
   "week": 9,
   "game": "401772763",
   "teams": "ATL–NE",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Drake London",
-   "team": "ATL",
-   "opp": "NE",
-   "pos": "WR",
    "stat": "receptions",
    "dir": "UNDER",
    "line": 5.5,
-   "proj": 5,
-   "threshold": 3,
-   "ourP": 0.146,
-   "othP": 0.138,
-   "base": 0.054,
-   "lift": 2.72,
-   "drivers": [
-    "range width / line",
-    "projected usage share",
-    "expected margin"
-   ],
-   "recent": [
-    5,
-    8,
-    10,
-    4
-   ],
-   "expVol": 7.9,
-   "actVol": 14,
-   "fitReasons": [],
-   "style": [],
-   "actual": 9,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": true
+   "lift": 2.72
   }
  },
  {
@@ -9908,38 +7562,38 @@
   "game": "401772943",
   "teams": "BAL–MIA",
   "pick": {
-   "name": "Zay Flowers",
-   "team": "BAL",
-   "opp": "MIA",
+   "name": "Jaylen Waddle",
+   "team": "MIA",
+   "opp": "BAL",
    "pos": "WR",
-   "stat": "rec_yds",
+   "stat": "receptions",
    "dir": "UNDER",
-   "line": 68.5,
-   "proj": 61.4,
-   "threshold": 34.3,
-   "ourP": 0.273,
-   "othP": 0.262,
-   "base": 0.091,
-   "lift": 2.98,
+   "line": 5.5,
+   "proj": 4.5,
+   "threshold": 3,
+   "ourP": 0.118,
+   "othP": 0.103,
+   "base": 0.054,
+   "lift": 2.2,
    "drivers": [
-    "projected usage share",
-    "team implied pts",
-    "deep-target share"
+    "range width / line",
+    "deep-target share",
+    "projected usage share"
    ],
    "recent": [
-    74,
-    72,
-    46,
-    63
+    6,
+    6,
+    1,
+    5
    ],
-   "expVol": 8.1,
-   "actVol": 5,
+   "expVol": 6.5,
+   "actVol": 9,
    "fitReasons": [],
    "style": [
     "Deep threat"
    ],
-   "actual": 64,
-   "won": true,
+   "actual": 6,
+   "won": false,
    "bigOurWay": false,
    "bigAgainst": false
   }
@@ -10035,42 +7689,38 @@
   "game": "401772765",
   "teams": "CHI–CIN",
   "pick": {
-   "name": "Rome Odunze",
+   "name": "Kyle Monangai",
    "team": "CHI",
    "opp": "CIN",
-   "pos": "WR",
-   "stat": "rec_yds",
+   "pos": "RB",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 64.5,
-   "proj": 57,
-   "threshold": 32.3,
-   "ourP": 0.232,
-   "othP": 0.218,
-   "base": 0.091,
-   "lift": 2.54,
+   "line": 74.5,
+   "proj": 30.9,
+   "threshold": 33.5,
+   "ourP": 0.235,
+   "othP": 0.124,
+   "base": 0.093,
+   "lift": 2.52,
    "drivers": [
-    "projected usage share",
-    "deep-target share",
-    "team implied pts"
+    "range width / line",
+    "team implied pts",
+    "opp unit rating (rel)"
    ],
    "recent": [
-    69,
-    32,
-    31,
-    114
+    18,
+    19,
+    81,
+    24
    ],
-   "expVol": 7.5,
-   "actVol": 3,
-   "fitReasons": [
-    "33% of his targets are short outside; this defense allows 6.4 yds/target there (league 5.5)."
-   ],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 0,
-   "won": true,
-   "bigOurWay": true,
-   "bigAgainst": false
+   "expVol": 6.5,
+   "actVol": 26,
+   "fitReasons": [],
+   "style": [],
+   "actual": 176,
+   "won": false,
+   "bigOurWay": false,
+   "bigAgainst": true
   }
  },
  {
@@ -10094,41 +7744,13 @@
   "week": 9,
   "game": "401772871",
   "teams": "DET–MIN",
-  "pick": {
-   "name": "Amon-Ra St. Brown",
-   "team": "DET",
-   "opp": "MIN",
-   "pos": "WR",
-   "stat": "receptions",
+  "pick": null,
+  "strongest": {
+   "name": "Justin Jefferson",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 6.5,
-   "proj": 6.3,
-   "threshold": 3.3,
-   "ourP": 0.151,
-   "othP": 0.141,
-   "base": 0.054,
-   "lift": 2.82,
-   "drivers": [
-    "range width / line",
-    "projected usage share",
-    "team implied pts"
-   ],
-   "recent": [
-    7,
-    8,
-    9,
-    6
-   ],
-   "expVol": 8.1,
-   "actVol": 13,
-   "fitReasons": [],
-   "style": [
-    "Better vs zone"
-   ],
-   "actual": 9,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 74.5,
+   "lift": 2.87
   }
  },
  {
@@ -10137,39 +7759,13 @@
   "week": 9,
   "game": "401772766",
   "teams": "IND–PIT",
-  "pick": {
-   "name": "Tyler Warren",
-   "team": "IND",
-   "opp": "PIT",
-   "pos": "TE",
-   "stat": "receptions",
+  "pick": null,
+  "strongest": {
+   "name": "DK Metcalf",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 5.5,
-   "proj": 4.7,
-   "threshold": 3,
-   "ourP": 0.103,
-   "othP": 0.1,
-   "base": 0.054,
-   "lift": 1.92,
-   "drivers": [
-    "range width / line",
-    "team implied pts",
-    "projected usage share"
-   ],
-   "recent": [
-    5,
-    4,
-    4,
-    4
-   ],
-   "expVol": 6.4,
-   "actVol": 7,
-   "fitReasons": [],
-   "style": [],
-   "actual": 5,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 61.5,
+   "lift": 2.33
   }
  },
  {
@@ -10263,35 +7859,38 @@
   "game": "401772874",
   "teams": "LAR–NO",
   "pick": {
-   "name": "Chris Olave",
+   "name": "Rashid Shaheed",
    "team": "NO",
    "opp": "LAR",
    "pos": "WR",
-   "stat": "receptions",
-   "dir": "UNDER",
-   "line": 5.5,
-   "proj": 4.8,
-   "threshold": 3,
-   "ourP": 0.105,
-   "othP": 0.1,
-   "base": 0.054,
-   "lift": 1.96,
+   "stat": "rec_yds",
+   "dir": "OVER",
+   "line": 44.5,
+   "proj": 55,
+   "threshold": 30,
+   "ourP": 0.278,
+   "othP": 0.112,
+   "base": 0.168,
+   "lift": 1.65,
    "drivers": [
-    "range width / line",
-    "expected margin",
+    "model gap / line",
+    "line vs his best recent",
     "projected usage share"
    ],
    "recent": [
-    7,
-    6,
-    5,
-    8
+    114,
+    28,
+    40,
+    75
    ],
-   "expVol": 7.6,
-   "actVol": 4,
+   "expVol": 7.4,
+   "actVol": 9,
    "fitReasons": [],
-   "style": [],
-   "actual": 3,
+   "style": [
+    "Deep threat",
+    "Better vs zone"
+   ],
+   "actual": 68,
    "won": true,
    "bigOurWay": false,
    "bigAgainst": false
@@ -10346,40 +7945,36 @@
   "game": "401772926",
   "teams": "SEA–WSH",
   "pick": {
-   "name": "Jaxon Smith-Njigba",
-   "team": "SEA",
-   "opp": "WSH",
+   "name": "Deebo Samuel Sr.",
+   "team": "WSH",
+   "opp": "SEA",
    "pos": "WR",
    "stat": "receptions",
    "dir": "UNDER",
-   "line": 7.5,
-   "proj": 6.6,
-   "threshold": 3.8,
-   "ourP": 0.212,
-   "othP": 0.122,
+   "line": 5.5,
+   "proj": 4.3,
+   "threshold": 3,
+   "ourP": 0.165,
+   "othP": 0.128,
    "base": 0.054,
-   "lift": 3.96,
+   "lift": 3.08,
    "drivers": [
     "range width / line",
     "projected usage share",
     "deep-target share"
    ],
    "recent": [
+    6,
+    8,
     4,
-    8,
-    8,
-    8
+    3
    ],
-   "expVol": 9.2,
-   "actVol": 9,
-   "fitReasons": [
-    "36% of his targets are short outside; this defense allows 6.3 yds/target there (league 5.5)."
-   ],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 8,
-   "won": false,
+   "expVol": 6.4,
+   "actVol": 6,
+   "fitReasons": [],
+   "style": [],
+   "actual": 5,
+   "won": true,
    "bigOurWay": false,
    "bigAgainst": false
   }
@@ -10435,42 +8030,13 @@
   "week": 10,
   "game": "401772636",
   "teams": "ATL–IND",
-  "pick": {
-   "name": "Kyle Pitts Sr.",
-   "team": "ATL",
-   "opp": "IND",
-   "pos": "TE",
+  "pick": null,
+  "strongest": {
+   "name": "Drake London",
    "stat": "receptions",
    "dir": "UNDER",
-   "line": 5.5,
-   "proj": 4.7,
-   "threshold": 3,
-   "ourP": 0.115,
-   "othP": 0.105,
-   "base": 0.054,
-   "lift": 2.15,
-   "drivers": [
-    "range width / line",
-    "expected margin",
-    "projected usage share"
-   ],
-   "recent": [
-    3,
-    7,
-    9,
-    4
-   ],
-   "expVol": 6.4,
-   "actVol": 5,
-   "fitReasons": [],
-   "style": [
-    "Outside receiver",
-    "Better vs zone"
-   ],
-   "actual": 2,
-   "won": true,
-   "bigOurWay": true,
-   "bigAgainst": false
+   "line": 6.5,
+   "lift": 4.25
   }
  },
  {
@@ -10563,41 +8129,13 @@
   "week": 10,
   "game": "401772877",
   "teams": "CAR–NO",
-  "pick": {
-   "name": "Tetairoa McMillan",
-   "team": "CAR",
-   "opp": "NO",
-   "pos": "WR",
-   "stat": "rec_yds",
-   "dir": "OVER",
-   "line": 50.5,
-   "proj": 53.9,
-   "threshold": 30,
-   "ourP": 0.252,
-   "othP": 0.076,
-   "base": 0.168,
-   "lift": 1.5,
-   "drivers": [
-    "projected usage share",
-    "line vs his best recent",
-    "model gap / line"
-   ],
-   "recent": [
-    29,
-    33,
-    99,
-    46
-   ],
-   "expVol": 7.5,
-   "actVol": 8,
-   "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 60,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+  "pick": null,
+  "strongest": {
+   "name": "Rico Dowdle",
+   "stat": "rush_yds",
+   "dir": "UNDER",
+   "line": 93.5,
+   "lift": 1.68
   }
  },
  {
@@ -10694,41 +8232,13 @@
   "week": 10,
   "game": "401772944",
   "teams": "DEN–LV",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Brock Bowers",
-   "team": "LV",
-   "opp": "DEN",
-   "pos": "TE",
    "stat": "receptions",
    "dir": "UNDER",
    "line": 6.5,
-   "proj": 6,
-   "threshold": 3.3,
-   "ourP": 0.149,
-   "othP": 0.123,
-   "base": 0.054,
-   "lift": 2.77,
-   "drivers": [
-    "range width / line",
-    "expected margin",
-    "projected usage share"
-   ],
-   "recent": [
-    5,
-    4,
-    5
-   ],
-   "expVol": 8.5,
-   "actVol": 3,
-   "fitReasons": [],
-   "style": [
-    "Middle-of-field target",
-    "Underneath / short-area"
-   ],
-   "actual": 1,
-   "won": true,
-   "bigOurWay": true,
-   "bigAgainst": false
+   "lift": 2.77
   }
  },
  {
@@ -10737,43 +8247,13 @@
   "week": 10,
   "game": "401772878",
   "teams": "DET–WSH",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Amon-Ra St. Brown",
-   "team": "DET",
-   "opp": "WSH",
-   "pos": "WR",
    "stat": "receptions",
    "dir": "UNDER",
    "line": 7.5,
-   "proj": 7.2,
-   "threshold": 3.8,
-   "ourP": 0.195,
-   "othP": 0.123,
-   "base": 0.054,
-   "lift": 3.63,
-   "drivers": [
-    "range width / line",
-    "projected usage share",
-    "team implied pts"
-   ],
-   "recent": [
-    8,
-    9,
-    6,
-    9
-   ],
-   "expVol": 9.1,
-   "actVol": 8,
-   "fitReasons": [
-    "47% of his targets are short outside; this defense allows 6.3 yds/target there (league 5.5)."
-   ],
-   "style": [
-    "Better vs zone"
-   ],
-   "actual": 5,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 3.63
   }
  },
  {
@@ -10823,41 +8303,13 @@
   "week": 10,
   "game": "401772770",
   "teams": "HOU–JAX",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Nico Collins",
-   "team": "HOU",
-   "opp": "JAX",
-   "pos": "WR",
    "stat": "rec_yds",
    "dir": "OVER",
    "line": 65.5,
-   "proj": 67.6,
-   "threshold": 32.8,
-   "ourP": 0.281,
-   "othP": 0.132,
-   "base": 0.168,
-   "lift": 1.67,
-   "drivers": [
-    "projected usage share",
-    "last-game vs line",
-    "deep-target share"
-   ],
-   "recent": [
-    104,
-    79,
-    52,
-    27
-   ],
-   "expVol": 8.4,
-   "actVol": 15,
-   "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 136,
-   "won": true,
-   "bigOurWay": true,
-   "bigAgainst": false
+   "lift": 1.67
   }
  },
  {
@@ -10866,41 +8318,13 @@
   "week": 10,
   "game": "401772927",
   "teams": "LAC–PIT",
-  "pick": {
-   "name": "Keenan Allen",
-   "team": "LAC",
-   "opp": "PIT",
-   "pos": "WR",
-   "stat": "rec_yds",
-   "dir": "OVER",
-   "line": 40.5,
-   "proj": 46.1,
-   "threshold": 30,
-   "ourP": 0.253,
-   "othP": 0.071,
-   "base": 0.168,
-   "lift": 1.51,
-   "drivers": [
-    "line vs his best recent",
-    "model gap / line",
-    "projected usage share"
-   ],
-   "recent": [
-    27,
-    119,
-    44,
-    41
-   ],
-   "expVol": 6.8,
-   "actVol": 5,
-   "fitReasons": [],
-   "style": [
-    "Better vs zone"
-   ],
-   "actual": 19,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+  "pick": null,
+  "strongest": {
+   "name": "Ladd McConkey",
+   "stat": "receptions",
+   "dir": "UNDER",
+   "line": 5.5,
+   "lift": 2.27
   }
  },
  {
@@ -10909,41 +8333,13 @@
   "week": 10,
   "game": "401772879",
   "teams": "LAR–SF",
-  "pick": {
-   "name": "Jauan Jennings",
-   "team": "SF",
-   "opp": "LAR",
-   "pos": "WR",
-   "stat": "rec_yds",
-   "dir": "OVER",
-   "line": 49.5,
-   "proj": 56.3,
-   "threshold": 30,
-   "ourP": 0.264,
-   "othP": 0.089,
-   "base": 0.168,
-   "lift": 1.57,
-   "drivers": [
-    "projected usage share",
-    "model gap / line",
-    "line vs his best recent"
-   ],
-   "recent": [
-    89,
-    24,
-    45,
-    41
-   ],
-   "expVol": 7.7,
-   "actVol": 9,
-   "fitReasons": [],
-   "style": [
-    "Better vs zone"
-   ],
-   "actual": 71,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+  "pick": null,
+  "strongest": {
+   "name": "Christian McCaffrey",
+   "stat": "rush_yds",
+   "dir": "UNDER",
+   "line": 63.5,
+   "lift": 2.28
   }
  },
  {
@@ -11140,44 +8536,13 @@
   "week": 11,
   "game": "401772880",
   "teams": "CHI–MIN",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Justin Jefferson",
-   "team": "MIN",
-   "opp": "CHI",
-   "pos": "WR",
    "stat": "rec_yds",
    "dir": "UNDER",
    "line": 74.5,
-   "proj": 66.9,
-   "threshold": 37.3,
-   "ourP": 0.26,
-   "othP": 0.208,
-   "base": 0.091,
-   "lift": 2.84,
-   "drivers": [
-    "projected usage share",
-    "opp unit rating (rel)",
-    "deep-target share"
-   ],
-   "recent": [
-    79,
-    74,
-    47,
-    37
-   ],
-   "expVol": 8.1,
-   "actVol": 9,
-   "fitReasons": [
-    "24% of his targets are deep outside; this defense allows 14.7 yds/target there (league 11.6).",
-    "This defense allows 9.0 yds/target to WRs (league 8.0)."
-   ],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 61,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 2.84
   }
  },
  {
@@ -11315,35 +8680,35 @@
   "game": "401772928",
   "teams": "DET–PHI",
   "pick": {
-   "name": "DeVonta Smith",
+   "name": "Saquon Barkley",
    "team": "PHI",
    "opp": "DET",
-   "pos": "WR",
-   "stat": "rec_yds",
-   "dir": "OVER",
-   "line": 57.5,
-   "proj": 58.4,
-   "threshold": 30,
-   "ourP": 0.347,
-   "othP": 0.15,
-   "base": 0.168,
-   "lift": 2.07,
+   "pos": "RB",
+   "stat": "carries",
+   "dir": "UNDER",
+   "line": 17.5,
+   "proj": 15,
+   "threshold": 7,
+   "ourP": 0.162,
+   "othP": 0.101,
+   "base": 0.097,
+   "lift": 1.67,
    "drivers": [
-    "line vs his best recent",
-    "projected usage share",
-    "zone fit"
+    "range width / line",
+    "expected margin",
+    "team implied pts"
    ],
    "recent": [
-    49,
-    183,
-    84,
-    69
+    12,
+    18,
+    14,
+    22
    ],
-   "expVol": 6.5,
-   "actVol": 5,
+   "expVol": 15,
+   "actVol": 26,
    "fitReasons": [],
    "style": [],
-   "actual": 8,
+   "actual": 26,
    "won": false,
    "bigOurWay": false,
    "bigAgainst": true
@@ -11459,38 +8824,38 @@
   "game": "401772884",
   "teams": "LAR–SEA",
   "pick": {
-   "name": "Jaxon Smith-Njigba",
-   "team": "SEA",
-   "opp": "LAR",
+   "name": "Puka Nacua",
+   "team": "LAR",
+   "opp": "SEA",
    "pos": "WR",
-   "stat": "receptions",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 7.5,
-   "proj": 7.4,
-   "threshold": 3.8,
-   "ourP": 0.183,
-   "othP": 0.161,
-   "base": 0.054,
-   "lift": 3.41,
+   "line": 89.5,
+   "proj": 78,
+   "threshold": 44.8,
+   "ourP": 0.258,
+   "othP": 0.243,
+   "base": 0.091,
+   "lift": 2.82,
    "drivers": [
-    "projected usage share",
     "range width / line",
+    "projected usage share",
     "deep-target share"
    ],
    "recent": [
-    8,
-    8,
-    8,
-    5
+    85,
+    28,
+    95,
+    64
    ],
-   "expVol": 10.3,
-   "actVol": 12,
-   "fitReasons": [],
-   "style": [
-    "Deep threat"
+   "expVol": 8.7,
+   "actVol": 8,
+   "fitReasons": [
+    "This defense allows 7.1 yds/target to WRs (league 8.0)."
    ],
-   "actual": 9,
-   "won": false,
+   "style": [],
+   "actual": 75,
+   "won": true,
    "bigOurWay": false,
    "bigAgainst": false
   }
@@ -11502,43 +8867,44 @@
   "game": "401772631",
   "teams": "MIA–WSH",
   "pick": {
-   "name": "Jaylen Waddle",
+   "name": "De'Von Achane",
    "team": "MIA",
    "opp": "WSH",
-   "pos": "WR",
-   "stat": "receptions",
+   "pos": "RB",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 5.5,
-   "proj": 5.1,
-   "threshold": 3,
-   "ourP": 0.164,
-   "othP": 0.102,
-   "base": 0.054,
-   "lift": 3.05,
+   "line": 82.5,
+   "proj": 65,
+   "threshold": 37.1,
+   "ourP": 0.233,
+   "othP": 0.174,
+   "base": 0.093,
+   "lift": 2.5,
    "drivers": [
     "range width / line",
     "projected usage share",
-    "opp unit rating (rel)"
+    "team implied pts"
    ],
    "recent": [
-    1,
-    5,
-    6,
-    5
+    82,
+    67,
+    67,
+    174
    ],
-   "expVol": 7.3,
-   "actVol": 7,
+   "expVol": 14.3,
+   "actVol": 21,
    "fitReasons": [
-    "35% of his targets are short outside; this defense allows 6.6 yds/target there (league 5.5).",
-    "This defense allows 9.0 yds/target to WRs (league 8.0)."
+    "Runs 64% inside; this defense allows 4.2 yds/carry inside and 5.7 outside (league 4.1 / 5.1)."
    ],
    "style": [
-    "Deep threat"
+    "Outside / perimeter runner",
+    "Explosive runner",
+    "Receiving back"
    ],
-   "actual": 3,
-   "won": true,
+   "actual": 120,
+   "won": false,
    "bigOurWay": false,
-   "bigAgainst": false
+   "bigAgainst": true
   }
  },
  {
@@ -11562,40 +8928,13 @@
   "week": 12,
   "game": "401772783",
   "teams": "ARI–JAX",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Michael Wilson",
-   "team": "ARI",
-   "opp": "JAX",
-   "pos": "WR",
-   "stat": "rec_yds",
-   "dir": "OVER",
-   "line": 59.5,
-   "proj": 66.2,
-   "threshold": 30,
-   "ourP": 0.302,
-   "othP": 0.128,
-   "base": 0.168,
-   "lift": 1.8,
-   "drivers": [
-    "line vs his best recent",
-    "projected usage share",
-    "model gap / line"
-   ],
-   "recent": [
-    11,
-    16,
-    185
-   ],
-   "expVol": 8.5,
-   "actVol": 15,
-   "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 118,
-   "won": true,
-   "bigOurWay": true,
-   "bigAgainst": false
+   "stat": "receptions",
+   "dir": "UNDER",
+   "line": 5.5,
+   "lift": 1.98
   }
  },
  {
@@ -11685,41 +9024,13 @@
   "week": 12,
   "game": "401772946",
   "teams": "BUF–HOU",
-  "pick": {
+  "pick": null,
+  "strongest": {
    "name": "Nico Collins",
-   "team": "HOU",
-   "opp": "BUF",
-   "pos": "WR",
    "stat": "receptions",
    "dir": "UNDER",
    "line": 5.5,
-   "proj": 5,
-   "threshold": 3,
-   "ourP": 0.13,
-   "othP": 0.113,
-   "base": 0.054,
-   "lift": 2.42,
-   "drivers": [
-    "range width / line",
-    "projected usage share",
-    "deep-target share"
-   ],
-   "recent": [
-    4,
-    4,
-    7,
-    9
-   ],
-   "expVol": 7.8,
-   "actVol": 3,
-   "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 3,
-   "won": true,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "lift": 2.42
   }
  },
  {
@@ -12012,37 +9323,34 @@
   "game": "401772929",
   "teams": "LAR–TB",
   "pick": {
-   "name": "Davante Adams",
-   "team": "LAR",
-   "opp": "TB",
-   "pos": "WR",
-   "stat": "receptions",
+   "name": "Sean Tucker",
+   "team": "TB",
+   "opp": "LAR",
+   "pos": "RB",
+   "stat": "rush_yds",
    "dir": "UNDER",
-   "line": 5.5,
-   "proj": 4.6,
-   "threshold": 3,
-   "ourP": 0.136,
-   "othP": 0.133,
-   "base": 0.054,
-   "lift": 2.53,
+   "line": 49.5,
+   "proj": 35.2,
+   "threshold": 30,
+   "ourP": 0.158,
+   "othP": 0.13,
+   "base": 0.093,
+   "lift": 1.69,
    "drivers": [
     "range width / line",
-    "projected usage share",
-    "deep-target share"
+    "small sample",
+    "expected margin"
    ],
    "recent": [
-    5,
-    5,
-    6,
-    1
+    42,
+    53,
+    106
    ],
-   "expVol": 8.2,
-   "actVol": 8,
+   "expVol": 8.7,
+   "actVol": 12,
    "fitReasons": [],
-   "style": [
-    "Deep threat"
-   ],
-   "actual": 5,
+   "style": [],
+   "actual": 42,
    "won": true,
    "bigOurWay": false,
    "bigAgainst": false
@@ -12270,39 +9578,13 @@
   "week": 13,
   "game": "401772894",
   "teams": "CAR–LAR",
-  "pick": {
-   "name": "Rico Dowdle",
-   "team": "CAR",
-   "opp": "LAR",
-   "pos": "RB",
-   "stat": "carries",
+  "pick": null,
+  "strongest": {
+   "name": "Tetairoa McMillan",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 16.5,
-   "proj": 14.5,
-   "threshold": 6.6,
-   "ourP": 0.147,
-   "othP": 0.126,
-   "base": 0.097,
-   "lift": 1.52,
-   "drivers": [
-    "range width / line",
-    "expected margin",
-    "last-game vs line"
-   ],
-   "recent": [
-    25,
-    18,
-    19,
-    6
-   ],
-   "expVol": 14.5,
-   "actVol": 18,
-   "fitReasons": [],
-   "style": [],
-   "actual": 18,
-   "won": false,
-   "bigOurWay": false,
-   "bigAgainst": false
+   "line": 60.5,
+   "lift": 2.27
   }
  },
  {
@@ -12401,31 +9683,31 @@
    "team": "DAL",
    "opp": "KC",
    "pos": "WR",
-   "stat": "receptions",
+   "stat": "rec_yds",
    "dir": "UNDER",
-   "line": 6.5,
-   "proj": 5.9,
-   "threshold": 3.3,
-   "ourP": 0.19,
-   "othP": 0.145,
-   "base": 0.054,
-   "lift": 3.54,
+   "line": 80.5,
+   "proj": 71.2,
+   "threshold": 40.3,
+   "ourP": 0.311,
+   "othP": 0.237,
+   "base": 0.091,
+   "lift": 3.4,
    "drivers": [
-    "range width / line",
     "projected usage share",
-    "expected margin"
+    "expected margin",
+    "range width / line"
    ],
    "recent": [
-    7,
-    7,
-    5,
-    4
+    74,
+    85,
+    66,
+    75
    ],
    "expVol": 9.1,
    "actVol": 9,
    "fitReasons": [],
    "style": [],
-   "actual": 7,
+   "actual": 112,
    "won": false,
    "bigOurWay": false,
    "bigAgainst": false
@@ -12438,41 +9720,37 @@
   "game": "401772931",
   "teams": "DEN–WSH",
   "pick": {
-   "name": "Troy Franklin",
-   "team": "DEN",
-   "opp": "WSH",
+   "name": "Deebo Samuel Sr.",
+   "team": "WSH",
+   "opp": "DEN",
    "pos": "WR",
-   "stat": "receptions",
-   "dir": "UNDER",
-   "line": 4.5,
-   "proj": 3.6,
-   "threshold": 3,
-   "ourP": 0.119,
-   "othP": 0.083,
-   "base": 0.054,
-   "lift": 2.22,
+   "stat": "rec_yds",
+   "dir": "OVER",
+   "line": 37.5,
+   "proj": 57.7,
+   "threshold": 30,
+   "ourP": 0.325,
+   "othP": 0.055,
+   "base": 0.168,
+   "lift": 1.94,
    "drivers": [
-    "range width / line",
-    "deep-target share",
-    "opp unit rating (rel)"
+    "model gap / line",
+    "projected usage share",
+    "position fit"
    ],
    "recent": [
-    6,
-    4,
-    5,
-    4
+    11,
+    41,
+    29,
+    74
    ],
-   "expVol": 6.1,
-   "actVol": 3,
+   "expVol": 7.6,
+   "actVol": 7,
    "fitReasons": [
-    "42% of his targets are short outside; this defense allows 6.7 yds/target there (league 5.6).",
-    "This defense allows 9.0 yds/target to WRs (league 7.9)."
+    "This defense allows 7.0 yds/target to WRs (league 7.9)."
    ],
-   "style": [
-    "Deep threat",
-    "Better vs zone"
-   ],
-   "actual": 2,
+   "style": [],
+   "actual": 64,
    "won": true,
    "bigOurWay": false,
    "bigAgainst": false
@@ -12588,25 +9866,25 @@
    "team": "LAC",
    "opp": "LV",
    "pos": "WR",
-   "stat": "receptions",
+   "stat": "rec_yds",
    "dir": "OVER",
-   "line": 3.5,
-   "proj": 4.3,
-   "threshold": 3,
-   "ourP": 0.163,
-   "othP": 0.029,
-   "base": 0.096,
-   "lift": 1.71,
+   "line": 39.5,
+   "proj": 45.5,
+   "threshold": 30,
+   "ourP": 0.266,
+   "othP": 0.044,
+   "base": 0.168,
+   "lift": 1.58,
    "drivers": [
-    "model gap / line",
     "line vs his best recent",
+    "model gap / line",
     "projected usage share"
    ],
    "recent": [
-    11,
-    4,
-    2,
-    2
+    119,
+    44,
+    41,
+    19
    ],
    "expVol": 6.6,
    "actVol": 5,
@@ -12614,8 +9892,8 @@
    "style": [
     "Better vs zone"
    ],
-   "actual": 4,
-   "won": true,
+   "actual": 30,
+   "won": false,
    "bigOurWay": false,
    "bigAgainst": false
   }
@@ -12666,39 +9944,42 @@
   "game": "401772896",
   "teams": "MIN–SEA",
   "pick": {
-   "name": "Jaxon Smith-Njigba",
-   "team": "SEA",
-   "opp": "MIN",
+   "name": "Jordan Addison",
+   "team": "MIN",
+   "opp": "SEA",
    "pos": "WR",
-   "stat": "receptions",
-   "dir": "UNDER",
-   "line": 6.5,
-   "proj": 6.4,
-   "threshold": 3.3,
-   "ourP": 0.175,
-   "othP": 0.14,
-   "base": 0.054,
-   "lift": 3.27,
+   "stat": "rec_yds",
+   "dir": "OVER",
+   "line": 33.5,
+   "proj": 43.9,
+   "threshold": 30,
+   "ourP": 0.31,
+   "othP": 0.043,
+   "base": 0.168,
+   "lift": 1.84,
    "drivers": [
-    "range width / line",
-    "projected usage share",
-    "team implied pts"
+    "model gap / line",
+    "deep-target share",
+    "position fit"
    ],
    "recent": [
-    8,
-    5,
-    9,
-    8
+    48,
+    35,
+    20,
+    0
    ],
-   "expVol": 9,
-   "actVol": 4,
-   "fitReasons": [],
+   "expVol": 6,
+   "actVol": 10,
+   "fitReasons": [
+    "This defense allows 7.0 yds/target to WRs (league 7.9)."
+   ],
    "style": [
-    "Deep threat"
+    "Deep threat",
+    "Better vs zone"
    ],
-   "actual": 2,
+   "actual": 36,
    "won": true,
-   "bigOurWay": true,
+   "bigOurWay": false,
    "bigAgainst": false
   }
  },

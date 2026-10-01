@@ -124,3 +124,9 @@ test('outliers: a significant gap is stat-specific (10 rush yds on 97.5 yes; 10 
   assert.equal(r.outliers[0].gapDir, 'UNDER');
   assert.ok(r.outliers[0].tierRecord);
 });
+
+test('no edge on an insignificant gap: 4.2 projected catches vs a 4.5 line is never the game pick, however volatile', () => {
+  const c = scoreCandidate(base({ pos: 'WR', stat: 'receptions', label: 'Receptions', proj: 4.2, p10: 1, p50: 4, p90: 8, line: 4.5, probOver: 0.42, expVolume: { carries: 0, targets: 7, attempts: null }, bigMiss: bm({ bust: 0.2, boom: 0.06 }) }), now);
+  assert.equal(c.qualifies, false);
+  assert.match(c.reason, /too small to call an edge/);
+});

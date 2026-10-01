@@ -23,6 +23,7 @@ export const TIER_RECORD = { '1–1.5×': { all: [1563, 0.543], OVER: [499, 0.52
 export const tierOf = (strength) => (strength >= 2 ? '2×+' : strength >= 1.5 ? '1.5–2×' : strength >= 1 ? '1–1.5×' : strength >= 0.6 ? 'lean' : null);
 
 export const OUTLIER_RULES = {
+  minSig: 1,             // the gap from the line must clear the stat's significance bar (SIGNIFICANCE, OR rule)
   minLift: 1.5,          // learned P(big miss) ≥ 1.5× the typical rate for this stat (after quality adjustment),
                          // AND more likely our way than the other way. Out of sample (2024→2025 / 2025→2024): side
                          // won 55.4% of 112 / 55.5% of 137 one-per-game picks (break-even ≈ 52.4%) — suggestive, not proven.
@@ -124,6 +125,9 @@ export function scoreCandidate(c, now = Date.now()) {
   else if (bigProb <= againstProb) reason = `a big miss is about as likely the other way (${pct(againstProb)} vs ${pct(bigProb)}) — volatile, not one-sided`;
   else if (!agrees) reason = `the model's own projection (${round1(c.proj)}) is on the other side of the line`;
   else if (!tailReaches) reason = `the model's range doesn't reach ${bigText}`;
+  // An edge has to be a real disagreement with the book: the gap must clear the same stat-specific bar as an outlier
+  // (e.g. 4.2 vs a 4.5 catch line is 0.3× the bar — not an edge, however volatile the line).
+  else if (sigStrength < OUTLIER_RULES.minSig) reason = `the gap from the line (${round1(c.proj)} vs ${c.line}) is only ${sigStrength.toFixed(2)}× the significance bar for this stat — too small to call an edge`;
   return {
     ...c, eligible: true, qualifies: reason == null, direction, gap, gapPct: c.line !== 0 ? gap / Math.abs(c.line) : null,
     sd, z, quality, roleQuality, score, lift, bigProb, againstProb, baseProb, bigThreshold: T, sigThreshold: sigT, sigStrength, sigTier: tierOf(sigStrength), gapDir, bigText, sideProb, flags, reason,

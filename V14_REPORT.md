@@ -241,3 +241,25 @@ Also fixed: the displayed team pass rate (and the skeptic's team-rush estimate) 
 **Role-growth prior rule:** stop blending last season's share when this season's is 10+ points higher for carries or 6+ for targets. Tested raw vs raw (batch 12 on, batch 13 off) and rejected. On affected rows: RB carries 4.10 → 4.12, RB rush yds 22.3 → 22.5, WR targets 2.50 → 2.65, TE yds 20.7 → 22.1. Early role jumps regress, matching batch 10.
 
 **Team consistency:** independently calibrated players could add up to more catches or receiving yards than their QB's completions or passing yards. Both sides now meet in the middle. Whole distributions are rescaled, and P(over) is recomputed from the quantiles.
+
+## fbm-1.5.2: game-pick significance rule; team run volume re-tested (2026-10-01)
+
+**Game pick must clear the significance bar** (user rule: no "edge" on 4.2 vs a 4.5 catch line). Backtest on raw batch 13 (`bigmiss.mjs 13 --rerun --minsig X`):
+
+| Required gap | Record | Big misses our way / against |
+|---|---|---|
+| none (previous rule) | 141–119 (54.2%) | 33 / 40 |
+| ≥ 0.6× bar | 109–101 (51.9%) | 25 / 33 |
+| ≥ 1× bar (shipped) | **77–85 (47.5%)** | 13 / 32 |
+
+Shipped at the user's request, with its real record shown on the page. The data says the pick's value came from volatile lines, not from model-vs-book gaps. Reverting is `OUTLIER_RULES.minSig = 0` in `src/outlier.js`.
+
+**Team run volume** (Bijan, Swift; `scripts/team_runs_test.mjs`): predicting a team's rushing attempts in its next game. Grid fit on 2022–24, tested on 2025:
+
+| Estimator | 2025 MAE | Early weeks |
+|---|---|---|
+| Current (k 12 pseudo-games toward league) | **5.86** | **4.72** |
+| Best lighter regression (k 6) | 5.92 | 4.80 |
+| With spread | 5.96 | 4.93 |
+
+Not changed. Three games of team run volume are mostly game script.

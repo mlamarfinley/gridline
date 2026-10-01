@@ -13,6 +13,8 @@ import { loadPlayerIds } from '../src/pbp.js';
 import { fetchCached } from '../src/fetcher.js';
 import { parseCsv } from '../src/baselines.js';
 import { normName } from '../src/snaps.js';
+import { sigStrengthOf } from '../src/outlier.js';
+const MINSIG = (() => { const i = process.argv.indexOf('--minsig'); return i > 0 ? Number(process.argv[i + 1]) : 0; })();
 
 const batch = Number(process.argv[2]);
 const WRITE = process.argv.includes('--write');
@@ -225,7 +227,7 @@ if (process.argv.includes('--rerun')) {
         const agrees = dir === 'OVER' ? d.proj > d.line : d.proj < d.line, reach = dir === 'OVER' ? d.p90 >= d.line + d.T : d.p10 <= d.line - d.T;
         const cand = { d, dir, lift, ourP, othP, base: dir === 'OVER' ? base[d.stat].boom : base[d.stat].bust, drivers: drivers(dir === 'OVER' ? mB : mU, d.x, d.stat) };
         if (!top || lift > top.lift) top = cand;
-        if (lift >= 1.5 && ourP > othP && agrees && reach && (!best || lift > best.lift)) best = cand;
+        if (lift >= 1.5 && ourP > othP && agrees && reach && sigStrengthOf(d.stat, d.line, d.proj) >= MINSIG && (!best || lift > best.lift)) best = cand;
       }
       const g0 = G[0];
       if (!best) { out.push({ fold: foldLabel, season: g0.season, week: g0.week, game: `${g0.team === g0.opponent ? '' : ''}${gid}`, teams: [...new Set(G.map((d) => d.team))].sort().join('–'), pick: null, strongest: top && { name: top.d.player_name, stat: top.d.stat, dir: top.dir, line: top.d.line, lift: +top.lift.toFixed(2) } }); continue; }
