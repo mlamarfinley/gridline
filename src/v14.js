@@ -99,6 +99,15 @@ export function usageFromRows(rows, week, snapSeries = null) {
   ];
 }
 
+// ---------- fbm-1.5 matchup inputs (src/profiles.js): percentage effects, so each enters as projection × fit ----------
+export const MATCHUP_FEATS = ['proj × zone fit', 'proj × position fit', 'proj × man/zone fit', 'proj × run-side fit', 'proj × explosive fit', 'proj × opp unit (rel)', 'proj × OL/DL-type edge'];
+/** fit = playerFit(...) or null; oppUnit = relevant defensive unit rating (0–100, 50 avg); edge = offense−defense rating of the relevant head-to-head (0 avg). */
+export function matchupX(proj, fit, oppUnit, edge) {
+  const f = fit || {};
+  return [proj * (f.zoneFit || 0), proj * (f.posFit || 0), proj * (f.covFit || 0), proj * (f.runFit || 0), proj * (f.explFit || 0),
+    proj * (oppUnit != null ? (50 - oppUnit) / 100 : 0), proj * (edge != null ? edge / 100 : 0)];
+}
+
 export const predictCorr = (m, x) => m.beta[0] + x.reduce((s, v, j) => s + (m.sd[j] ? ((v - m.mu[j]) / m.sd[j]) * m.beta[j + 1] : 0), 0);
 
 let V14 = null;

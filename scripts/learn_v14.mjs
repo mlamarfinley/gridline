@@ -8,12 +8,19 @@
 // Fold 1: learn 2024 → test 2025 + 2026.  Final: learn 2024+2025 → test 2026 (weeks 2–3 were inspected earlier).
 import fs from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
-import { FEATS, buildX, loadUsage, usageFeatures, predictCorr } from '../src/v14.js';
+import { FEATS as FEATS14, buildX, loadUsage, usageFeatures, predictCorr, matchupX, MATCHUP_FEATS } from '../src/v14.js';
+import { buildContext, playerFit, unitEdges } from '../src/profiles.js';
+import { loadPlayerIds } from '../src/pbp.js';
+import { oppUnitFor } from '../src/bigmiss.js';
+import { edgeKeyFor } from '../src/why.js';
+// --matchup: fbm-1.5 — the same learner with the matchup engine's inputs added (writes src/fitted_v15.json).
+const MATCHUP = process.argv.includes('--matchup');
+const FEATS = MATCHUP ? [...FEATS14, ...MATCHUP_FEATS] : FEATS14;
 
 const batch = Number(process.argv[2]);
 const WRITE = process.argv.includes('--write');
 const db = new DatabaseSync(new URL('../data/ledger.sqlite', import.meta.url).pathname, { readOnly: true });
-const raw = db.prepare(`SELECT p.season, p.week, p.game_id, p.player_id, p.player_name, p.team, p.position pos, p.role, p.stat, p.projection proj, p.p10, p.p50, p.p90,
+const raw = db.prepare(`SELECT p.season, p.week, p.game_id, p.player_id, p.player_name, p.team, p.opponent, p.position pos, p.role, p.stat, p.projection proj, p.p10, p.p50, p.p90,
     s.actual, l.line, c.context_json ctx, a.context_json act
   FROM blind_predictions p JOIN blind_scores s USING (batch_id, game_id, player_id, stat)
   LEFT JOIN blind_lines l USING (batch_id, game_id, player_id, stat)
@@ -27,9 +34,23 @@ for (const season of [2024, 2025, 2026]) USE[season] = await loadUsage(season);
 
 const STATS = ['pass_yds', 'pass_att', 'completions', 'pass_td', 'ints', 'rush_yds', 'carries', 'rush_td', 'rec_yds', 'receptions', 'targets', 'rec_td', 'long_rec', 'long_rush', 'long_cmp', 'fg_made', 'xp_made', 'k_pts'];
 const num = (v) => (Number.isFinite(v) ? v : 0);
+const IDS = MATCHUP ? await loadPlayerIds() : null;
+const NVT = { WSH: 'WAS', LAR: 'LA' }, nvt = (a) => NVT[a] || a;
+const MCTX = new Map();
+if (MATCHUP) for (const r of raw) { const k = `${r.season}|${r.week}`; if (!MCTX.has(k)) MCTX.set(k, await buildContext(r.season, r.week)); }
+function matchupFor(r) {
+  const ctx = MCTX.get(`${r.season}|${r.week}`);
+  const g = IDS.byEspn.get(String(r.player_id))?.gsis, pl = g ? ctx.players.get(g) : null;
+  const mine = ctx.teams[nvt(r.team)], theirs = ctx.teams[nvt(r.opponent)];
+  const fit = pl && theirs ? playerFit(pl, theirs.def, ctx.league) : null;
+  const oppUnit = oppUnitFor(r.stat, r.pos, theirs?.ratings?.def);
+  const edge = mine && theirs ? unitEdges(mine, theirs).find((e) => e.label === edgeKeyFor(r.pos, r.stat))?.edge ?? null : null;
+  return matchupX(r.proj, fit, oppUnit, edge);
+}
 const rows = raw.filter((r) => STATS.includes(r.stat)).map((r) => {
   const c = r.ctx ? JSON.parse(r.ctx) : {};
-  const x = buildX({ proj: r.proj, p10: r.p10, p90: r.p90, week: r.week, role: r.role, ctx: c, usage: usageFeatures(USE[r.season], r.week, r.team, r.player_name) });
+  const x0 = buildX({ proj: r.proj, p10: r.p10, p90: r.p90, week: r.week, role: r.role, ctx: c, usage: usageFeatures(USE[r.season], r.week, r.team, r.player_name) });
+  const x = MATCHUP ? [...x0, ...matchupFor(r)] : x0;
   const a = r.act ? JSON.parse(r.act) : null;
   return { ...r, x, c, actVol: a?.stats ? { targets: a.stats.targets, carries: a.stats.carries, pass_att: a.stats.pass_att } : null };
 });
@@ -178,4 +199,4 @@ const result = {
 console.log(JSON.stringify({ fold1: result.fold1, final: result.final, missDecomposition: result.missDecomposition }, null, 1));
 for (const [k, v] of Object.entries(fin)) if (v.lessons?.length) console.log(k, 'λ', v.lambda, 's', v.s, v.lessons.map((e) => `${e.feature} ${e.effect > 0 ? '+' : ''}${e.effect}`).join(', '));
 else console.log(k, v.note || '');
-if (WRITE) { fs.writeFileSync(new URL('../src/fitted_v14.json', import.meta.url), JSON.stringify(result, null, 1)); console.log('wrote src/fitted_v14.json'); }
+if (WRITE) { const f = MATCHUP ? 'fitted_v15.json' : 'fitted_v14.json'; fs.writeFileSync(new URL(`../src/${f}`, import.meta.url), JSON.stringify({ ...result, model: MATCHUP ? 'fbm-1.5.0' : result.model }, null, 1)); console.log(`wrote src/${f}`); }

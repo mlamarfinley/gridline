@@ -69,7 +69,8 @@ export function whyPick(c) {
 
   // 4. Matchup (defense vs his position/style + unit edge)
   const fit = card.matchup?.fit;
-  for (const r of fit?.reasons || []) out.push(`Matchup: ${r}`);
+  const runStat = /rush|carries/.test(c.stat);
+  for (const r of fit?.reasons || []) if ((r.kind === 'run') === runStat) out.push(`Matchup: ${r.text}`);
   if (card.matchup?.style?.length) out.push(`Player type: ${card.matchup.style.join(', ')}.`);
   if (c.unitEdge) out.push(`Unit ratings: ${c.unitEdge.label} — ${c.team} offense ${c.unitEdge.offense} vs ${c.opponent} defense ${c.unitEdge.defense} (${c.unitEdge.verdict}).`);
   return out;

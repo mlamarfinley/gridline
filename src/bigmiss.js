@@ -49,9 +49,17 @@ export function bigMissProbs(f) {
   return { boom: predictLogit(FIT.boom, x), bust: predictLogit(FIT.bust, x), baseBoom: FIT.baseRates?.[f.stat]?.boom ?? null, baseBust: FIT.baseRates?.[f.stat]?.bust ?? null, x };
 }
 
+const RUN_ONLY = new Set(['explosive runner', 'run fit', 'explosive fit']);
+const PASS_ONLY = new Set(['deep-target share', 'zone fit', 'position fit', 'man/zone fit']);
+/** Display filter: only drivers that mean something for this stat (a WR's explosive-run rate is noise). */
+export function relevantDriver(f, stat) {
+  if (f.startsWith('stat is')) return false;
+  const run = /rush|carries/.test(stat);
+  return run ? !PASS_ONLY.has(f) : !RUN_ONLY.has(f);
+}
 /** The 3 features pushing this probability up the most (plain English), for the "why". */
-export function topDrivers(kind, x) {
+export function topDrivers(kind, x, stat) {
   if (!FIT) return [];
   const m = FIT[kind];
-  return x.map((v, j) => [FEATS[j], m.sd[j] ? ((v - m.mu[j]) / m.sd[j]) * m.b[j + 1] : 0]).filter(([f, c]) => c > 0.08 && !f.startsWith('stat is')).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([f]) => f);
+  return x.map((v, j) => [FEATS[j], m.sd[j] ? ((v - m.mu[j]) / m.sd[j]) * m.b[j + 1] : 0]).filter(([f, c]) => c > 0.08 && relevantDriver(f, stat)).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([f]) => f);
 }

@@ -665,7 +665,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
   };
   if (outlier.pick) {
     const p = outlier.pick, kind = p.direction === 'OVER' ? 'boom' : 'bust';
-    const drivers = p.bigMiss ? topDrivers(kind, p.bigMiss.x) : [];
+    const drivers = p.bigMiss ? topDrivers(kind, p.bigMiss.x, p.stat) : [];
     p.why = [
       `Why this is an outlier: ${Math.round(p.bigProb * 100)}% chance the line misses by ${p.bigText} — ${p.lift.toFixed(1)}× the usual ${Math.round(p.baseProb * 100)}% for ${p.label.toLowerCase()} lines. Chance it misses big the other way: ${Math.round(p.againstProb * 100)}%.${drivers.length ? ` Biggest drivers: ${drivers.join(', ')}.` : ''}`,
       ...explainPick(p),

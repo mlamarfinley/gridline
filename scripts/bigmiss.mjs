@@ -8,7 +8,7 @@
 import fs from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { buildContext, playerFit } from '../src/profiles.js';
-import { BIG, FEATS, threshold, bigMissX, oppUnitFor } from '../src/bigmiss.js';
+import { BIG, FEATS, threshold, bigMissX, oppUnitFor, relevantDriver } from '../src/bigmiss.js';
 import { loadPlayerIds } from '../src/pbp.js';
 import { fetchCached } from '../src/fetcher.js';
 import { parseCsv } from '../src/baselines.js';
@@ -40,7 +40,7 @@ for (const season of [2024, 2025, 2026]) {
   for (const row of parseCsv(typeof r.data === 'string' ? r.data : '')) {
     if (row.season_type !== 'REG') continue;
     const tw = ((T[row.team] ||= {})[Number(row.week)] ||= []);
-    tw.push({ name: normName(row.player_display_name), pos: row.position === 'FB' ? 'RB' : row.position, tgt: Number(row.targets || 0), car: Number(row.carries || 0), rec: Number(row.receptions || 0), ry: Number(row.rushing_yards || 0), recy: Number(row.receiving_yards || 0) });
+    tw.push({ name: normName(row.player_display_name), pos: row.position === 'FB' ? 'RB' : row.position, tgt: Number(row.targets || 0), car: Number(row.carries || 0), att: Number(row.attempts || 0), rec: Number(row.receptions || 0), ry: Number(row.rushing_yards || 0), recy: Number(row.receiving_yards || 0) });
   }
 }
 /** Share of his team's per-game opportunities (targets or carries) held by same-group teammates who are absent this week. */
@@ -61,7 +61,7 @@ function freedShare(season, team, week, playerName, stat) {
 /** After the fact: this game's actual volume for the player. */
 function actualVolume(season, team, week, playerName, stat) {
   const p = (WEEKLY[season]?.[nv(team)]?.[week] || []).find((x) => x.name === normName(playerName));
-  return p ? (/rush|carries/.test(stat) ? p.car : p.tgt) : null;
+  return p ? (/rush|carries/.test(stat) ? p.car : stat === 'pass_yds' || stat === 'completions' ? p.att : p.tgt) : null;
 }
 const NVT = { WSH: 'WAS', LAR: 'LA' };
 const nv = (a) => NVT[a] || a;
@@ -85,7 +85,7 @@ for (const r of rows) {
     oppUnit: oppUnitFor(r.stat, r.pos, ctx.teams[nv(r.opponent)]?.ratings?.def) });
   const boom = r.actual >= r.line + T ? 1 : 0, bust = r.actual <= r.line - T ? 1 : 0;
   const expVol = /rush|carries/.test(r.stat) ? c.carries : r.stat === 'pass_yds' || r.stat === 'completions' ? c.attempts : c.targets;
-  data.push({ ...r, x, boom, bust, T, freed, expVol, actVol: actualVolume(r.season, r.team, r.week, r.player_name, r.stat) });
+  data.push({ ...r, x, boom, bust, T, freed, expVol, actVol: actualVolume(r.season, r.team, r.week, r.player_name, r.stat), fitReasons: (fit?.reasons || []).filter((fr) => (/rush|carries/.test(r.stat) ? fr.kind === 'run' : fr.kind === 'rec')).map((fr) => fr.text), style: pl?.style || [], recentVals: prior.slice(-4).map((g) => g.v) });
 }
 
 // ---------- base rates ----------
@@ -203,4 +203,55 @@ console.log('\nSimulated outlier picks (one per game, out of sample):');
 for (const opt of [{}, { needOurWay: true }, { needOurWay: true, margin: 1.25 }, { needOurWay: true, margin: 1.5 }]) {
   simulatePicks(d24, d25, 'learn 2024 → pick 2025', opt);
   simulatePicks(d25, d24, 'learn 2025 → pick 2024 (rev.)', opt);
+}
+
+// ---------- RERUN: the new outlier pick for EVERY game 2024–26, each from a model that never saw that season ----------
+if (process.argv.includes('--rerun')) {
+  const MIN_L = MIN_LINE;
+  function picksFor(train, test, foldLabel) {
+    const mB = fitLogit(train, 'boom', 2), mU = fitLogit(train, 'bust', 2);
+    const base = {}; for (const st of Object.keys(BIG)) { const L = train.filter((d) => d.stat === st); base[st] = { boom: rate(L, 'boom'), bust: rate(L, 'bust') }; }
+    const drivers = (m, x, stat) => x.map((v, j) => [FEATS[j], m.sd[j] ? ((v - m.mu[j]) / m.sd[j]) * m.b[j + 1] : 0]).filter(([f, c]) => c > 0.08 && relevantDriver(f, stat)).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([f]) => f);
+    const byGame = new Map(); for (const d of test) (byGame.get(d.game_id) || byGame.set(d.game_id, []).get(d.game_id)).push(d);
+    const out = [];
+    for (const [gid, G] of byGame) {
+      let best = null, top = null;
+      for (const d of G) {
+        if (d.line < MIN_L[d.stat]) continue;
+        const pb = predict(mB, d.x), pu = predict(mU, d.x);
+        const lb = pb / Math.max(base[d.stat].boom, 1e-3), lu = pu / Math.max(base[d.stat].bust, 1e-3);
+        const dir = lb >= lu ? 'OVER' : 'UNDER', lift = Math.max(lb, lu);
+        const ourP = dir === 'OVER' ? pb : pu, othP = dir === 'OVER' ? pu : pb;
+        const agrees = dir === 'OVER' ? d.proj > d.line : d.proj < d.line, reach = dir === 'OVER' ? d.p90 >= d.line + d.T : d.p10 <= d.line - d.T;
+        const cand = { d, dir, lift, ourP, othP, base: dir === 'OVER' ? base[d.stat].boom : base[d.stat].bust, drivers: drivers(dir === 'OVER' ? mB : mU, d.x, d.stat) };
+        if (!top || lift > top.lift) top = cand;
+        if (lift >= 1.5 && ourP > othP && agrees && reach && (!best || lift > best.lift)) best = cand;
+      }
+      const g0 = G[0];
+      if (!best) { out.push({ fold: foldLabel, season: g0.season, week: g0.week, game: `${g0.team === g0.opponent ? '' : ''}${gid}`, teams: [...new Set(G.map((d) => d.team))].sort().join('–'), pick: null, strongest: top && { name: top.d.player_name, stat: top.d.stat, dir: top.dir, line: top.d.line, lift: +top.lift.toFixed(2) } }); continue; }
+      const d = best.d;
+      const won = best.dir === 'OVER' ? d.actual > d.line : d.actual < d.line;
+      const big = best.dir === 'OVER' ? d.boom === 1 : d.bust === 1, bigAgainst = best.dir === 'OVER' ? d.bust === 1 : d.boom === 1;
+      out.push({ fold: foldLabel, season: d.season, week: d.week, game: gid, teams: [...new Set(G.map((x) => x.team))].sort().join('–'), pick: {
+        name: d.player_name, team: d.team, opp: d.opponent, pos: d.pos, stat: d.stat, dir: best.dir, line: d.line, proj: +d.proj.toFixed(1), threshold: +d.T.toFixed(1),
+        ourP: +best.ourP.toFixed(3), othP: +best.othP.toFixed(3), base: +best.base.toFixed(3), lift: +best.lift.toFixed(2), drivers: best.drivers,
+        recent: d.recentVals, expVol: d.expVol != null ? +d.expVol.toFixed(1) : null, actVol: d.actVol, fitReasons: d.fitReasons.slice(0, 2), style: d.style,
+        actual: d.actual, won, bigOurWay: big, bigAgainst } });
+    }
+    return out;
+  }
+  const all = [
+    ...picksFor(d25, d24, 'learned on 2025 (reverse — out of sample, not forward)'),
+    ...picksFor(d24, d25, 'learned on 2024 (forward)'),
+    ...picksFor([...d24, ...d25], d26, 'learned on 2024–25 (forward)'),
+  ].sort((a, b) => a.season - b.season || a.week - b.week || a.teams.localeCompare(b.teams));
+  fs.mkdirSync(new URL('../reports/', import.meta.url), { recursive: true });
+  fs.writeFileSync(new URL('../reports/outlier_rerun_2024_2026.json', import.meta.url), JSON.stringify(all, null, 1));
+  const P = all.filter((x) => x.pick);
+  for (const season of [2024, 2025, 2026]) {
+    const S = P.filter((x) => x.season === season), G = all.filter((x) => x.season === season);
+    if (!G.length) continue;
+    console.log(`${season}: ${S.length} picks in ${G.length} games  won ${S.filter((x) => x.pick.won).length}-${S.filter((x) => !x.pick.won).length} (${(100 * S.filter((x) => x.pick.won).length / Math.max(1, S.length)).toFixed(1)}%)  big miss our way ${S.filter((x) => x.pick.bigOurWay).length}  against ${S.filter((x) => x.pick.bigAgainst).length}`);
+  }
+  console.log('wrote reports/outlier_rerun_2024_2026.json');
 }
