@@ -159,3 +159,54 @@ The model's 0.85 blowout cut is milder than reality, so it was kept.
 The same shift for RB2s was worse, so it applies to lead backs only. Week 4 RB1 average: 13.7 → 14.5 carries.
 
 Also fixed: the displayed team pass rate (and the skeptic's team-rush estimate) now uses the simulator's effective game-state weights.
+
+## fbm-1.5.0: situational multiplier model (2026-10-01)
+
+**The idea:** effects are percentages of the player's own number, not fixed additions. A 10% boost is +1.5 carries on a 15-carry back and +2.0 on a 20-carry back.
+
+`src/situational.js` (fit with `scripts/learn_situational.mjs` on nflverse 2022–25):
+
+    expected stat = baseline × exp(β · x)          (Poisson regression, log(baseline) offset)
+
+- **baseline:** his average this season, padded with 2 games' worth of last season's average.
+- **x:** points favored, points underdog, blowout terms beyond 7, implied team points, what this defense allows to his position (log, shrunk), home, wind 15+ mph, cold.
+- The learner and the live model share the same state and feature code, so training and live inputs match.
+
+**Fitted multipliers.** Test = fit on 2022–24, scored on 2025, against the player's baseline alone:
+
+| Stat | 2025 test: baseline → model | per 7 pts fav | per 7 pts dog | blowout fav (beyond 7) | blowout dog (beyond 7) | +7 team pts | opp allowance (log) | home | wind 15+ | cold |
+|---|---|---|---|---|---|---|---|---|---|---|
+| RB|carries | 4.16 → 4.172 (no gain) | ×0.99 | ×0.95 | ×1.01 | ×1.11 | ×0.98 | ×1.80 | ×1.03 | ×1.02 | ×1.00 |
+| RB|rush_yds | 25.043 → 25.073 (no gain) | ×0.97 | ×0.96 | ×1.01 | ×1.14 | ×1.03 | ×1.97 | ×1.03 | ×1.01 | ×1.04 |
+| RB|targets | 1.638 → 1.606 | ×0.92 | ×1.06 | ×1.05 | ×0.92 | ×1.08 | ×1.44 | ×1.06 | ×0.98 | ×1.05 |
+| RB|receptions | 1.354 → 1.324 | ×0.90 | ×1.05 | ×1.11 | ×0.93 | ×1.08 | ×1.54 | ×1.07 | ×0.99 | ×1.08 |
+| RB|rec_yds | 13.699 → 13.171 | ×0.86 | ×1.09 | ×1.02 | ×0.86 | ×1.22 | ×1.24 | ×1.03 | ×1.04 | ×1.06 |
+| WR|targets | 2.298 → 2.273 | ×0.97 | ×1.05 | ×0.99 | ×0.98 | ×1.05 | ×1.34 | ×1.00 | ×0.96 | ×0.93 |
+| WR|receptions | 1.692 → 1.683 | ×0.97 | ×1.07 | ×1.01 | ×0.98 | ×1.07 | ×1.28 | ×1.02 | ×0.94 | ×0.95 |
+| WR|rec_yds | 25.449 → 25.195 | ×1.00 | ×1.08 | ×0.99 | ×0.88 | ×1.04 | ×1.37 | ×1.04 | ×0.89 | ×0.96 |
+| TE|targets | 1.9 → 1.913 (no gain) | ×0.97 | ×1.00 | ×1.06 | ×0.95 | ×1.01 | ×1.42 | ×1.01 | ×0.96 | ×0.98 |
+| TE|receptions | 1.568 → 1.583 (no gain) | ×0.97 | ×1.00 | ×1.02 | ×1.00 | ×1.02 | ×1.34 | ×1.02 | ×0.95 | ×0.99 |
+| TE|rec_yds | 18.698 → 18.878 (no gain) | ×0.97 | ×0.95 | ×0.96 | ×1.09 | ×1.05 | ×1.43 | ×1.02 | ×0.89 | ×0.98 |
+| QB|pass_att | 7.69 → 7.586 | ×0.94 | ×1.01 | ×1.07 | ×1.01 | ×1.06 | ×1.49 | ×1.02 | ×0.94 | ×0.96 |
+| QB|pass_yds | 62.443 → 60.486 | ×0.95 | ×0.99 | ×1.03 | ×1.00 | ×1.06 | ×1.77 | ×1.06 | ×0.90 | ×0.98 |
+| QB|completions | 5.392 → 5.28 | ×0.95 | ×1.01 | ×1.06 | ×1.03 | ×1.05 | ×1.72 | ×1.05 | ×0.91 | ×0.97 |
+| QB|rush_yds | 13.445 → 13.691 (no gain) | ×0.86 | ×0.90 | ×1.17 | ×1.57 | ×1.02 | ×1.20 | ×1.02 | ×1.12 | ×0.87 |
+| QB|carries | 1.935 → 1.934 | ×0.90 | ×0.96 | ×1.09 | ×1.46 | ×1.04 | ×1.20 | ×1.01 | ×1.08 | ×0.94 |
+
+**Readings:**
+- Relative to a back's own baseline, being favored doesn't add carries (×0.99 per 7). The baseline already holds his usual game script, and pregame spreads don't know who will actually lead.
+- Big underdogs bounce back a little (×1.11 per 7 beyond 7).
+- Opponent allowance is the biggest carries effect.
+- Favorites throw less to backs (×0.86–0.92 per 7) and pass less overall (QB ×0.94–0.95).
+- Wind 15+ mph: QB passing yards ×0.90, WR yards ×0.89.
+
+**Against the full model** (2025, blend weight learned on weeks 2–9, tested on weeks 10–18; `scripts/situational_vs_model.mjs`):
+- The full model beats the multiplier model on RB carries (4.15 vs 4.37) and rushing yards.
+- A blend helps a little, and is shipped, for TE receptions (60%), WR targets (60%), RB targets (50%), RB receptions (20%) and QB completions (10%).
+- Not blended: QB passing yards (fewer misses, but its record vs lines got worse), TE yards, WR yards / receptions.
+- Every other stat shows the multiplier math on the card as a reference.
+
+**Guards:**
+- No blend onto a zero projection, and QB stats blend only for the starter.
+- Receptions are capped at 0.9 × simulated targets.
+- No baseline-driven layer for a stat whose share rose 1.5+ points from a teammate's absence.

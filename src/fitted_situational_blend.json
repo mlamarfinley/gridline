@@ -1,0 +1,127 @@
+{
+ "batch": 9,
+ "learnedAt": "2026-10-01T16:09:04.024Z",
+ "method": "blend weight learned on 2025 wk 2\u20139, kept only if it beat the model on wk 10\u201318; also dropped where the record against posted lines got worse (QB pass yds, TE rec yds, RB rush yds ~even).",
+ "byStat": {
+  "QB|completions": {
+   "w": 0.1,
+   "test": {
+    "model": 5.173,
+    "blended": 5.14,
+    "situational": 5.18
+   }
+  },
+  "QB|pass_att": {
+   "w": 0,
+   "test": {
+    "model": 7.11,
+    "blended": 7.11,
+    "situational": 7.448
+   }
+  },
+  "QB|pass_yds": {
+   "w": 0,
+   "test": {
+    "model": 61.046,
+    "blended": 60.295,
+    "situational": 60.689
+   }
+  },
+  "QB|rush_yds": {
+   "w": 0,
+   "test": {
+    "model": 13.152,
+    "blended": 13.152,
+    "situational": 13.015
+   }
+  },
+  "RB|carries": {
+   "w": 0,
+   "test": {
+    "model": 4.146,
+    "blended": 4.15,
+    "situational": 4.367
+   }
+  },
+  "RB|rec_yds": {
+   "w": 0,
+   "test": {
+    "model": 13.228,
+    "blended": 13.39,
+    "situational": 13.88
+   }
+  },
+  "RB|receptions": {
+   "w": 0.2,
+   "test": {
+    "model": 1.314,
+    "blended": 1.31,
+    "situational": 1.328
+   }
+  },
+  "RB|rush_yds": {
+   "w": 0,
+   "test": {
+    "model": 25.063,
+    "blended": 25.043,
+    "situational": 25.675
+   }
+  },
+  "RB|targets": {
+   "w": 0.5,
+   "test": {
+    "model": 1.517,
+    "blended": 1.516,
+    "situational": 1.554
+   }
+  },
+  "TE|rec_yds": {
+   "w": 0,
+   "test": {
+    "model": 20.61,
+    "blended": 20.519,
+    "situational": 21.072
+   }
+  },
+  "TE|receptions": {
+   "w": 0.6,
+   "test": {
+    "model": 1.683,
+    "blended": 1.621,
+    "situational": 1.623
+   }
+  },
+  "TE|targets": {
+   "w": 0,
+   "test": {
+    "model": 1.93,
+    "blended": 1.937,
+    "situational": 1.937
+   }
+  },
+  "WR|rec_yds": {
+   "w": 0,
+   "test": {
+    "model": 27.308,
+    "blended": 27.368,
+    "situational": 27.924
+   }
+  },
+  "WR|receptions": {
+   "w": 0,
+   "test": {
+    "model": 1.74,
+    "blended": 1.744,
+    "situational": 1.777
+   }
+  },
+  "WR|targets": {
+   "w": 0.6,
+   "test": {
+    "model": 2.409,
+    "blended": 2.382,
+    "situational": 2.421
+   }
+  }
+ }
+}

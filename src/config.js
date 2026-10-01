@@ -39,7 +39,10 @@ export const CFBD_API_KEY = process.env.CFBD_API_KEY || '';
 //            absorbs at most 55% of an absent lead back's share (measured 2022–25).
 // 1.4.4 NFL: lead backs (RB1) get +0.78 carries on top of the pooled RB calibration — the pooled shift is learned
 //            on RB1s and RB2s together and left RB1s ~0.8 carries short (walk-forward: 2026 MAE 4.48 → 4.36).
-export const MODEL_VERSION = 'fbm-1.4.4';
+export const MODEL_VERSION = 'fbm-1.5.0';
+// 1.5.0 NFL: situational multiplier model (src/situational.js, learned 2022–25): baseline × learned multipliers for
+//            spread / blowout / team total / opponent allowance / home / weather. Shown on every card; blended in for
+//            QB completions, RB targets/receptions, TE receptions, WR targets (beat the model on 2025 wk 10–18).
 export const RB1_CARRY_SHIFT = 0.78;
 
 // Weeks inspected while tuning each model version. Results on these weeks are IN-SAMPLE
@@ -57,6 +60,7 @@ export const DEV_WEEKS = {
   'fbm-1.4.2': { nfl: [2, 3, 4], cfb: [4] },
   'fbm-1.4.3': { nfl: [2, 3, 4], cfb: [4] },
   'fbm-1.4.4': { nfl: [2, 3, 4], cfb: [4] },
+  'fbm-1.5.0': { nfl: [2, 3, 4], cfb: [4] },
 };
 
 export const LEAGUES = {

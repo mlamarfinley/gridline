@@ -20,9 +20,19 @@ import { whyPick, edgeKeyFor } from './why.js';
 import { bigMissProbs, oppUnitFor, BIG, topDrivers } from './bigmiss.js';
 import { calibrationFor, calibrateSample } from './calibrate.js';
 import { v14For, buildX, usageFromRows, applyV14 } from './v14.js';
+import { seasonState, situationInput, situationMultiplier, loadWeekly } from './situational.js';
 import fsA from 'node:fs';
 let ANCHOR = null;
 try { ANCHOR = JSON.parse(fsA.readFileSync(new URL('./fitted_anchor.json', import.meta.url), 'utf8')).byStat; } catch { ANCHOR = null; }
+let SITFIT = null, SITBLEND = null;
+try { SITFIT = JSON.parse(fsA.readFileSync(new URL('./fitted_situational.json', import.meta.url), 'utf8')).byStat; } catch { SITFIT = null; }
+try { SITBLEND = JSON.parse(fsA.readFileSync(new URL('./fitted_situational_blend.json', import.meta.url), 'utf8')).byStat; } catch { SITBLEND = null; }
+// Role changed for THIS stat: a teammate's absence adds 1.5+ points of the share that drives it (carry share for
+// carries / rushing yards, target share for targets / catches / receiving yards). His season baseline then describes
+// a different job, so baseline-driven layers (anchor, situational blend) stand aside for that stat.
+const RUSH_STATS = new Set(['carries', 'rush_yds', 'long_rush', 'rush_td']);
+const roleChanged = (info, k) => (info?.redistribution || []).reduce((a, x) => a + (RUSH_STATS.has(k) ? x.addCarryShare : k === 'pass_yds' || k === 'pass_att' || k === 'completions' ? 0 : x.addTargetShare), 0) >= 0.015;
+const NVA = (a) => ({ WSH: 'WAS', LAR: 'LA' })[a] || a; // ESPN → nflverse team abbreviations
 import { FIT, loadPriorSeason, priorPoints, blendTeam } from './priors.js';
 import { lineAgg, gradeTeam, leagueBaseline, METHOD as LINE_METHOD } from './linegrades.js';
 
@@ -206,6 +216,10 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
   const teams = {};
   const flat = [];
   const expMarginHome = implied ? implied.home - implied.away : null;
+  let SIT = null;
+  if (lg === 'nfl' && !blind && ev?.week != null && SITFIT) {
+    try { const [cur, prev, ids] = await Promise.all([loadWeekly(season), loadWeekly(season - 1), loadPlayerIds()]); SIT = { state: seasonState(cur, prev, ev.week), ids }; } catch { SIT = null; }
+  }
   for (const t of [home, away]) {
     const opp = t.id === home.id ? away : home;
     const cx = ctx[t.id], ox = ctx[opp.id];
@@ -586,7 +600,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
         // his role by 5+ points of share — his average then describes a different job.
         let anchorInfo = null;
         const aw = lg === 'nfl' && !STAT_DEFS[k].ratio ? ANCHOR?.[`${pos}|${k}`]?.w : 0;
-        if (aw > 0 && arrK?.length && rowsCur.length >= 2 && (info?.redistribution || []).reduce((a, x) => a + x.addCarryShare + x.addTargetShare, 0) < 0.05) {
+        if (aw > 0 && arrK?.length && rowsCur.length >= 2 && !roleChanged(info, k)) {
           const histK = rowsCur.map((x) => x.stats[k]).filter((v) => v != null);
           if (histK.length >= 2) {
             const sa = histK.reduce((a, b) => a + b, 0) / histK.length;
@@ -594,6 +608,30 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
             const shift = aw * (sa - m0);
             arrK = Float64Array.from(arrK, (v) => Math.max(0, v + shift));
             anchorInfo = { w: aw, seasonAvg: Math.round(sa * 10) / 10, before: Math.round(m0 * 10) / 10, shift: Math.round(shift * 10) / 10 };
+          }
+        }
+        // Situational multiplier model (src/situational.js): his baseline × learned multipliers for this game's
+        // situation. Always shown as a second opinion; blended in only where that beat the model out of sample
+        // (src/fitted_situational_blend.json). Skipped when an absence changed his role (his baseline is another job).
+        let situational = null;
+        const skey = `${pos}|${k}`;
+        if (SIT && SITFIT?.[skey]?.beta && arrK?.length && !roleChanged(info, k)) {
+          const gs = SIT.ids.byEspn.get(String(id))?.gsis;
+          const inp = gs ? situationInput(SIT.state, { key: skey, playerId: gs, opp: NVA(opp.abbr), spread: expMargin, impliedPts, home: t.id === home.id ? 1 : 0, wind: weather?.windMph ?? null, temp: weather?.tempF ?? null, outdoors: !weather?.indoor }) : null;
+          if (inp) {
+            const sm = situationMultiplier(SITFIT[skey], inp.x);
+            let value = inp.base * sm.mult;
+            let m0 = 0; for (const v of arrK) m0 += v; m0 /= arrK.length;
+            // Blend only for a player the simulation actually gives this work to: the starting QB for QB stats, and
+            // never onto a zero (a backup's baseline from games he started is not this week's role).
+            const active = m0 > 0 && (pos !== 'QB' || id === roles.qb);
+            // Receptions can't outrun targets: cap at the simulated targets × his catch rate ceiling (0.9).
+            if (k === 'receptions' && simStats.targets?.length) { let tg = 0; for (const v of simStats.targets) tg += v; tg /= simStats.targets.length; value = Math.min(value, 0.9 * tg); }
+            const sw = active ? SITBLEND?.[skey]?.w || 0 : 0;
+            if (sw > 0) arrK = Float64Array.from(arrK, (v) => Math.max(0, v + sw * (value - m0)));
+            situational = { base: Math.round(inp.base * 10) / 10, mult: Math.round(sm.mult * 1000) / 1000, value: Math.round(value * 10) / 10, w: sw, beatsBaseline: !!SITFIT[skey].beatsBaseline,
+              parts: sm.parts.map((x) => ({ feat: x.feat, mult: Math.round(x.mult * 1000) / 1000 })), constMult: Math.round(sm.base * 1000) / 1000,
+              oppAllowPer: Math.round(inp.oppAllowPer * 10) / 10, leaguePer: Math.round(inp.leaguePer * 10) / 10, spread: expMargin };
           }
         }
         if (k === 'ypc') s = ratioSummary(simStats.rush_yds, simStats.carries);
@@ -619,6 +657,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
           probOver: pOver, fairOdds: pOver != null ? { over: probToAmerican(pOver), under: probToAmerican(1 - pOver) } : null,
           calibration: v14Applied[k] != null ? { version: 'fbm-1.4.0', correction: Math.round(v14Applied[k] * 100) / 100 } : 'fbm-1.3.0',
           anchor: anchorInfo,
+          situational,
           available: s != null,
           unavailableReason: s == null ? 'Not modelled' : (k === 'targets' && lg === 'cfb' ? null : null),
         };

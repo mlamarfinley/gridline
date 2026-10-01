@@ -390,6 +390,7 @@ function cardBody(m, c, key) {
         <dt>Book price</dt><dd class="book">${bk?.overPrice != null ? `O ${am(bk.overPrice)} / U ${am(bk.underPrice)}` : bk ? '<span class="faint" title="The free ESPN feed publishes lines without prices">n/a</span>' : '—'}</dd>
         ${actual != null ? `<dt>Actual</dt><dd class="actual ${hit}">${f1(actual)}</dd>` : ''}
       </dl>
+      ${s.situational ? `<div class="sitm" title="Learned from 2022–25 games: his baseline times how this kind of situation changed output for players at his position"><span class="faint">Situation model</span> ${esc(sitText(s.situational))}${s.situational.w ? ` <span class="faint">· ${Math.round(s.situational.w * 100)}% blended in</span>` : ' <span class="faint">· reference only</span>'}</div>` : ''}
       ${s.probOver != null ? `<div class="prob">Model P(&gt; ${s.threshold}) <span class="p">${pct(s.probOver)}</span> · fair ${am(s.fairOdds?.over)}<br><span class="faint">threshold = ${esc(s.thresholdSource)}</span>${bk?.implied?.noVigOver != null ? `<br>Book no-vig P(over) ${pct(bk.implied.noVigOver)}` : ''}<br><span class="exp">experimental · uncalibrated</span></div>` : ''}
     </div>
     <div class="chart">${last5Chart(s)}${vsPosBlock(s)}</div>
@@ -403,6 +404,12 @@ function actualOf(a, k) {
   if (k === 'ypr') return a.receptions ? a.rec_yds / a.receptions : null;
   if (k === 'tds') return (a.rush_td || 0) + (a.rec_td || 0);
   return a[k] ?? 0;
+}
+
+function sitText(x) {
+  const lbl = (p) => ({ favPts: `fav ${f1(x.spread)}`, blowFav: `big fav ${f1(x.spread)}`, dogPts: `dog ${f1(-x.spread)}`, blowDog: `big dog ${f1(-x.spread)}`, teamTot: 'team total', oppAllow: `opp allows ${f1(x.oppAllowPer)}/g vs ${f1(x.leaguePer)}`, home: 'home', wind15: 'wind', cold: 'cold' })[p.feat] || p.feat;
+  const parts = [...(Math.abs(x.constMult - 1) >= 0.005 ? [{ feat: 'stat level', mult: x.constMult }] : []), ...(x.parts || [])];
+  return `${f1(x.base)}${parts.map((p) => ` × ${p.mult.toFixed(2)} ${p.feat === 'stat level' ? '(typical)' : `(${lbl(p)})`}`).join('')} = ${f1(x.value)}`;
 }
 
 function vsPosBlock(s) {

@@ -109,6 +109,12 @@ export function whyPick(c) {
     const d = vp.avg - c.line, meaningful = Math.abs(d) >= 0.1 * Math.max(1, c.line) && g.length >= 3;
     add(`Matchup: ${vp.label}, last ${g.length}: ${g.map((x) => `${x.name ? x.name.split(' ').slice(-1)[0] : '?'} ${f1(x.value)}`).join(', ')} — average ${f1(vp.avg)} vs this ${c.line} line.`, meaningful ? (d > 0 ? 1 : -1) : 0);
   }
+  // Situational multiplier model: his baseline × what this kind of game has done to players like him (2022–25).
+  const sx = card.stats?.[c.stat]?.situational;
+  if (sx && c.line != null) {
+    const d = sx.value - c.line, meaningful = Math.abs(d) >= 0.1 * Math.max(1, c.line);
+    add(`Situation model: ${situationText(sx)}${sx.w ? ` — ${pct(sx.w)} of it is blended into the projection (that improved accuracy out of sample)` : ' — shown for reference; for this stat the main model was more accurate out of sample'}.`, meaningful ? (d > 0 ? 1 : -1) : 0);
+  }
   // Season anchor (learned): part of the projection is his own season average.
   const an = card.stats?.[c.stat]?.anchor;
   if (an && Math.abs(an.shift) >= 0.5) add(`Who he is: the projection is blended ${pct(an.w)} toward his season average (${f1(an.seasonAvg)}), moving it ${an.shift > 0 ? 'up' : 'down'} ${f1(Math.abs(an.shift))} — learned from 2024–25, where it made projections more accurate.`, an.shift > 0 ? 1 : -1);
@@ -124,6 +130,13 @@ export function whyPick(c) {
   return out.sort((a, b) => order[a.stance] - order[b.stance]);
 }
 
+const SIT_WORD = { favPts: 'favored', dogPts: 'underdog', blowFav: 'big favorite', blowDog: 'big underdog', teamTot: 'team total', oppAllow: 'what this defense allows', home: 'home', wind15: 'wind', cold: 'cold' };
+/** "his baseline 20.0 × 0.98 (underdog by 2.5) × 1.04 (what this defense allows) = 20.4" */
+export function situationText(sx) {
+  const parts = [...(Math.abs(sx.constMult - 1) >= 0.005 ? [{ feat: 'level', mult: sx.constMult }] : []), ...(sx.parts || [])];
+  const label = (p) => (p.feat === 'level' ? 'typical change for this stat' : p.feat === 'favPts' || p.feat === 'blowFav' ? `favored by ${f1(sx.spread)}` : p.feat === 'dogPts' || p.feat === 'blowDog' ? `underdog by ${f1(-sx.spread)}` : p.feat === 'oppAllow' ? `this defense allows ${f1(sx.oppAllowPer)} per game to his position vs ${f1(sx.leaguePer)} league` : SIT_WORD[p.feat] || p.feat);
+  return `his baseline ${f1(sx.base)}${parts.map((p) => ` × ${p.mult.toFixed(2)} (${label(p)})`).join('')} = ${f1(sx.value)}`;
+}
 // Volume clears what the line needs → supports OVER (+1); well short → supports UNDER (−1); within 5% → no lean.
 function mathEffect(have, need) {
   if (!(have > 0) || !(need > 0)) return 0;
