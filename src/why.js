@@ -120,6 +120,11 @@ export function whyPick(c) {
     const d = sx.value - c.line, meaningful = Math.abs(d) >= 0.1 * Math.max(1, c.line);
     add(`Situation model: ${situationText(sx)}${sx.w ? ` — ${pct(sx.w)} of it is blended into the projection (that improved accuracy out of sample)` : ' — shown for reference; for this stat the main model was more accurate out of sample'}.`, meaningful ? (d > 0 ? 1 : -1) : 0);
   }
+  // Player quality: Player Rating (RB carries / rush yds) and the skill ratings.
+  const ra = card.stats?.[c.stat]?.ratingAdj;
+  if (ra && Math.abs(ra.shift) >= 0.3) add(`Player Rating ${ra.rating}: moves the projection ${ra.shift > 0 ? 'up' : 'down'} ${f1(Math.abs(ra.shift))} (backs this good / this weak beat / missed their projections in 2024).`, ra.shift > 0 ? 1 : -1);
+  const sa = card.stats?.[c.stat]?.skillAdj;
+  if (sa && Math.abs(sa.shift) >= 0.1) add(`Skill ratings (overall ${sa.overall}): ${sa.shift > 0 ? '+' : ''}${f1(sa.shift)}${sa.top.length ? ` — mostly ${sa.top.map((t) => `${t.skill} ${t.rating}`).join(', ')}` : ''}.`, 0);
   // Season anchor (learned): part of the projection is his own season average.
   const an = card.stats?.[c.stat]?.anchor;
   if (an && Math.abs(an.shift) >= 0.5) add(`Who he is: the projection is blended ${pct(an.w)} toward his season average (${f1(an.seasonAvg)}), moving it ${an.shift > 0 ? 'up' : 'down'} ${f1(Math.abs(an.shift))} — learned from 2024–25, where it made projections more accurate.`, an.shift > 0 ? 1 : -1);

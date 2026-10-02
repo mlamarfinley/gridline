@@ -28,6 +28,8 @@ import fsA from 'node:fs';
 let ANCHOR = null;
 try { ANCHOR = JSON.parse(fsA.readFileSync(new URL('./fitted_anchor.json', import.meta.url), 'utf8')).byStat; } catch { ANCHOR = null; }
 let SITFIT = null, SITBLEND = null, TEAMRUNS = null, PRPROJ = null;
+let SKPROJ = null; // player skill ratings → projection (user-requested; slopes only, near-neutral out of sample)
+try { SKPROJ = JSON.parse(fsA.readFileSync(new URL('./fitted_skill_projection.json', import.meta.url), 'utf8')).byStat; } catch { SKPROJ = null; }
 try { PRPROJ = JSON.parse(fsA.readFileSync(new URL('./fitted_player_rating_projection.json', import.meta.url), 'utf8')).byStat; } catch { PRPROJ = null; }
 try { TEAMRUNS = JSON.parse(fsA.readFileSync(new URL('./fitted_team_runs.json', import.meta.url), 'utf8')).beta; } catch { TEAMRUNS = null; }
 try { SITFIT = JSON.parse(fsA.readFileSync(new URL('./fitted_situational.json', import.meta.url), 'utf8')).byStat; } catch { SITFIT = null; }
@@ -226,6 +228,8 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
   // Player Ratings (Madden + Production Monitor; derived file when Madden isn't local). Live NFL only.
   let PRAT = null, PRIDS = null;
   if (lg === 'nfl' && !blind && ev?.week != null && PRPROJ) { try { PRAT = await playerRatingsFor(season, ev.week); PRIDS = PRAT ? await loadPlayerIds() : null; } catch { PRAT = null; } }
+  let SKR = null;
+  if (lg === 'nfl' && !blind && ev?.week != null && SKPROJ) { try { SKR = await buildRatings(season, ev.week); PRIDS = PRIDS || await loadPlayerIds(); } catch { SKR = null; } }
   let SIT = null;
   if (lg === 'nfl' && !blind && ev?.week != null && SITFIT) {
     try { const [cur, prev, ids] = await Promise.all([loadWeekly(season), loadWeekly(season - 1), loadPlayerIds()]); SIT = { state: seasonState(cur, prev, ev.week), ids, cur, prev }; } catch { SIT = null; }
@@ -640,6 +644,22 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
             ratingAdj = { rating: pr.rating, z: pr.z, shift: Math.round(shift * 10) / 10 };
           }
         }
+        // Player SKILL ratings (src/playerRatings.js) → projection: shift = Σ b_k·(skill rating − 50)/50 per position|stat,
+        // fitted on 2024–25 (scripts/skill_rating_projection_test.mjs). No intercept, so ratings only move a player relative
+        // to an average one. Added at the user's request: out of sample it is roughly neutral (within ±0.7% MAE per stat).
+        // Only for a player the simulation already gives this work to (never adds production to a backup's zero).
+        let skillAdj = null;
+        const skp = SKPROJ?.[`${pos}|${k}`];
+        if (skp && SKR && arrK?.length) {
+          const gs = PRIDS?.byEspn.get(String(id))?.gsis, rt = gs ? SKR.players.get(gs) : null;
+          let m0 = 0; for (const v of arrK) m0 += v; m0 /= arrK.length;
+          if (rt && rt.pos === pos && m0 > 0 && (pos !== 'QB' || id === roles.qb)) {
+            const parts = skp.skills.map((sk, j) => { const r = rt.skills[sk]; const x = r && !r.noData ? (r.rating - 50) / 50 : 0; return { skill: sk, rating: r?.rating ?? null, effect: skp.beta[j + 1] * x }; });
+            const shift = Math.max(-0.5 * m0, parts.reduce((a, p) => a + p.effect, 0));
+            arrK = Float64Array.from(arrK, (v) => Math.max(0, v + shift));
+            skillAdj = { shift: Math.round(shift * 100) / 100, overall: rt.overall, top: parts.filter((p) => Math.abs(p.effect) >= 0.005).sort((a, b) => Math.abs(b.effect) - Math.abs(a.effect)).slice(0, 3).map((p) => ({ skill: p.skill, rating: p.rating, effect: Math.round(p.effect * 100) / 100 })) };
+          }
+        }
         // Situational multiplier model (src/situational.js): his baseline × learned multipliers for this game's
         // situation. Always shown as a second opinion; blended in only where that beat the model out of sample
         // (src/fitted_situational_blend.json). Skipped when an absence changed his role (his baseline is another job).
@@ -689,6 +709,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
           calibration: v14Applied[k] != null ? { version: 'fbm-1.4.0', correction: Math.round(v14Applied[k] * 100) / 100 } : 'fbm-1.3.0',
           anchor: anchorInfo,
           ratingAdj,
+          skillAdj,
           situational,
           available: s != null,
           unavailableReason: s == null ? 'Not modelled' : (k === 'targets' && lg === 'cfb' ? null : null),

@@ -22,7 +22,7 @@ for (const r of all) {
   if (!(r.season === 2024 || r.season === 2025) || r.week < 3 || !STATS[r.pos]?.includes(r.stat)) continue;
   const gs = ids.byEspn.get(String(r.player_id))?.gsis; if (!gs) continue;
   const p = ratingsAt(r.season, r.week).players.get(gs); if (!p || p.pos !== r.pos) continue;
-  data.push({ key: r.key, season: r.season, res: r.actual - r.cal, x: SKILLS[r.pos].map(([k]) => ((p.skills[k]?.rating ?? 50) - 50) / 50) });
+  data.push({ key: r.key, season: r.season, res: r.actual - r.cal, x: SKILLS[r.pos].map(([k]) => ((p.skills[k]?.rating ?? 50) - 50) / 50), ov: ((p.overall ?? 50) - 50) / 50 });
 }
 function ridge(L, lam) { const P = L[0].x.length + 1, A = Array.from({ length: P }, () => new Array(P).fill(0)), b = new Array(P).fill(0);
   for (const r of L) { const x = [1, ...r.x]; for (let i = 0; i < P; i++) { b[i] += x[i] * r.res; for (let j = 0; j < P; j++) A[i][j] += x[i] * x[j]; } }
@@ -41,8 +41,16 @@ for (const key of [...new Set(data.map((d) => d.key))].sort()) {
     const gain = Math.min(1 - f1.with / f1.base, 1 - f2.with / f2.base); // must help in BOTH directions
     if (!best || gain > best.gain) best = { lam, gain, f1, f2 };
   }
+  // Variants without an intercept (ratings move a player only relative to average, never shift everyone):
+  const slopeOnly = (b) => [0, ...b.slice(1)];
+  const ovFit = (L) => { let n = 0, d = 0; for (const r of L) { n += r.ov * r.res; d += r.ov * r.ov; } return d ? n / (d + 0.2 * L.length) : 0; };
+  const maeOv = (L, c) => L.reduce((a, r) => a + Math.abs(r.res - c * r.ov), 0) / L.length;
+  const so = { f1: mae(B, slopeOnly(ridge(A, best.lam))), f2: mae(A, slopeOnly(ridge(B, best.lam))) };
+  const ov = { f1: maeOv(B, ovFit(A)), f2: maeOv(A, ovFit(B)), c: ovFit(D) };
+  const pc = (w, b) => `${(((w - b) / b) * 100).toFixed(1)}%`;
+  console.log(`   ${key.padEnd(14)} slopes-only ${pc(so.f1, best.f1.base)} / ${pc(so.f2, best.f2.base)} · overall-only ${pc(ov.f1, best.f1.base)} / ${pc(ov.f2, best.f2.base)} (coef ${ov.c.toFixed(2)})`);
   const ship = best.gain > 0.002; // at least 0.2% better in both directions
-  out[key] = { ship, lambda: best.lam, beta: ridge(D, best.lam), skills: SKILLS[key.split('|')[0]].map(([k]) => k), test2025: best.f1, test2024: best.f2, n: D.length };
+  out[key] = { ship, lambda: best.lam, beta: ridge(D, best.lam), overallCoef: ov.c, overallTest: { test2025: ov.f1, test2024: ov.f2 }, slopesTest: { test2025: so.f1, test2024: so.f2 }, skills: SKILLS[key.split('|')[0]].map(([k]) => k), test2025: best.f1, test2024: best.f2, n: D.length };
   console.log(`${key.padEnd(16)} n ${String(D.length).padStart(5)} | 2024→2025 MAE ${best.f1.base.toFixed(3)} → ${best.f1.with.toFixed(3)} | 2025→2024 ${best.f2.base.toFixed(3)} → ${best.f2.with.toFixed(3)} | ${ship ? 'SHIP' : 'no'} (worst-fold gain ${(best.gain * 100).toFixed(1)}%)`);
 }
 if (process.argv.includes('--write')) { fs.writeFileSync(new URL('../src/fitted_skill_projection.json', import.meta.url), JSON.stringify({ learnedAt: new Date().toISOString(), batch: BATCH, note: 'residual = b0 + Σ b_k·(rating_k−50)/50; shipped only where both walk-forward directions improved ≥0.2%', byStat: out }, null, 1)); console.log('wrote src/fitted_skill_projection.json'); }
