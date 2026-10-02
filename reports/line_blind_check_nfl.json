@@ -1,7 +1,7 @@
 {
  "league": "nfl",
  "week": 4,
- "checkedAt": "2026-10-02T23:12:51.608Z",
+ "checkedAt": "2026-10-02T23:24:56.757Z",
  "games": [
   {
    "id": "401872964",
@@ -61,7 +61,7 @@
    "id": "401872970",
    "matchup": "LAR @ PHI",
    "stats": 94,
-   "withLines": 37,
+   "withLines": 36,
    "differing": 0,
    "maxAbsDiff": 0,
    "linesInBlindRun": false
@@ -151,5 +151,5 @@
  "stats": 1492,
  "differing": 0,
  "maxAbsDiff": 0,
- "withLines": 640
+ "withLines": 639
 }

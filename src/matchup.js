@@ -225,7 +225,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
   // nflverse weekly rows (this season + last), used week-filtered (< this game's week) for the quality-adjusted run
   // defense in both live and market-blind runs.
   let WEEKLY = null;
-  if (lg === 'nfl' && ev?.week != null) { try { const [cw, pw] = await Promise.all([loadWeekly(season), loadWeekly(season - 1)]); WEEKLY = { cur: cw, prev: pw }; } catch { WEEKLY = null; } }
+  if (lg === 'nfl' && ev?.week != null) { try { const [cw, pw, p2] = await Promise.all([loadWeekly(season), loadWeekly(season - 1), loadWeekly(season - 2).catch(() => [])]); WEEKLY = { cur: cw, prev: pw, prev2: p2 }; } catch { WEEKLY = null; } }
   // Player Ratings (Madden + Production Monitor; derived file when Madden isn't local). Live NFL only.
   let PRAT = null, PRIDS = null;
   if (lg === 'nfl' && !blind && ev?.week != null && PRPROJ) { try { PRAT = await playerRatingsFor(season, ev.week); PRIDS = PRAT ? await loadPlayerIds() : null; } catch { PRAT = null; } }
@@ -379,17 +379,22 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       }
       const nEff = sw2 > 0 ? (sw * sw) / sw2 : 0;
       let carryShare = wtc > 0 ? wc / wtc : 0;
+      // Backs: role measured WITHOUT blowout plays (|margin| ≥ 17) — garbage-time carries (a third back mopping up down 24)
+      // aren't his job in a normal game script; blowout scripts keep their own measured shares below. Next-game share
+      // error 14.9 → 14.6 pts, depth backs 10.9 → 10.5 (scripts/run_context_tests.mjs B, 2022–25).
+      const nbT = ['trail', 'close', 'lead'].reduce((a, k) => a + (stTC[k] || 0), 0);
+      if (pos === 'RB' && lg === 'nfl' && nbT >= 15 && wtc > 0) carryShare = ['trail', 'close', 'lead'].reduce((a, k) => a + (stC[k] || 0), 0) / nbT;
       // A back who MISSED his team's last game (no box-score line, not on the injury report as out): his share from only
       // the games he appeared in overstates his role. Meet halfway with the share that counts the team games he missed
       // since his first appearance as zero carries (scripts/missing_games_share_test.mjs, 2022–25: backs who missed their
       // last game and played the next — error 11.0 → 10.4 pts; 2024–25 held out 10.3 → 9.7; all such backs 17.6 → 13.1).
-      let gapNote = null, gapGames = 0;
+      let gapNote = null, gapGames = 0; const notes0 = [];
       if (pos === 'RB' && lg === 'nfl' && lastGame && !lastGame.appeared.has(id) && played.length && !partial.size) {
         const firstIdx = teamTotals.findIndex((y) => y.appeared.has(id));
         const span = teamTotals.slice(Math.max(0, firstIdx)).filter((y) => wOf.has(y.eventId));
         const dW = span.reduce((a, y) => a + wOf.get(y.eventId) * y.teamCarries, 0);
         if (firstIdx >= 0 && dW > 0) {
-          const zeroFilled = wc / dW, before = carryShare;
+          const zeroFilled = carryShare * (wtc / dW), before = carryShare;
           carryShare = (carryShare + zeroFilled) / 2; gapGames = span.length;
           const miss = span.length - played.length;
           if (before - carryShare > 0.005) gapNote = `Missed ${miss} of his team's last ${span.length} games (incl. the last one) without an injury designation: his share from games he appeared in (${fmtPct(before)}) is met halfway with one counting those as zero carries → ${fmtPct(carryShare)}.`;
@@ -405,7 +410,12 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
           // Last season's share stays in even when this season's role looks bigger: dropping it for "grown" roles was
           // tested twice (blind batches 10 and 12 vs 13) and made those players' projections worse — early jumps regress.
           if (ps.target != null) targetShare = (n * targetShare + FIT.share.target.k * ps.target) / (n + FIT.share.target.k);
-          if (ps.carry != null && pos === 'RB') carryShare = (nC * carryShare + FIT.share.carry.k * ps.carry) / (nC + FIT.share.carry.k);
+          // …except a back whose role SHRANK (this season's share, team games he missed counted as zero, under half of last
+          // season's): there last season only misleads — next-game error 6.9 vs 7.8 pts with it (scripts/shrunk_role_prior_test.mjs).
+          const allTC = teamTotals.reduce((a, y) => a + y.teamCarries, 0), mine = r.filter((x) => teamTotals.some((y) => y.eventId === x.eventId)).reduce((a, x) => a + (x.stats.carries || 0), 0);
+          const shrunkRole = pos === 'RB' && ps.carry != null && allTC > 0 && mine / allTC < 0.5 * ps.carry;
+          if (shrunkRole) notes0.push(`Last season's role (${fmtPct(ps.carry)} of ${t.abbr}'s carries) not used: he has ${fmtPct(mine / allTC)} this season — backs whose role shrank like this didn't get it back (2022–25).`);
+          if (ps.carry != null && pos === 'RB' && !shrunkRole) carryShare = (nC * carryShare + FIT.share.carry.k * ps.carry) / (nC + FIT.share.carry.k);
         }
       }
       // ROLE MOVES that stick (scripts/rookie_ramp_test.mjs, nflverse 2021–25, α picked on 2022–23, checked on 2024–25):
@@ -436,7 +446,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       if (pos === 'RB') { carryShare = Math.max(carryShare, 0.03); targetShare = Math.max(targetShare, 0.025); }
       if (pos === 'WR' || pos === 'TE') targetShare = Math.max(targetShare, 0.03);
       if (pos === 'QB') targetShare = 0;
-      const notes = [...rampNotes, ...(gapNote ? [gapNote] : [])];
+      const notes = [...notes0, ...rampNotes, ...(gapNote ? [gapNote] : [])];
       for (const [, pg] of partial) notes.push(`Week ${pg.week} vs ${pg.opp} treated as a partial game (${pg.evidence}) — likely an early exit (injury); it barely counts toward his usage.`);
       const redistribution = []; // structured record of usage moved from absent teammates (audited by src/skeptic.js)
       // Redistribute usage vacated by unavailable key teammates (to the extent the sample does
@@ -534,7 +544,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
     }));
 
     const effOut = {};
-    const defQ = {};
+    const defQ = {}, defPrior = {};
     for (const pl of players) {
       const info = pInfo[pl.id];
       const prev = sumStats((prevLogs.get(pl.id) || []).filter((x) => /Regular/i.test(x.seasonLabel)).map((x) => x.stats));
@@ -542,12 +552,24 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       const lgYpc = pos === 'QB' ? P.ypc.QB : (P.ypc[pos] ?? P.ypc.RB);
       const kY = V12 ? FIT.eff.ypc.best.k : SHRINK.ypc, wPrev = V12 ? 1 : 0.5;
       const ypcPrior = shrink(prev.carries ? prev.rush_yds / prev.carries : null, (prev.carries || 0) * wPrev, lgYpc, kY);
-      const ypcPlayer = shrink(info.cur.carries ? info.cur.rush_yds / info.cur.carries : null, info.cur.carries || 0, ypcPrior, kY);
+      // Rookies: recent games count more for YPC (0.85 per game back; next-game error 3.539 → 3.505, rookie backs 2022–25,
+      // scripts/run_context_tests.mjs C). Veterans keep the flat season figure.
+      let curC = info.cur.carries || 0, curY = info.cur.rush_yds || 0;
+      if (lg === 'nfl' && prior && prior.games(nameMap.get(pl.id)) === 0 && info.played.length >= 2) {
+        let c = 0, y = 0; info.played.forEach((x, j) => { const w = Math.pow(0.85, info.played.length - 1 - j); c += w * (x.stats.carries || 0); y += w * (x.stats.rush_yds || 0); });
+        if (c > 0) { curY = (y / c) * curC; info.rookieYpc = { flat: curC ? (info.cur.rush_yds / curC) : null, recent: y / c }; }
+      }
+      const ypcPlayer = shrink(curC ? curY / curC : null, curC, ypcPrior, kY);
       // Run defense judged against the quality of backs it faced (each back vs his own normal YPC), shrunk with 80
       // carries toward league; falls back to raw YPC allowed when nflverse weekly data is unavailable.
       const dq = WEEKLY ? (defQ[opp.abbr] ??= rbDefenseQuality(WEEKLY.cur, WEEKLY.prev, ev.week, NVA(opp.abbr))) : null;
-      const oppYpcMult = dq ? clamp(((dq.adjYpc * dq.carries + dq.lg * 80) / (dq.carries + 80)) / dq.lg, 0.8, 1.25) : clamp(ox.defense.rbYpcAllowedShrunk / P.ypc.RB, 0.8, 1.25);
-      if (dq) info.defQuality = { raw: dq.raw, faced: dq.faced, adj: dq.adjYpc, lg: dq.lg, carries: dq.carries };
+      // Shrink target = the defense's own LAST-SEASON level (quality-adjusted, regressed 25% to league), not league average:
+      // early-season run defenses keep most of last year's identity (scripts/run_context_tests.mjs A, 2022–25).
+      const dPrior = dq ? (defPrior[opp.abbr] ??= priorRunDefense(WEEKLY, NVA(opp.abbr))) : null;
+      const priorYpc = dq ? dq.lg * (1 + DEF_PRIOR_W * ((dPrior ?? 1) - 1)) : null;
+      if (dq) dq.prior = priorYpc;
+      const oppYpcMult = dq ? clamp(((dq.adjYpc * dq.carries + priorYpc * 80) / (dq.carries + 80)) / dq.lg, 0.8, 1.25) : clamp(ox.defense.rbYpcAllowedShrunk / P.ypc.RB, 0.8, 1.25);
+      if (dq) info.defQuality = { raw: dq.raw, faced: dq.faced, adj: dq.adjYpc, lg: dq.lg, carries: dq.carries, lastSeason: dPrior != null ? +(dPrior * dq.lg).toFixed(2) : null, shrinkTarget: +priorYpc.toFixed(2) };
       const ypcMult = Math.pow(oppYpcMult, pos === 'QB' ? 0.5 * SHRINK.oppRunExp / 0.8 : SHRINK.oppRunExp);
       const ypc = ypcPlayer * ypcMult;
       const lgR10 = pos === 'QB' ? P.qbRun10 : P.run10, lgR20 = pos === 'QB' ? P.qbRun20 : P.run20;
@@ -1082,6 +1104,15 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
 }
 
 // ---------- helpers ----------
+const DEF_PRIOR_W = 0.75; // scripts/run_context_tests.mjs A
+/** A defense's quality-adjusted RB YPC allowed last season, as a ratio to that season's league average. */
+function priorRunDefense(WEEKLY, opp) {
+  const isRb = (r) => (r.position === 'RB' || r.position === 'FB') && +r.carries > 0;
+  const L = WEEKLY.prev.filter(isRb); if (!L.length) return null;
+  const lg = L.reduce((a, r) => a + +r.rushing_yards, 0) / L.reduce((a, r) => a + +r.carries, 0);
+  const q = rbDefenseQuality(WEEKLY.prev, WEEKLY.prev2 || [], 99, opp);
+  return q ? q.adjYpc / lg : null;
+}
 function avg(a) { let s = 0; for (const x of a) s += x; return a.length ? s / a.length : 0; }
 /**
  * Games that don't represent a player's role: he barely played (left early — usually an injury) or was a late
