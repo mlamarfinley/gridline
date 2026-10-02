@@ -389,3 +389,33 @@ Overall = weighted blend (weights in `SKILLS`).
 - TE: Kittle 84, Kincaid 82, LaPorta 82
 
 **Not yet model inputs.** The next step is to test each skill's week-to-week stability and its value as a projection input (e.g. an RYOE-informed YPC prior), and ship only what improves held-out accuracy. The earlier RB-quality × defense test (fbm-1.5.6) found no gain from a quality interaction.
+
+## Player ratings v2: recency decay, opponent adjustment, Madden comparison (2026-10-02)
+
+**Method:**
+- Per player-game records from nflverse play-by-play and NGS, this season and last.
+- Each game is weighted λ^(games ago), counted in the player's own games and flowing across the season boundary.
+- Each game's rate is corrected by what that defense allows on the same metric to the same position (shrunk with DEF_K).
+- The weighted rate is shrunk toward the position mean, then scored 100·Φ(z).
+
+**Fit** (`scripts/fit_rating_decay.mjs`): per position × skill, grid over λ (0.6–1.0) × shrink scale (0.5–8×) × opponent adjustment on/off. Each setting predicts the player's next 4 games, rated at weeks 4 / 7 / 10 / 13 of 2024 and 2025.
+
+| Skill group | Fitted λ |
+|---|---|
+| RB / WR / TE rate skills (success, explosive, catching, deep, EPA per target, separation) | 0.6 (at the grid floor: current role and QB carry most of the signal) |
+| QB EPA, WR / TE earning targets | 0.85–0.9 |
+| QB sack avoidance, scrambling | 0.95 |
+| QB accuracy (CPOE), YAC over expected | 1.0 |
+
+The opponent adjustment helped CPOE, INT rate, deep, RB RYOE / success / explosive, and WR / TE catching, deep and efficiency. It was turned off elsewhere. Next-4-game error vs no decay: WR EPA per target 0.2165 → 0.1860, RB explosive 0.00326 → 0.00245.
+
+**Qualification:** actual plays over this season + last. QB 150 dropbacks, RB 60 carries, WR 30 targets, TE 25. The first cut used recency-weighted samples, which let backups with a few good recent games rank top-5.
+
+**Madden NFL 27 comparison** (`scripts/madden_ratings.mjs` → `reports/Gridline_vs_Madden27_week4.xlsx`, not committed). EA "Week 3 Ratings", 1,937 players, comparison only, never a model input. Correlation of our overall with Madden OVR:
+
+| Position | Pearson | Rank | Matched |
+|---|---|---|---|
+| QB | 0.71 | 0.70 | 44 / 44 |
+| WR | 0.67 | 0.55 | 109 / 117 |
+| TE | 0.58 | 0.45 | 58 / 60 |
+| RB | 0.42 | 0.31 | 60 / 62 |

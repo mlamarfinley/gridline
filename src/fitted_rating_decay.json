@@ -1,0 +1,240 @@
+{
+ "learnedAt": "2026-10-02T21:51:24.495Z",
+ "method": "λ^(games ago) per skill; opponent adjustment kept only where it lowered next-4-game error",
+ "evalPoints": [
+  [
+   2024,
+   4
+  ],
+  [
+   2024,
+   7
+  ],
+  [
+   2024,
+   10
+  ],
+  [
+   2024,
+   13
+  ],
+  [
+   2025,
+   4
+  ],
+  [
+   2025,
+   7
+  ],
+  [
+   2025,
+   10
+  ],
+  [
+   2025,
+   13
+  ]
+ ],
+ "byPos": {
+  "QB": {
+   "epa": {
+    "lambda": 0.9,
+    "kScale": 1,
+    "adjust": false,
+    "mse": 0.03664703644165558,
+    "mseFlatNoAdj": 0.037469068983225315,
+    "mseBestNoAdj": 0.03664703644165558
+   },
+   "cpoe": {
+    "lambda": 1,
+    "kScale": 0.5,
+    "adjust": true,
+    "mse": 18.975730169699755,
+    "mseFlatNoAdj": 19.189105791417656,
+    "mseBestNoAdj": 19.189105791417656
+   },
+   "deep": {
+    "lambda": 0.6,
+    "kScale": 8,
+    "adjust": true,
+    "mse": 0.4882419467817011,
+    "mseFlatNoAdj": 0.49673429676305403,
+    "mseBestNoAdj": 0.4884240023028442
+   },
+   "sack": {
+    "lambda": 0.95,
+    "kScale": 1,
+    "adjust": false,
+    "mse": 0.000883579182783194,
+    "mseFlatNoAdj": 0.0008927907645547067,
+    "mseBestNoAdj": 0.000883579182783194
+   },
+   "ints": {
+    "lambda": 0.9,
+    "kScale": 2,
+    "adjust": true,
+    "mse": 0.0003317299465080807,
+    "mseFlatNoAdj": 0.0003338370098856315,
+    "mseBestNoAdj": 0.0003320486122284499
+   },
+   "scramble": {
+    "lambda": 0.95,
+    "kScale": 0.5,
+    "adjust": false,
+    "mse": 0.06335023702222188,
+    "mseFlatNoAdj": 0.0638517397107886,
+    "mseBestNoAdj": 0.06335023702222188
+   },
+   "run": {
+    "lambda": 0.6,
+    "kScale": 0.5,
+    "adjust": false,
+    "mse": 25.77649279024717,
+    "mseFlatNoAdj": 28.088789649358983,
+    "mseBestNoAdj": 25.77649279024717
+   }
+  },
+  "RB": {
+   "ryoe": {
+    "lambda": 0.9,
+    "kScale": 4,
+    "adjust": true,
+    "mse": 1.0266930772958967,
+    "mseFlatNoAdj": 1.0366788585630844,
+    "mseBestNoAdj": 1.0294282693507024
+   },
+   "success": {
+    "lambda": 0.6,
+    "kScale": 2,
+    "adjust": true,
+    "mse": 0.008613562303157218,
+    "mseFlatNoAdj": 0.010412951859962636,
+    "mseBestNoAdj": 0.008629527955517458
+   },
+   "explosive": {
+    "lambda": 0.6,
+    "kScale": 2,
+    "adjust": true,
+    "mse": 0.0024514833420656076,
+    "mseFlatNoAdj": 0.003259229796616975,
+    "mseBestNoAdj": 0.0024590294144344322
+   },
+   "short": {
+    "lambda": 0.6,
+    "kScale": 8,
+    "adjust": false,
+    "mse": 0.03993093974543512,
+    "mseFlatNoAdj": 0.049478162912950166,
+    "mseBestNoAdj": 0.03993093974543512
+   },
+   "recv": {
+    "lambda": 0.6,
+    "kScale": 4,
+    "adjust": false,
+    "mse": 7.342962607820724,
+    "mseFlatNoAdj": 8.084107281330105,
+    "mseBestNoAdj": 7.342962607820724
+   }
+  },
+  "WR": {
+   "earn": {
+    "lambda": 0.85,
+    "kScale": 0.5,
+    "adjust": false,
+    "mse": 0.00280275447270618,
+    "mseFlatNoAdj": 0.00299418048243088,
+    "mseBestNoAdj": 0.00280275447270618
+   },
+   "sep": {
+    "lambda": 0.6,
+    "kScale": 0.5,
+    "adjust": false,
+    "mse": 0.3612480726789955,
+    "mseFlatNoAdj": 0.37940598868220354,
+    "mseBestNoAdj": 0.3612480726789955
+   },
+   "yac": {
+    "lambda": 1,
+    "kScale": 2,
+    "adjust": true,
+    "mse": 1.9745554457607541,
+    "mseFlatNoAdj": 1.9767680010982311,
+    "mseBestNoAdj": 1.9761266519859453
+   },
+   "hands": {
+    "lambda": 0.6,
+    "kScale": 2,
+    "adjust": true,
+    "mse": 0.014064713667134679,
+    "mseFlatNoAdj": 0.016787625300473542,
+    "mseBestNoAdj": 0.014077174741469954
+   },
+   "deep": {
+    "lambda": 0.6,
+    "kScale": 2,
+    "adjust": true,
+    "mse": 87.29404254857748,
+    "mseFlatNoAdj": 95.53360339595014,
+    "mseBestNoAdj": 87.33269398904865
+   },
+   "eff": {
+    "lambda": 0.6,
+    "kScale": 2,
+    "adjust": true,
+    "mse": 0.1859819039524576,
+    "mseFlatNoAdj": 0.21647376253403744,
+    "mseBestNoAdj": 0.18625193165161455
+   }
+  },
+  "TE": {
+   "earn": {
+    "lambda": 0.85,
+    "kScale": 0.5,
+    "adjust": false,
+    "mse": 0.0017438725617083377,
+    "mseFlatNoAdj": 0.0018960266117266362,
+    "mseBestNoAdj": 0.0017438725617083377
+   },
+   "sep": {
+    "lambda": 0.95,
+    "kScale": 1,
+    "adjust": false,
+    "mse": 0.585648064551678,
+    "mseFlatNoAdj": 0.586494195379057,
+    "mseBestNoAdj": 0.585648064551678
+   },
+   "yac": {
+    "lambda": 1,
+    "kScale": 2,
+    "adjust": false,
+    "mse": 1.4932310706741632,
+    "mseFlatNoAdj": 1.4932310706741632,
+    "mseBestNoAdj": 1.4932310706741632
+   },
+   "hands": {
+    "lambda": 0.6,
+    "kScale": 2,
+    "adjust": true,
+    "mse": 0.014355868319654153,
+    "mseFlatNoAdj": 0.018621088054538912,
+    "mseBestNoAdj": 0.014368004621842071
+   },
+   "deep": {
+    "lambda": 0.6,
+    "kScale": 1,
+    "adjust": true,
+    "mse": 164.7809440658037,
+    "mseFlatNoAdj": 166.68684041496596,
+    "mseBestNoAdj": 164.9156316062568
+   },
+   "eff": {
+    "lambda": 0.6,
+    "kScale": 2,
+    "adjust": true,
+    "mse": 0.18185753069077754,
+    "mseFlatNoAdj": 0.21384122812795678,
+    "mseBestNoAdj": 0.18191748424326146
+   }
+  }
+ }
+}
