@@ -1,0 +1,34 @@
+{
+ "learnedAt": "2026-10-02T22:02:59.022Z",
+ "source": "scripts/ratings_vs_madden_test.mjs (2024, Madden 25 weekly releases; target = raw next-4-game production)",
+ "byPos": {
+  "QB": {
+   "wOurs": 0.4,
+   "rBlend": 0.5291900657724666,
+   "rOurs": 0.4305833177989085,
+   "rMadden": 0.48072715463689636,
+   "n": 113
+  },
+  "RB": {
+   "wOurs": 0.1,
+   "rBlend": 0.4078948764471553,
+   "rOurs": 0.21297669859146018,
+   "rMadden": 0.40736119648530095,
+   "n": 171
+  },
+  "WR": {
+   "wOurs": 0.2,
+   "rBlend": 0.2346173833586435,
+   "rOurs": 0.17955546699795946,
+   "rMadden": 0.2300551495437164,
+   "n": 304
+  },
+  "TE": {
+   "wOurs": 0.9,
+   "rBlend": 0.21792899809906946,
+   "rOurs": 0.21680896161607452,
+   "rMadden": 0.15778673673605517,
+   "n": 151
+  }
+ }
+}

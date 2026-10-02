@@ -44,7 +44,7 @@ async function api(req, res, url) {
   if (p === '/api/ratings') {
     const pos = ['QB', 'RB', 'WR', 'TE'].includes(q.get('pos')) ? q.get('pos') : 'RB';
     const sl = await getSlate('nfl');
-    return send(res, 200, await ratingsBoard(sl.season, sl.week, pos));
+    return send(res, 200, await ratingsBoard(sl.season, sl.week, pos, { includeMadden: true })); // local only
   }
   if (p === '/api/lineblind') {
     try { return send(res, 200, JSON.parse(fs.readFileSync(path.join(ROOT, 'reports', `line_blind_check_${league(q)}.json`), 'utf8'))); }

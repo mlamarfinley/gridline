@@ -419,3 +419,25 @@ The opponent adjustment helped CPOE, INT rate, deep, RB RYOE / success / explosi
 | WR | 0.67 | 0.55 | 109 / 117 |
 | TE | 0.58 | 0.45 | 58 / 60 |
 | RB | 0.42 | 0.31 | 60 / 62 |
+
+## Player ratings v3: game context + the best ranking system (2026-10-02)
+
+**Context added to production ratings:**
+- **Situation:** RB success, explosive runs, WR / TE EPA per target and QB EPA per dropback are measured over expected for down × distance × score state (same season, league-wide). Garbage time and protect-the-lead plays no longer inflate or deflate a player.
+- **Supporting cast:** per game, a back is compared with his team's other backs (same line, same day), and a receiver with the same QB's throws to other targets. β × teammate context is removed.
+- **Refit:** λ, shrink, opponent adjustment and β per skill. With situation-adjusted metrics, most skills prefer long memory (λ 0.9–1.0) instead of heavy recency. β = 0.5 helped RB explosive, RB receiving and WR efficiency; elsewhere 0.
+
+**Which system predicts production best?** (`scripts/ratings_vs_madden_test.mjs`, 2024, Madden 25 weekly releases at weeks 4 / 7 / 10 / 13; target = raw next-4-game production)
+
+| Position | Ours | Madden | Best blend (ours / Madden) |
+|---|---|---|---|
+| QB (EPA / dropback) | 0.43 | 0.48 | 0.53 at 40 / 60 (same weight in both halves of the season) |
+| RB (yards / carry) | 0.21 | 0.41 | 0.41 at 10 / 90 |
+| WR (yards / target) | 0.18 | 0.23 | 0.23 at 20 / 80 |
+| TE (yards / target) | 0.22 | 0.16 | 0.22 at 90 / 10 |
+
+Learning the skill weights by regression (fit 2025 → test 2024, `scripts/learn_rating_weights.mjs`) did not generalize (RB learned overall r ≈ 0), so the hand weights stay.
+
+**Ranking system adopted: COMBINED rating** = per-position blend of z(production) and z(Madden OVR) (`src/fitted_rating_blend.json`). It is shown in the local app only: EA data stays local and gitignored. The public site shows production ratings.
+
+**Week 4 production vs Madden 27 correlation:** QB 0.72, WR 0.67, TE 0.63, RB 0.43.

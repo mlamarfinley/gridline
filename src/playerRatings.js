@@ -6,10 +6,15 @@
 //     value that best predicted each player's next 4 games in 2024 and 2025.
 //   • Opponent: each game's rate is corrected by what that defense allows on the same metric to the same position
 //     (shrunk toward league), so a big game against a soft defense counts for less — where that improved prediction.
+//   • Situation: success, explosive and EPA metrics are measured OVER EXPECTED for the play's down, distance and score
+//     state (league-wide, same season), so garbage-time and protect-the-lead plays don't inflate or deflate a player.
+//   • Supporting cast: per game, a back is compared with his team's OTHER backs (same line, same day) and a receiver
+//     with the same QB's throws to OTHER targets; β × that teammate context is removed (β fitted per skill).
 //   • The weighted rate is shrunk toward the position average by its effective sample, then scored against qualifying
 //     players: rating = 100 × Φ(z) (50 = average, ~84 = one SD better). Lower-is-better metrics are flipped.
 import fs from 'node:fs';
 import { loadPlays, loadNgs, loadPlayerIds } from './pbp.js';
+import { stateOf } from './volume.js';
 
 const MIN_SAMPLE = { QB: 150, RB: 60, WR: 30, TE: 25 }; // ACTUAL dropbacks / carries / targets over this season + last
 const DEF_K = { QB: 150, RB: 150, WR: 80, TE: 60 };     // shrink for a defense's allowance (in that metric's sample)
@@ -17,7 +22,7 @@ const DEF_K = { QB: 150, RB: 150, WR: 80, TE: 60 };     // shrink for a defense'
 // [key, label, shrink k, higher-is-better, overall weight, opponent-adjustable]
 export const SKILLS = {
   QB: [
-    ['epa', 'Passing efficiency (EPA per dropback)', 150, true, 0.30, true],
+    ['epa', 'Passing efficiency (EPA per dropback over expected)', 150, true, 0.30, true],
     ['cpoe', 'Accuracy (completion % over expected)', 150, true, 0.20, true],
     ['deep', 'Deep passing (EPA per 20+ yd throw)', 30, true, 0.12, true],
     ['sack', 'Pocket / sack avoidance (sack rate)', 150, false, 0.10, true],
@@ -27,8 +32,8 @@ export const SKILLS = {
   ],
   RB: [
     ['ryoe', 'Creating yards (rush yds over expected / carry)', 80, true, 0.32, true],
-    ['success', 'Rushing success rate', 100, true, 0.18, true],
-    ['explosive', 'Explosive runs (10+ yd rate)', 100, true, 0.18, true],
+    ['success', 'Rushing success over expected', 100, true, 0.18, true],
+    ['explosive', 'Explosive runs over expected (10+ yd)', 100, true, 0.18, true],
     ['short', 'Short yardage (success, ≤2 to go)', 25, true, 0.12, true],
     ['recv', 'Receiving (yards per target)', 25, true, 0.20, true],
   ],
@@ -38,14 +43,14 @@ export const SKILLS = {
     ['yac', 'YAC over expected (NGS)', 30, true, 0.15, true],
     ['hands', 'Catching (catch rate over expected)', 40, true, 0.15, true],
     ['deep', 'Deep threat (yards per 20+ yd target)', 12, true, 0.10, true],
-    ['eff', 'Efficiency (EPA per target)', 50, true, 0.20, true],
+    ['eff', 'Efficiency (EPA per target over expected)', 50, true, 0.20, true],
   ],
 };
 SKILLS.TE = SKILLS.WR;
 
 let FIT = null;
 try { FIT = JSON.parse(fs.readFileSync(new URL('./fitted_rating_decay.json', import.meta.url), 'utf8')); } catch { FIT = null; }
-export const fitFor = (pos, key) => FIT?.byPos?.[pos]?.[key] || { lambda: 0.95, adjust: true, kScale: 1 };
+export const fitFor = (pos, key) => FIT?.byPos?.[pos]?.[key] || { lambda: 0.95, adjust: true, kScale: 1, beta: 0 };
 
 const bucket = (ay) => (ay == null ? 'na' : ay < 0 ? 'b' : ay < 5 ? 's' : ay < 10 ? 'm' : ay < 20 ? 'i' : 'd');
 const succOf = (p) => (p.dn == null || p.tg == null ? null : p.y >= (p.dn === 1 ? 0.4 : p.dn === 2 ? 0.6 : 1) * p.tg ? 1 : 0);
@@ -62,9 +67,20 @@ export async function buildRecords(seasons) {
   const gameKey = new Map(); // season|week|team → {g, opp}
   for (const season of seasons) {
     const plays = (await loadPlays(season)).filter((p) => !p.post);
+    // League expectation by situation (down × distance bucket × score state), this season.
+    const sit = (p) => `${p.dn ?? 0}|${p.tg == null ? 'x' : p.tg <= 2 ? 's' : p.tg <= 6 ? 'm' : p.tg <= 10 ? 'l' : 'xl'}|${stateOf(p.sd)}`;
+    const EX = {}; const ex = (tbl, k, v) => { const a = ((EX[tbl] ||= {})[k] ||= [0, 0]); a[0] += v; a[1]++; };
+    for (const p of plays) {
+      if (p.t === 'R' && p.ru && !p.scr) { const s2 = succOf(p); if (s2 != null) ex('succ', sit(p), s2); ex('expl', sit(p), p.y >= 10 ? 1 : 0); }
+      if (p.t === 'P' && !p.sk && p.rec && p.epa != null) ex('tgtEpa', sit(p), p.epa);
+      if ((p.t === 'P' || p.scr) && p.epa != null) ex('dbEpa', sit(p), p.epa);
+    }
+    const E = (tbl, p) => { const a = EX[tbl]?.[sit(p)]; return a && a[1] >= 20 ? a[0] / a[1] : (() => { let n = 0, d = 0; for (const v of Object.values(EX[tbl] || {})) { n += v[0]; d += v[1]; } return d ? n / d : 0; })(); };
     const lgCatch = {}; for (const p of plays) if (p.t === 'P' && !p.sk && p.rec) { const b = bucket(p.ay); (lgCatch[b] ||= [0, 0]); lgCatch[b][0] += p.c; lgCatch[b][1]++; }
     const teamAtt = new Map(); for (const p of plays) if (p.t === 'P' && !p.sk) teamAtt.set(`${p.g}|${p.o}`, (teamAtt.get(`${p.g}|${p.o}`) || 0) + 1);
     const G = new Map(); // gsis|g → record
+    const TEAMCTX = new Map(); // game|team|group → { skill: [num, den] } (all backs' runs / all targets that game)
+    const teamAdd = (k, sk, num, den) => { const t = TEAMCTX.get(k) || TEAMCTX.set(k, {}).get(k); const a = (t[sk] ||= [0, 0]); a[0] += num; a[1] += den; };
     const rec = (gs, p) => {
       const k = `${gs}|${p.g}`; let r = G.get(k);
       if (!r) { r = { gs, season, week: p.w, g: p.g, opp: p.d, team: p.o, m: {} }; G.set(k, r); }
@@ -76,7 +92,7 @@ export async function buildRecords(seasons) {
       if (p.t === 'P') {
         if (p.qb && posOf(p.qb) === 'QB') {
           const r = rec(p.qb, p);
-          if (p.epa != null) add(r, 'epa', p.epa, 1);
+          if (p.epa != null) add(r, 'epa', p.epa - E('dbEpa', p), 1);
           add(r, 'sack', p.sk ? 1 : 0, 1);
           if (!p.sk) { add(r, 'ints', p.int ? 1 : 0, 1); if (p.ay != null && p.ay >= 20) add(r, 'deep', p.epa ?? 0, 1); }
           add(r, 'scramble', 0, 1);
@@ -88,7 +104,8 @@ export async function buildRecords(seasons) {
           else {
             const lc = lgCatch[bucket(p.ay)];
             add(r, 'hands', p.c - (lc ? lc[0] / lc[1] : 0.65), 1);
-            if (p.epa != null) add(r, 'eff', p.epa, 1);
+            if (p.epa != null) { const oe = p.epa - E('tgtEpa', p); add(r, 'eff', oe, 1); teamAdd(`${p.g}|${p.o}|tgt`, 'eff', oe, 1); }
+            teamAdd(`${p.g}|${p.o}|tgt`, 'hands', p.c - (lc ? lc[0] / lc[1] : 0.65), 1);
             if (p.ay != null && p.ay >= 20) add(r, 'deep', p.y, 1);
             if (!r.m.earn) add(r, 'earn', 0, teamAtt.get(`${p.g}|${p.o}`) || 0);
             add(r, 'earn', 1, 0);
@@ -97,17 +114,21 @@ export async function buildRecords(seasons) {
       } else if (p.ru) {
         const pos = posOf(p.ru); if (!pos) continue;
         const r = rec(p.ru, p);
-        if (p.scr) { if (pos === 'QB') { add(r, 'scramble', p.y, 1); if (p.epa != null) add(r, 'epa', p.epa, 1); add(r, 'sack', 0, 1); } }
+        if (p.scr) { if (pos === 'QB') { add(r, 'scramble', p.y, 1); if (p.epa != null) add(r, 'epa', p.epa - E('dbEpa', p), 1); add(r, 'sack', 0, 1); } }
         else if (pos === 'QB') add(r, 'runYds', p.y, 0);
         else if (pos === 'RB') {
           const s = succOf(p);
-          if (s != null) add(r, 'success', s, 1);
-          add(r, 'explosive', p.y >= 10 ? 1 : 0, 1);
+          if (s != null) { const oe = s - E('succ', p); add(r, 'success', oe, 1); teamAdd(`${p.g}|${p.o}|run`, 'success', oe, 1); }
+          const xo = (p.y >= 10 ? 1 : 0) - E('expl', p); add(r, 'explosive', xo, 1); teamAdd(`${p.g}|${p.o}|run`, 'explosive', xo, 1);
           if (p.tg != null && p.tg <= 2 && s != null) add(r, 'short', s, 1);
         }
       }
     }
     for (const r of G.values()) {
+      // Teammates' context this game = team total minus his own (backs: other backs' runs; receivers: other targets).
+      const pos0 = posOf(r.gs);
+      const grp = pos0 === 'RB' ? 'run' : pos0 === 'WR' || pos0 === 'TE' ? 'tgt' : null;
+      if (grp) { const T = TEAMCTX.get(`${r.g}|${r.team}|${grp}`) || {}; r.ctx = {}; for (const [sk, [n, d]] of Object.entries(T)) { const own = r.m[sk] || [0, 0]; const dn = d - own[1]; if (dn > 0) r.ctx[sk] = [n - own[0], dn]; } }
       if (posOf(r.gs) === 'QB') { r.m.run = [r.m.runYds?.[0] || 0, 1]; delete r.m.runYds; }
       (R.get(r.gs) || R.set(r.gs, []).get(r.gs)).push(r);
     }
@@ -149,7 +170,7 @@ function defenseAllowance(R, posOf, season, week) {
 
 /** Ratings at (season, week) from records. opts.lambda(pos,key) / opts.adjust(pos,key) override the fitted values. */
 export function ratingsFrom({ R, posOf }, season, week, opts = {}) {
-  const lam = opts.lambda || ((pos, k) => fitFor(pos, k).lambda), adj = opts.adjust || ((pos, k) => fitFor(pos, k).adjust), ks = opts.kScale || ((pos, k) => fitFor(pos, k).kScale ?? 1);
+  const lam = opts.lambda || ((pos, k) => fitFor(pos, k).lambda), adj = opts.adjust || ((pos, k) => fitFor(pos, k).adjust), ks = opts.kScale || ((pos, k) => fitFor(pos, k).kScale ?? 1), bet = opts.beta || ((pos, k) => fitFor(pos, k).beta ?? 0);
   const { D, L } = defenseAllowance(R, posOf, season, week);
   const players = new Map(), byPos = {};
   for (const pos of ['QB', 'RB', 'WR', 'TE']) {
@@ -166,6 +187,8 @@ export function ratingsFrom({ R, posOf }, season, week, opts = {}) {
           const r = games[i], m = r.m[k]; if (!m || !m[1]) continue;
           const w = Math.pow(l, age);
           let n = m[0];
+          const b = bet(pos, k), cx = r.ctx?.[k];
+          if (b && cx && cx[1] > 0) n -= b * m[1] * (cx[0] / (cx[1] + 10)); // teammates' rate this game (lightly shrunk to 0 = average)
           if (doAdj) {
             const key = `${pos}|${r.season}|${k}`, lg = L[key], da = D.get(`${r.opp}|${key}`);
             if (lg && lg[1] > 0 && da) { const lgRate = lg[0] / lg[1]; const dRate = (da[0] + DEF_K[pos] * lgRate) / (da[1] + DEF_K[pos]); n -= m[1] * (dRate - lgRate); }
@@ -211,11 +234,13 @@ export async function buildRatings(season, week) {
 }
 
 /** Leaderboard for one position, with names, for the Ratings page. */
-export async function ratingsBoard(season, week, pos) {
+export async function ratingsBoard(season, week, pos, { includeMadden = false } = {}) {
   const R = await buildRatings(season, week);
   const ids = await loadPlayerIds();
   const list = (R.byPos[pos] || []).map((x) => ({ ...x, name: ids.nameByGsis.get(x.gsis) || x.gsis }));
-  return { season, week, pos, method: R.method, skills: SKILLS[pos].map(([key, label, , up, weight]) => ({ key, label, higherIsBetter: up, weight, lambda: fitFor(pos, key).lambda, adjusted: fitFor(pos, key).adjust })), players: list };
+  const combined = includeMadden ? addCombined(pos, list) : null;
+  if (combined) list.sort((a, b) => (b.combined ?? -1) - (a.combined ?? -1) || (b.overall ?? 0) - (a.overall ?? 0));
+  return { season, week, pos, method: R.method, combined, skills: SKILLS[pos].map(([key, label, , up, weight]) => ({ key, label, higherIsBetter: up, weight, lambda: fitFor(pos, key).lambda, adjusted: fitFor(pos, key).adjust })), players: list };
 }
 
 function phi(z) {
@@ -224,3 +249,35 @@ function phi(z) {
   return z > 0 ? 1 - p : p;
 }
 const round3 = (x) => (Number.isFinite(x) ? Math.round(x * 1000) / 1000 : null);
+
+// ---------- COMBINED rating: our production rating blended with Madden (local only) ----------
+// 2024 test (scripts/ratings_vs_madden_test.mjs): Madden predicted next-4-game production better than our production
+// rating for QB/RB/WR; the best blend per position is in src/fitted_rating_blend.json (z-scores within position).
+// Madden data is EA's (reports/madden_ratings.json, gitignored): combined ratings are built only when that local file
+// exists, and are never exported to the public static site.
+let BLEND = null;
+try { BLEND = JSON.parse(fs.readFileSync(new URL('./fitted_rating_blend.json', import.meta.url), 'utf8')).byPos; } catch { BLEND = null; }
+const normName = (n) => String(n).normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[.'’,]/g, '').replace(/-/g, ' ').replace(/\b(jr|sr|ii|iii|iv|v)\b/g, '').replace(/\s+/g, ' ').trim();
+const MPOS = { HB: 'RB', QB: 'QB', WR: 'WR', TE: 'TE' };
+let MADDEN = undefined;
+export function maddenIndex() {
+  if (MADDEN !== undefined) return MADDEN;
+  try {
+    const d = JSON.parse(fs.readFileSync(new URL('../reports/madden_ratings.json', import.meta.url), 'utf8'));
+    const m = new Map(); for (const p of d.players) { const pos = MPOS[p.pos]; if (!pos) continue; const k = `${normName(p.name)}|${pos}`; if (!m.has(k)) m.set(k, p); }
+    MADDEN = { iteration: d.iteration, retrievedAt: d.retrievedAt, byKey: m };
+  } catch { MADDEN = null; }
+  return MADDEN;
+}
+/** Adds {madden, combined} to each player in a board (in place) when local Madden data and blend weights exist. */
+export function addCombined(pos, players) {
+  const MI = maddenIndex(); const wO = BLEND?.[pos]?.wOurs;
+  if (!MI || wO == null) return null;
+  for (const p of players) { const m = MI.byKey.get(`${normName(p.name)}|${pos}`); p.madden = m ? m.overall : null; }
+  const M = players.filter((p) => p.madden != null && p.overall != null);
+  const z = (f) => { const v = M.map(f), mu = v.reduce((a, b) => a + b, 0) / v.length, sd = Math.sqrt(v.reduce((a, b) => a + (b - mu) ** 2, 0) / v.length) || 1; return (x) => (f(x) - mu) / sd; };
+  const zo = z((p) => p.overall), zm = z((p) => p.madden);
+  const s = (p) => wO * zo(p) + (1 - wO) * zm(p), zs = z(s);
+  for (const p of players) p.combined = p.madden != null && p.overall != null ? Math.round(100 * phi(zs(p))) : null;
+  return { wOurs: wO, wMadden: +(1 - wO).toFixed(2), iteration: MI.iteration };
+}

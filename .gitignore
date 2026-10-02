@@ -6,3 +6,4 @@ site/
 # EA Madden ratings: personal comparison only, not redistributed
 reports/madden_ratings.json
 reports/*Madden*.xlsx
+reports/madden25_iterations.json

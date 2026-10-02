@@ -634,8 +634,9 @@ async function renderRatings(pos) {
     <div class="lhead"><h1>NFL ${esc(pos)} skill ratings · before week ${d.week}</h1>
       <p class="faint">0–100 against qualifying ${esc(pos)}s (50 = average, 84 ≈ one standard deviation better). Built from nflverse play-by-play and NFL Next Gen Stats: this season's games count fully, last season half. Every metric is shrunk toward average by sample size, so small samples sit nearer 50.</p>
       <nav class="ljump">${['QB', 'RB', 'WR', 'TE'].map((p) => `<a href="#/nfl/ratings?pos=${p}" class="${p === pos ? 'on' : ''}">${p}</a>`).join('')}</nav></div>
-    <div class="scroll"><table class="rtable"><thead><tr><th>#</th><th>Player</th><th class="num">Overall</th>${d.skills.map((k) => `<th class="num" title="${esc(k.label)} · weight ${Math.round(k.weight * 100)}%${k.higherIsBetter ? '' : ' · lower raw value is better'}">${esc(k.label.split(' (')[0])}</th>`).join('')}</tr></thead>
-    <tbody>${d.players.map((x, i) => `<tr><td class="faint">${i + 1}</td><td>${esc(x.name)} <span class="faint">${esc(x.team || '')}</span></td>${cell(x.overall)}${d.skills.map((k) => cell(x.skills[k.key]?.rating)).join('')}</tr>`).join('')}</tbody></table></div>
+    ${d.combined ? `<p class="faint">Combined = ${Math.round(d.combined.wOurs * 100)}% our production rating + ${Math.round(d.combined.wMadden * 100)}% Madden (${esc(d.combined.iteration)}), the mix that best predicted real production in a 2024 test. Madden numbers are shown only in this local app.</p>` : ''}
+    <div class="scroll"><table class="rtable"><thead><tr><th>#</th><th>Player</th>${d.combined ? '<th class="num">Combined</th><th class="num">Madden</th>' : ''}<th class="num">Production</th>${d.skills.map((k) => `<th class="num" title="${esc(k.label)} · weight ${Math.round(k.weight * 100)}%${k.higherIsBetter ? '' : ' · lower raw value is better'}">${esc(k.label.split(' (')[0])}</th>`).join('')}</tr></thead>
+    <tbody>${d.players.map((x, i) => `<tr><td class="faint">${i + 1}</td><td>${esc(x.name)} <span class="faint">${esc(x.team || '')}</span></td>${d.combined ? `${cell(x.combined)}<td class="num faint">${x.madden ?? '—'}</td>` : ''}${cell(x.overall)}${d.skills.map((k) => cell(x.skills[k.key]?.rating)).join('')}</tr>`).join('')}</tbody></table></div>
   </section>`;
 }
 
