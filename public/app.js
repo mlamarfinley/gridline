@@ -322,7 +322,7 @@ function outliersBlock(m) {
   if (!o || (!o.outliers?.length && !o.leans?.length)) return `<section class="outliers"><div class="k">Outliers · model vs book line</div><p class="faint">No player's projection differs from his line by a significant amount for that stat.</p></section>`;
   const row = (c) => `<details class="orow"><summary><span class="dir ${c.gapDir === 'OVER' ? 'over' : 'under'}">${c.gapDir}</span> <b>${esc(c.name)}</b> <span class="faint">${esc(c.team)} ${esc(c.pos)}</span> · ${esc(c.label)} · line <b class="b">${c.line}</b> · model <b class="m">${f1(c.proj)}</b> · gap ${sgn(Math.round(c.gap * 10) / 10)} <span class="faint">(${f2(c.sigStrength)}× the bar${c.tierRecord ? ` · gaps this size: ${pct(c.tierRecord[1])} of ${c.tierRecord[0]}` : ''})</span></summary>${c.why?.length ? whyList(c.why) : ''}</details>`;
   return `<section class="outliers"><div class="k">Outliers · model vs book line, biggest first</div>
-    <p class="exp">A gap counts as an outlier when it clears either bar for that stat: rushing/receiving 9 yds or 15% of the line · passing 20 yds or 8% · receptions 1 or 25% · carries 2.5 or 15%. Honest record (blind 2024–25, fbm-1.5.1; partly in-sample for the v1.4 layer): gaps of 1–1.5× won 54% against the line, bigger gaps 51–52%; UNDERs 52–55% in every tier, OVERs 49–52%. The game pick above (gap required) went 74–85 (46.5%) out of sample.</p>
+    <p class="exp">A gap counts as an outlier when it clears either bar for that stat: rushing/receiving 9 yds or 15% of the line · passing 20 yds or 8% · receptions 1 or 25% · carries 2.5 or 15%. Honest record (blind 2024–25, fbm-1.5.6; partly in-sample for the v1.4 layer): gaps of 1–1.5× won 55% against the line (UNDERs 56%), bigger gaps 51–52%; OVERs 49–52%. The game pick above (gap required) went 77–88 (46.7%) out of sample.</p>
     ${o.outliers.map(row).join('') || '<p class="faint">No full outliers this game.</p>'}
     ${o.leans?.length ? `<h5 class="leanh">Leans (0.6–1× the bar)</h5>${o.leans.map(row).join('')}` : ''}
   </section>`;
@@ -360,7 +360,7 @@ function outlierBlock(m) {
       <div><h5>Uncertainty</h5><ul>${(p.flags.length ? p.flags : ['no quality flags raised']).map((f) => `<li>${esc(f)}</li>`).join('')}<li>Model probabilities are uncalibrated simulation outputs; held-out backtests showed overconfidence at the extremes.</li></ul></div></div>
     <details class="why"><summary>Model reasoning for this stat</summary><p>${esc(p.explain || '')}</p></details>
     ${conflicts}${shortlist}
-    <p class="exp">experimental · out of sample (2024↔2025) picks made this way (requiring a significant gap) went 74–85 (46.5%) against the line, below break-even (≈ 52.4%); without the gap requirement the same rule went 145–118 (55.1%) — suggestive, not proven; big misses also go the other way</p>
+    <p class="exp">experimental · out of sample (2024↔2025) picks made this way (requiring a significant gap) went 77–88 (46.7%) against the line, below break-even (≈ 52.4%); without the gap requirement the same rule went 142–118 (54.6%) — suggestive, not proven; big misses also go the other way</p>
   </section>`;
 }
 

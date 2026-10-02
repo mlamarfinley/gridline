@@ -1,100 +1,100 @@
 {
- "batch": 13,
- "learnedAt": "2026-10-01T16:41:32.608Z",
+ "batch": 14,
+ "learnedAt": "2026-10-02T21:19:11.221Z",
  "method": "blend weight learned on 2025 wk 2–9, kept only if it beat the model on wk 10–18",
  "byStat": {
   "QB|completions": {
    "w": 0,
    "test": {
-    "model": 5.2,
-    "blended": 5.137,
+    "model": 5.203,
+    "blended": 5.139,
     "situational": 5.18
    }
   },
   "QB|pass_att": {
    "w": 0,
    "test": {
-    "model": 7.187,
-    "blended": 7.161,
+    "model": 7.234,
+    "blended": 7.203,
     "situational": 7.448
    }
   },
   "QB|pass_yds": {
    "w": 0,
    "test": {
-    "model": 60.428,
-    "blended": 60.159,
+    "model": 60.884,
+    "blended": 60.291,
     "situational": 60.689
    }
   },
   "QB|rush_yds": {
    "w": 0,
    "test": {
-    "model": 13.177,
-    "blended": 13.177,
+    "model": 13.158,
+    "blended": 13.158,
     "situational": 13.015
    }
   },
   "RB|carries": {
    "w": 0.1,
    "test": {
-    "model": 4.161,
-    "blended": 4.157,
+    "model": 4.158,
+    "blended": 4.153,
     "situational": 4.367
    }
   },
   "RB|rec_yds": {
    "w": 0,
    "test": {
-    "model": 13.214,
-    "blended": 13.341,
+    "model": 13.216,
+    "blended": 13.345,
     "situational": 13.88
    }
   },
   "RB|receptions": {
-   "w": 0.2,
+   "w": 0,
    "test": {
-    "model": 1.31,
-    "blended": 1.308,
+    "model": 1.306,
+    "blended": 1.303,
     "situational": 1.328
    }
   },
   "RB|rush_yds": {
    "w": 0,
    "test": {
-    "model": 25.069,
-    "blended": 25.048,
+    "model": 25.224,
+    "blended": 25.175,
     "situational": 25.675
    }
   },
   "RB|targets": {
    "w": 0.6,
    "test": {
-    "model": 1.515,
-    "blended": 1.515,
+    "model": 1.514,
+    "blended": 1.514,
     "situational": 1.554
    }
   },
   "TE|rec_yds": {
    "w": 0,
    "test": {
-    "model": 20.725,
-    "blended": 20.561,
+    "model": 20.742,
+    "blended": 20.603,
     "situational": 21.072
    }
   },
   "TE|receptions": {
-   "w": 0.4,
+   "w": 0.6,
    "test": {
-    "model": 1.69,
-    "blended": 1.64,
+    "model": 1.684,
+    "blended": 1.621,
     "situational": 1.623
    }
   },
   "TE|targets": {
    "w": 0,
    "test": {
-    "model": 1.927,
+    "model": 1.923,
     "blended": 1.937,
     "situational": 1.937
    }
@@ -102,23 +102,23 @@
   "WR|rec_yds": {
    "w": 0,
    "test": {
-    "model": 27.325,
-    "blended": 27.379,
+    "model": 27.328,
+    "blended": 27.39,
     "situational": 27.924
    }
   },
   "WR|receptions": {
    "w": 0,
    "test": {
-    "model": 1.744,
-    "blended": 1.746,
+    "model": 1.746,
+    "blended": 1.759,
     "situational": 1.777
    }
   },
   "WR|targets": {
    "w": 0.6,
    "test": {
-    "model": 2.407,
+    "model": 2.408,
     "blended": 2.382,
     "situational": 2.421
    }

@@ -19,7 +19,7 @@ export const sigStrengthOf = (stat, line, proj) => { const s = SIGNIFICANCE[stat
 /** The gap that counts as significant for this line (the smaller of the two bars). */
 export const sigThreshold = (stat, line) => (SIGNIFICANCE[stat] ? Math.min(SIGNIFICANCE[stat][0], SIGNIFICANCE[stat][1] * line) : null);
 // How picks with gaps this size actually did against the line, 2024–25 blind backtest (raw projections).
-export const TIER_RECORD = { '1–1.5×': { all: [1563, 0.543], OVER: [499, 0.523], UNDER: [1064, 0.552] }, '1.5–2×': { all: [838, 0.510], OVER: [293, 0.491], UNDER: [545, 0.519] }, '2×+': { all: [1344, 0.516], OVER: [679, 0.490], UNDER: [665, 0.543] } };
+export const TIER_RECORD = { '1–1.5×': { all: [1523, 0.548], OVER: [488, 0.520], UNDER: [1035, 0.561] }, '1.5–2×': { all: [878, 0.516], OVER: [299, 0.505], UNDER: [579, 0.522] }, '2×+': { all: [1341, 0.509], OVER: [661, 0.490], UNDER: [680, 0.528] } };
 export const tierOf = (strength) => (strength >= 2 ? '2×+' : strength >= 1.5 ? '1.5–2×' : strength >= 1 ? '1–1.5×' : strength >= 0.6 ? 'lean' : null);
 
 export const OUTLIER_RULES = {

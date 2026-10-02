@@ -39,7 +39,9 @@ export const CFBD_API_KEY = process.env.CFBD_API_KEY || '';
 //            absorbs at most 55% of an absent lead back's share (measured 2022–25).
 // 1.4.4 NFL: lead backs (RB1) get +0.78 carries on top of the pooled RB calibration — the pooled shift is learned
 //            on RB1s and RB2s together and left RB1s ~0.8 carries short (walk-forward: 2026 MAE 4.48 → 4.36).
-export const MODEL_VERSION = 'fbm-1.5.5';
+export const MODEL_VERSION = 'fbm-1.5.6';
+// 1.5.6 NFL: opponent run-defense multiplier exponent 0.8 → 0.5 (raw batch 14 vs 13: RB rush yds MAE 23.91 → 23.85);
+//            all layers re-learned on batch 14; player prop lines fetched only after projections are final.
 // 1.5.5 NFL: team unit ratings use this season only from week 3 (user choice); player profiles keep last season.
 // 1.5.4 NFL: matchup-engine unit ratings weight last season's plays 0.15 (was 0.25; scripts/def_prior_weight.mjs);
 //            big-miss pick model refit on the new ratings.
@@ -74,6 +76,7 @@ export const DEV_WEEKS = {
   'fbm-1.5.3': { nfl: [2, 3, 4], cfb: [4] },
   'fbm-1.5.4': { nfl: [2, 3, 4], cfb: [4] },
   'fbm-1.5.5': { nfl: [2, 3, 4], cfb: [4] },
+  'fbm-1.5.6': { nfl: [2, 3, 4], cfb: [4] },
 };
 
 export const LEAGUES = {
@@ -144,4 +147,7 @@ export const SHRINK = {
   // Exponent on the opponent's receiving-efficiency multipliers (catch rate, yds/catch). 2022–25 data: only ~15% of a
   // defense's yds/target deviation shows up in the next receiver's (scripts/matchup_volume_test.mjs).
   oppRecExp: 0.4,
+  // Exponent on the opponent's RB yards-per-carry multiplier. 2022–25: ~21% of an early-season run defense's raw YPC
+  // edge carries over (scripts/…/ypc_pass); 0.8 applied ~31%. 0.5 applies ~20%.
+  oppRunExp: 0.5,
 };

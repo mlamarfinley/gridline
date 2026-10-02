@@ -200,15 +200,10 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
   const venue = ev?.venue || (sum?.gameInfo?.venue ? { name: sum.gameInfo.venue.fullName, city: sum.gameInfo.venue.address?.city, state: sum.gameInfo.venue.address?.state, indoor: false } : null);
   const weather = pregame ? await kickoffWeather(venue, kickoff, prov) : { available: false, reason: 'Retrospective view — historical forecasts are not reconstructed' };
   const wx = weather.available && weather.effects ? weather.effects : { passEff: 1, catchRate: 1, passRate: 0, fumble: 1, dispersion: 1, notes: [] };
-  let props = {}, propsMeta = { available: false, source: 'DraftKings lines via ESPN core API' };
-  // noPlayerLines: player prop lines are never fetched (game lines — spread, total — are still used). The projection
-  // pipeline never reads prop lines anyway (they are attached after the numbers are final, for comparison only);
-  // scripts/line_blind_check.mjs runs every game both ways and verifies the projections are identical.
-  const pr = blind || noPlayerLines ? { data: null, meta: { error: noPlayerLines ? 'line-blind run: player props not requested' : 'market-blind: props not requested' } } : await espn.getProps(lg, eventId);
-  if (!blind && !noPlayerLines) prov.add(pr.meta);
-  if (pr.data?.items) { props = espn.parseProps(pr.data); propsMeta = { available: Object.keys(props).length > 0, source: 'DraftKings lines via ESPN core API (line only — this feed carries no over/under prices)', retrievedAt: pr.meta.fetchedAt }; }
-  else propsMeta.reason = pr.meta.status === 404 ? 'No player props posted for this game in the ESPN feed' : (pr.meta.error || 'unavailable');
-  const oddsApi = pregame && !noPlayerLines ? await oddsApiProps(lg, home, away, kickoff, prov) : { enabled: false };
+  // Player prop lines are NOT loaded here: projections are built with no access to them. They are fetched and attached
+  // only after every projection is final (LINE ATTACHMENT below). Game lines (spread, total) are inputs.
+  let props = {}, propsMeta = { available: false, source: 'DraftKings lines via ESPN core API' }, oddsApi = { enabled: false };
+  const SIMS_FINAL = new Map(); // final simulated sample per player|stat, for P(over) against the line once attached
 
   // ---------- fbm-1.2.0 NFL priors (prior season only; fitted constants in src/fitted_v12.json) ----------
   const V12 = lg === 'nfl';
@@ -492,7 +487,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       const ypcPrior = shrink(prev.carries ? prev.rush_yds / prev.carries : null, (prev.carries || 0) * wPrev, lgYpc, kY);
       const ypcPlayer = shrink(info.cur.carries ? info.cur.rush_yds / info.cur.carries : null, info.cur.carries || 0, ypcPrior, kY);
       const oppYpcMult = clamp(ox.defense.rbYpcAllowedShrunk / P.ypc.RB, 0.8, 1.25);
-      const ypcMult = Math.pow(oppYpcMult, pos === 'QB' ? 0.5 : 0.8);
+      const ypcMult = Math.pow(oppYpcMult, pos === 'QB' ? 0.5 * SHRINK.oppRunExp / 0.8 : SHRINK.oppRunExp);
       const ypc = ypcPlayer * ypcMult;
       const lgR10 = pos === 'QB' ? P.qbRun10 : P.run10, lgR20 = pos === 'QB' ? P.qbRun20 : P.run20;
       const r10p = shrink(info.pbp.carries ? info.pbp.r10 / info.pbp.carries : null, info.pbp.carries || 0, lgR10, SHRINK.explosiveRun);
@@ -572,8 +567,6 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       const rowsCur = id === roles.k ? kRows : info.r;
       const prevRows = prevLogs.get(id) || [];
       const nameN = nameMap.get(id);
-      const propLines = props[id] || {};
-      const oaLines = oddsApi.byName?.[normName(nameN)] || {};
       const stats = {};
       // fbm-1.4 pregame context — identical fields to the ledger's frozen blind_pred_context (src/blind.js).
       const isK = id === roles.k;
@@ -646,11 +639,12 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
         else s = arrK ? summarize(arrK) : null;
         const hist = rowsCur.map((x) => x.stats[k]).filter((v) => v != null);
         const seasonAvg = STAT_DEFS[k].ratio ? ratioAvg(rowsCur, k) : (hist.length ? avg(hist) : null);
-        const book = oaLines[k] || propLines[k] || null;
-        const threshold = book?.line ?? (seasonAvg != null && !STAT_DEFS[k].ratio ? Math.floor(seasonAvg) + 0.5 : null);
+        // The projection stage never sees a player line (they are not even fetched yet). P(over) here is against his own
+        // season average; the line-attachment stage below re-points it at the book line once projections are final.
+        const threshold = seasonAvg != null && !STAT_DEFS[k].ratio ? Math.floor(seasonAvg) + 0.5 : null;
         const arr = k === 'ypc' || k === 'ypr' ? null : arrK;
+        if (arr) SIMS_FINAL.set(`${id}|${k}`, arr);
         const pOver = arr && threshold != null ? probOver(arr, threshold) : null;
-        const bookImp = book?.overPrice != null ? { over: americanToProb(book.overPrice), under: americanToProb(book.underPrice), noVigOver: book.underPrice != null ? noVig(book.overPrice, book.underPrice)?.a : null } : null;
         // Raw (pre-calibration) simulation summary: the big-miss model was trained on raw projections/ranges.
         const rawS = simStats[k] && !STAT_DEFS[k].ratio ? summarize(simStats[k]) : null;
         stats[k] = {
@@ -659,8 +653,8 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
           proj: s ? round(s.mean, k) : null, p10: s?.p10 ?? null, p50: s?.p50 ?? null, p90: s?.p90 ?? null, quantiles: s?.quantiles || null,
           seasonAvg: seasonAvg != null ? round(seasonAvg, k) : null, seasonGames: rowsCur.length,
           last5: lastFive(rowsCur, prevRows, k, season),
-          book: book ? { line: book.line, overPrice: book.overPrice ?? null, underPrice: book.underPrice ?? null, source: book.source, updated: book.updated || null, implied: bookImp } : null,
-          threshold, thresholdSource: book ? 'book line' : threshold != null ? 'season average (no book line)' : null,
+          book: null, // attached after all projections are final (see LINE ATTACHMENT)
+          threshold, thresholdSource: threshold != null ? 'season average (no book line)' : null,
           probOver: pOver, fairOdds: pOver != null ? { over: probToAmerican(pOver), under: probToAmerican(1 - pOver) } : null,
           calibration: v14Applied[k] != null ? { version: 'fbm-1.4.0', correction: Math.round(v14Applied[k] * 100) / 100 } : 'fbm-1.3.0',
           anchor: anchorInfo,
@@ -792,11 +786,36 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       const Q = qb.stats?.[qk]?.proj, R = rec.reduce((a, c) => a + (c.stats?.[rk]?.proj || 0), 0);
       if (!(Q > 0) || !(R > Q * 1.01)) continue;
       const T = (Q + R) / 2;
-      for (const c of rec) if (c.stats?.[rk]?.proj) rescaleStat(c.stats[rk], T / R, rk);
-      rescaleStat(qb.stats[qk], T / Q, qk);
+      for (const c of rec) if (c.stats?.[rk]?.proj) { rescaleStat(c.stats[rk], T / R, rk); scaleSample(SIMS_FINAL, `${c.id}|${rk}`, T / R); }
+      rescaleStat(qb.stats[qk], T / Q, qk); scaleSample(SIMS_FINAL, `${qb.id}|${qk}`, T / Q);
       (t.consistency ||= []).push(`Receivers' calibrated ${word} (${f1c(R)}) exceeded the QB's ${qk === 'completions' ? 'completions' : 'passing yards'} (${f1c(Q)}); both rescaled to ${f1c(T)}.`);
     }
   }
+
+  // ---------- LINE ATTACHMENT: projections are final; only now are player prop lines fetched ----------
+  // Nothing above this point can read a player line. From here on, lines are used only to COMPARE: the over/under
+  // threshold, P(over) and fair odds, outliers and the game pick. noPlayerLines / blind skip the fetch entirely.
+  if (!blind && !noPlayerLines) {
+    const pr = await espn.getProps(lg, eventId);
+    prov.add(pr.meta);
+    if (pr.data?.items) { props = espn.parseProps(pr.data); propsMeta = { available: Object.keys(props).length > 0, source: 'DraftKings lines via ESPN core API (line only — this feed carries no over/under prices)', retrievedAt: pr.meta.fetchedAt }; }
+    else propsMeta.reason = pr.meta.status === 404 ? 'No player props posted for this game in the ESPN feed' : (pr.meta.error || 'unavailable');
+    if (pregame) oddsApi = await oddsApiProps(lg, home, away, kickoff, prov);
+    for (const t of Object.values(teams)) for (const c of [...t.cards, ...t._support, ...(t.kicker ? [t.kicker] : [])]) {
+      const propLines = props[c.id] || {}, oaLines = oddsApi.byName?.[normName(c.name)] || {};
+      for (const [k, st] of Object.entries(c.stats || {})) {
+        const book = oaLines[k] || propLines[k] || null;
+        if (!book) continue;
+        const bookImp = book.overPrice != null ? { over: americanToProb(book.overPrice), under: americanToProb(book.underPrice), noVigOver: book.underPrice != null ? noVig(book.overPrice, book.underPrice)?.a : null } : null;
+        st.book = { line: book.line, overPrice: book.overPrice ?? null, underPrice: book.underPrice ?? null, source: book.source, updated: book.updated || null, implied: bookImp };
+        st.threshold = book.line; st.thresholdSource = 'book line';
+        const arr = SIMS_FINAL.get(`${c.id}|${k}`);
+        st.probOver = arr ? probOver(arr, book.line) : null;
+        st.fairOdds = st.probOver != null ? { over: probToAmerican(st.probOver), under: probToAmerican(1 - st.probOver) } : null;
+      }
+    }
+  } else if (noPlayerLines) propsMeta.reason = 'line-blind run: player props not requested';
+  else propsMeta.reason = 'market-blind: props not requested';
 
   // ---------- SAME-POSITION LOG vs this opponent (display only) ----------
   // Under each stat: what the opponent's last 5 opponents got from the player in the same slot (e.g. the RB1 —
@@ -1008,6 +1027,8 @@ function effectiveWeights(weights) {
 }
 const f1c = (x) => (Math.round(x * 10) / 10).toString();
 /** Scale a stat's whole simulated distribution by f (headline, range, quantiles) and recompute P(over) from quantiles. */
+/** Keep a stored final sample in step with a rescaled stat. */
+function scaleSample(map, key, f) { const a = map.get(key); if (a) map.set(key, Float64Array.from(a, (v) => v * f)); }
 function rescaleStat(st, f, k) {
   const r = (x) => (x == null ? x : x * f);
   st.proj = round(st.proj * f, k); st.p10 = r(st.p10); st.p50 = r(st.p50); st.p90 = r(st.p90);

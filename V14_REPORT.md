@@ -327,3 +327,23 @@ Still blended with last season (PRIOR_W 0.15):
 This holds by construction. Prop lines are attached only after a stat's distribution is final, for the over/under threshold, P(over), outliers and the game pick. Every learned layer (v1.3, v1.4, anchor, situational, team runs) was fit on market-blind batches that never saw a player line.
 
 **UI:** a "Model only" switch on each game page hides every sportsbook player line: the line and price rows, the chart's line, P(over), outliers, the game pick, and line references in the head-to-head and same-slot blocks. It is remembered per browser. The verification result is shown next to the switch (`/api/lineblind`, also exported to the static site).
+
+## fbm-1.5.6: run-defense pass-through, RB quality test, structural line isolation (2026-10-02)
+
+**Run-defense multiplier.**
+- 2022–25: about 21% of an early-season run defense's raw RB-YPC edge carries to the next opponent. The exponent 0.8 applied about 31% (e.g. WSH: 2.49 YPC allowed on 51 runs → ×0.865).
+- Exponent changed to 0.5 (`SHRINK.oppRunExp`). Raw batch 14 vs 13: RB rush yds MAE 23.91 → 23.85, corr 0.541 → 0.544; every other stat unchanged.
+- All layers re-learned on batch 14:
+  - v1.3: 2026 miss 6.40 → 6.33.
+  - v1.4 kept: RB carries / receptions / targets / long rush; QB completions / attempts / pass yds / long; K.
+  - Anchor: QB rush yds 0.5, TE targets 0.4, RB rush yds 0.3, WR targets / receptions / rec yds 0.3, RB rec yds 0.1, WR long 0.1.
+  - Situational blend: RB carries, RB targets, TE receptions, WR targets.
+  - Game pick: 142–118 (54.6%) without the gap rule; 77–88 (46.7%) with it (live).
+  - Tiers: 1–1.5× 54.8% (UNDER 56.1%).
+
+**Do better backs lose less to good run defenses?** (`scripts/rb_quality_vs_defense.mjs`, 2022–25)
+- Quality = prior YPC: interaction −0.035 ± 0.025 (not significant); no held-out gain.
+- Quality = NGS RYOE per carry, last season: the opposite. Defense effect shows up 9% / 11% / 30% for low / mid / high RYOE backs (interaction +0.149, z 4.3). Elite backs lose more of their breakaway yards to good run defenses.
+- Neither version improved held-out YPC error, so no interaction was added. Player quality stays in through each back's own shrunk YPC.
+
+**Line isolation is now structural.** Player prop lines are fetched only after every projection, and the team consistency pass, are final (LINE ATTACHMENT stage in `src/matchup.js`). The projection stage cannot read them. `scripts/line_blind_check.mjs` still finds 0 of 1,492 projected numbers differ with lines removed.
