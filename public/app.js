@@ -450,7 +450,7 @@ function monitorBlock(c) {
 
 function ratingsBlock(r) {
   const bar = (v) => `<span class="rbar"><span style="width:${Math.max(2, v)}%"></span></span>`;
-  return `<details class="ratings"><summary>Skill ratings · overall <b>${r.overall ?? '—'}</b> <span class="faint">(0–100 vs ${esc(r.pos)}s, 50 = average)</span></summary>
+  return `<details class="ratings"><summary>Skill ratings · overall <b>${r.overall ?? '—'}</b> <span class="faint">(1–99 vs ${esc(r.pos)}s, 50 = average)</span></summary>
     <table>${r.skills.map((k) => `<tr><td>${esc(k.label)}</td><td class="num">${k.noData ? '<span class="faint">50</span>' : k.rating}</td><td>${bar(k.rating)}</td><td class="faint num" title="raw value · sample">${k.noData ? 'no data' : `${k.value ?? '—'} · n${k.n}`}</td></tr>`).join('')}</table></details>`;
 }
 
