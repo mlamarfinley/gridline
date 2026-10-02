@@ -7,6 +7,7 @@ import { getSlate, getMatchup, snapshotGame, snapshotSlate, backtestWeek, settle
 import { openLedger } from './src/ledger.js';
 import { requestAllowed } from './src/security.js';
 import { statLeaders } from './src/leaders.js';
+import { ratingsBoard } from './src/playerRatings.js';
 import { blindReport, latestBatch, runBlindPredictions, scoreBlind, saveReport, openBlind } from './src/blind.js';
 
 const PUBLIC = path.join(ROOT, 'public');
@@ -39,6 +40,11 @@ async function api(req, res, url) {
   if (p === '/api/slate') {
     const week = q.get('week') ? Number(q.get('week')) : undefined;
     return send(res, 200, await getSlate(league(q), { week, seasontype: q.get('seasontype') ? Number(q.get('seasontype')) : undefined }));
+  }
+  if (p === '/api/ratings') {
+    const pos = ['QB', 'RB', 'WR', 'TE'].includes(q.get('pos')) ? q.get('pos') : 'RB';
+    const sl = await getSlate('nfl');
+    return send(res, 200, await ratingsBoard(sl.season, sl.week, pos));
   }
   if (p === '/api/lineblind') {
     try { return send(res, 200, JSON.parse(fs.readFileSync(path.join(ROOT, 'reports', `line_blind_check_${league(q)}.json`), 'utf8'))); }

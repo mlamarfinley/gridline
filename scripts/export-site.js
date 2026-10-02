@@ -70,6 +70,7 @@ for (const lg of ['nfl', 'cfb']) {
     write(OUT, `api/slate/${lg}-w${w}.json`, s);
     if (lg === 'nfl' && w < cur.week) for (const g of s.games) if (g.status.completed) ids.add(g.id);
   }
+  if (lg === 'nfl') { try { const { ratingsBoard } = await import('../src/playerRatings.js'); for (const pos of ['QB', 'RB', 'WR', 'TE']) write(OUT, `api/ratings/${pos}.json`, await ratingsBoard(cur.season, cur.week, pos)); } catch (e) { summary.failed.push({ ratings: true, error: e.message }); } }
   try { write(OUT, `api/lineblind/${lg}.json`, JSON.parse(fs.readFileSync(path.join(ROOT, 'reports', `line_blind_check_${lg}.json`), 'utf8'))); } catch { /* check not run for this league */ }
   try { const { statLeaders } = await import('../src/leaders.js'); write(OUT, `api/leaders/${lg}.json`, await statLeaders(lg, cur.season)); } catch (e) { summary.failed.push({ lg, leaders: true, error: e.message }); }
   log(`${lg}: ${weeks.length} week slates; building ${ids.size} matchups`);

@@ -28,6 +28,7 @@ function staticPath(p) {
     case '/api/ledger': return `api/ledger/${q.get('kind') || 'pregame'}-${q.get('model') || ''}.json`;
     case '/api/blind': return `api/blind${q.get('batch') ? `-${q.get('batch')}` : ''}.json`;
     case '/api/leaders': return `api/leaders/${q.get('league') || 'nfl'}.json`;
+    case '/api/ratings': return `api/ratings/${q.get('pos') || 'RB'}.json`;
     case '/api/lineblind': return `api/lineblind/${q.get('league') || 'nfl'}.json`;
     default: return null;
   }
@@ -57,6 +58,7 @@ function parseHash() {
   const q = new URLSearchParams(qs || '');
   if (parts[0] === 'ledger') return { view: 'ledger' };
   if (parts[1] === 'leaders') return { view: 'leaders', league: parts[0] === 'cfb' ? 'cfb' : 'nfl' };
+  if (parts[1] === 'ratings') return { view: 'ratings', league: 'nfl', pos: q.get('pos') || 'RB' };
   const league = parts[0] === 'cfb' ? 'cfb' : 'nfl';
   if (parts[1] === 'game' && parts[2]) return { view: 'game', league, id: parts[2] };
   return { view: 'slate', league, week: q.get('week') ? Number(q.get('week')) : null };
@@ -83,7 +85,7 @@ async function route() {
   const r = parseHash();
   if (r.league) state.league = r.league;
   document.querySelectorAll('.league a').forEach((a) => a.classList.toggle('on', a.dataset.league === state.league && r.view !== 'ledger'));
-  document.querySelectorAll('.views a').forEach((a) => a.classList.toggle('on', a.dataset.view === (r.view === 'ledger' || r.view === 'leaders' ? r.view : 'slate')));
+  document.querySelectorAll('.views a').forEach((a) => a.classList.toggle('on', a.dataset.view === (['ledger', 'leaders', 'ratings'].includes(r.view) ? r.view : 'slate')));
   $('.views a[data-view=slate]').href = `#/${state.league}`;
   $('.views a[data-view=leaders]').href = `#/${state.league}/leaders`;
   // League tabs keep you on the leaders page when you're on it.
@@ -92,6 +94,7 @@ async function route() {
   window.scrollTo(0, 0);
   if (r.view === 'ledger') return renderLedger();
   if (r.view === 'leaders') return renderLeaders(r.league);
+  if (r.view === 'ratings') return renderRatings(r.pos);
   if (r.view === 'game') return renderGame(r.league, r.id);
   return renderSlate(r.league, r.week);
 }
@@ -399,6 +402,7 @@ function cardBody(m, c, key) {
     <div class="chart">${last5Chart(s)}${h2hBlock(s)}${vsPosBlock(s)}</div>
   </div>
   ${s.explain ? `<details class="why"><summary>Why this projection</summary><div class="expl">${esc(s.explain)}</div></details>` : ''}
+  ${c.ratings ? ratingsBlock(c.ratings) : ''}
   ${c.notes?.length ? `<ul class="notes">${c.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}`;
 }
 
@@ -432,6 +436,12 @@ async function wireModelOnly(lg) {
     const el = document.getElementById('moProof');
     if (el && r?.stats) el.textContent = `Projections never read player lines: week ${r.week ?? ''} check rebuilt every game with lines removed — ${r.differing} of ${r.stats} projected numbers changed (${r.withLines} of them have a book line).`;
   } catch { /* proof text is optional */ }
+}
+
+function ratingsBlock(r) {
+  const bar = (v) => `<span class="rbar"><span style="width:${Math.max(2, v)}%"></span></span>`;
+  return `<details class="ratings"><summary>Skill ratings · overall <b>${r.overall ?? '—'}</b> <span class="faint">(0–100 vs ${esc(r.pos)}s, 50 = average)</span></summary>
+    <table>${r.skills.map((k) => `<tr><td>${esc(k.label)}</td><td class="num">${k.rating}</td><td>${bar(k.rating)}</td><td class="faint num" title="raw value · sample">${k.value ?? '—'} · n${k.n}</td></tr>`).join('')}</table></details>`;
 }
 
 function vsPosBlock(s) {
@@ -609,6 +619,24 @@ function wireCards() {
       for (const t of targets) if (t === el || t.querySelector(`.statsel button[data-stat="${b.dataset.stat}"]`)) setCardStat(t, b.dataset.stat);
     }));
   });
+}
+
+// ---------------- Player skill ratings ----------------
+async function renderRatings(pos) {
+  const my = state.routeSeq;
+  loading('Loading player ratings…');
+  let d;
+  try { d = await api(`/api/ratings?pos=${pos}`); } catch (e) { if (my === state.routeSeq) fail(e); return; }
+  if (my !== state.routeSeq) return;
+  setTitle(`${pos} skill ratings`);
+  const cell = (v) => (v == null ? '<td class="faint num">—</td>' : `<td class="num rt" style="--r:${v}">${v}</td>`);
+  app.innerHTML = `<section class="leaders ratingspage">
+    <div class="lhead"><h1>NFL ${esc(pos)} skill ratings · before week ${d.week}</h1>
+      <p class="faint">0–100 against qualifying ${esc(pos)}s (50 = average, 84 ≈ one standard deviation better). Built from nflverse play-by-play and NFL Next Gen Stats: this season's games count fully, last season half. Every metric is shrunk toward average by sample size, so small samples sit nearer 50.</p>
+      <nav class="ljump">${['QB', 'RB', 'WR', 'TE'].map((p) => `<a href="#/nfl/ratings?pos=${p}" class="${p === pos ? 'on' : ''}">${p}</a>`).join('')}</nav></div>
+    <div class="scroll"><table class="rtable"><thead><tr><th>#</th><th>Player</th><th class="num">Overall</th>${d.skills.map((k) => `<th class="num" title="${esc(k.label)} · weight ${Math.round(k.weight * 100)}%${k.higherIsBetter ? '' : ' · lower raw value is better'}">${esc(k.label.split(' (')[0])}</th>`).join('')}</tr></thead>
+    <tbody>${d.players.map((x, i) => `<tr><td class="faint">${i + 1}</td><td>${esc(x.name)} <span class="faint">${esc(x.team || '')}</span></td>${cell(x.overall)}${d.skills.map((k) => cell(x.skills[k.key]?.rating)).join('')}</tr>`).join('')}</tbody></table></div>
+  </section>`;
 }
 
 // ---------------- Stat leaders ----------------

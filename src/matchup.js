@@ -16,11 +16,12 @@ import { selectOutlier } from './outlier.js';
 import { skeptic } from './skeptic.js';
 import { buildContext, playerFit, unitEdges } from './profiles.js';
 import { loadPlayerIds } from './pbp.js';
+import { buildRatings, SKILLS as RATING_SKILLS } from './playerRatings.js';
 import { whyPick, edgeKeyFor } from './why.js';
 import { bigMissProbs, oppUnitFor, BIG, topDrivers } from './bigmiss.js';
 import { calibrationFor, calibrateSample } from './calibrate.js';
 import { v14For, buildX, usageFromRows, applyV14 } from './v14.js';
-import { seasonState, situationInput, situationMultiplier, loadWeekly, teamRunsModel } from './situational.js';
+import { seasonState, situationInput, situationMultiplier, loadWeekly, teamRunsModel, rbDefenseQuality } from './situational.js';
 import fsA from 'node:fs';
 let ANCHOR = null;
 try { ANCHOR = JSON.parse(fsA.readFileSync(new URL('./fitted_anchor.json', import.meta.url), 'utf8')).byStat; } catch { ANCHOR = null; }
@@ -215,6 +216,10 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
   const teams = {};
   const flat = [];
   const expMarginHome = implied ? implied.home - implied.away : null;
+  // nflverse weekly rows (this season + last), used week-filtered (< this game's week) for the quality-adjusted run
+  // defense in both live and market-blind runs.
+  let WEEKLY = null;
+  if (lg === 'nfl' && ev?.week != null) { try { const [cw, pw] = await Promise.all([loadWeekly(season), loadWeekly(season - 1)]); WEEKLY = { cur: cw, prev: pw }; } catch { WEEKLY = null; } }
   let SIT = null;
   if (lg === 'nfl' && !blind && ev?.week != null && SITFIT) {
     try { const [cur, prev, ids] = await Promise.all([loadWeekly(season), loadWeekly(season - 1), loadPlayerIds()]); SIT = { state: seasonState(cur, prev, ev.week), ids, cur, prev }; } catch { SIT = null; }
@@ -478,6 +483,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
     }));
 
     const effOut = {};
+    const defQ = {};
     for (const pl of players) {
       const info = pInfo[pl.id];
       const prev = sumStats((prevLogs.get(pl.id) || []).filter((x) => /Regular/i.test(x.seasonLabel)).map((x) => x.stats));
@@ -486,7 +492,11 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       const kY = V12 ? FIT.eff.ypc.best.k : SHRINK.ypc, wPrev = V12 ? 1 : 0.5;
       const ypcPrior = shrink(prev.carries ? prev.rush_yds / prev.carries : null, (prev.carries || 0) * wPrev, lgYpc, kY);
       const ypcPlayer = shrink(info.cur.carries ? info.cur.rush_yds / info.cur.carries : null, info.cur.carries || 0, ypcPrior, kY);
-      const oppYpcMult = clamp(ox.defense.rbYpcAllowedShrunk / P.ypc.RB, 0.8, 1.25);
+      // Run defense judged against the quality of backs it faced (each back vs his own normal YPC), shrunk with 80
+      // carries toward league; falls back to raw YPC allowed when nflverse weekly data is unavailable.
+      const dq = WEEKLY ? (defQ[opp.abbr] ??= rbDefenseQuality(WEEKLY.cur, WEEKLY.prev, ev.week, NVA(opp.abbr))) : null;
+      const oppYpcMult = dq ? clamp(((dq.adjYpc * dq.carries + dq.lg * 80) / (dq.carries + 80)) / dq.lg, 0.8, 1.25) : clamp(ox.defense.rbYpcAllowedShrunk / P.ypc.RB, 0.8, 1.25);
+      if (dq) info.defQuality = { raw: dq.raw, faced: dq.faced, adj: dq.adjYpc, lg: dq.lg, carries: dq.carries };
       const ypcMult = Math.pow(oppYpcMult, pos === 'QB' ? 0.5 * SHRINK.oppRunExp / 0.8 : SHRINK.oppRunExp);
       const ypc = ypcPlayer * ypcMult;
       const lgR10 = pos === 'QB' ? P.qbRun10 : P.run10, lgR20 = pos === 'QB' ? P.qbRun20 : P.run20;
@@ -744,6 +754,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
   if (lg === 'nfl' && !blind && ev?.week != null) {
     try {
       const mctx = await buildContext(season, ev.week);
+      const RATINGS = await buildRatings(season, ev.week).catch(() => null);
       const nvIds = await loadPlayerIds();
       const NV = { WSH: 'WAS', LAR: 'LA' };
       const nv = (a) => NV[a] || a;
@@ -755,6 +766,8 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
           const id = nvIds.byEspn.get(String(c.id));
           const pl = id ? mctx.players.get(id.gsis) : null;
           c.matchup = pl ? { style: pl.style, fit: theirs ? playerFit(pl, theirs.def, mctx.league) : null, explRel: pl.explRate / mctx.league.expl - 1, deepShare: pl.share.deepOut + pl.share.deepMid } : null;
+          const rt = id ? RATINGS?.players.get(id.gsis) : null;
+          c.ratings = rt ? { overall: rt.overall, pos: rt.pos, sample: rt.sample, skills: RATING_SKILLS[rt.pos].filter(([k]) => rt.skills[k]).map(([k, label]) => ({ key: k, label, ...rt.skills[k] })) } : null;
         }
       }
     } catch (e) { for (const t of Object.values(teams)) t.units = { error: `matchup data unavailable: ${e.message}` }; }

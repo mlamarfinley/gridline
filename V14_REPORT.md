@@ -347,3 +347,45 @@ This holds by construction. Prop lines are attached only after a stat's distribu
 - Neither version improved held-out YPC error, so no interaction was added. Player quality stays in through each back's own shrunk YPC.
 
 **Line isolation is now structural.** Player prop lines are fetched only after every projection, and the team consistency pass, are final (LINE ATTACHMENT stage in `src/matchup.js`). The projection stage cannot read them. `scripts/line_blind_check.mjs` still finds 0 of 1,492 projected numbers differ with lines removed.
+
+## fbm-1.6.0: player quality (2026-10-02)
+
+### 1. Run defense judged against the backs it faced (`src/situational.js` rbDefenseQuality)
+
+A defense's RB YPC allowed is compared with each back's own expected YPC: his other games this season plus half of last season, shrunk with 60 carries toward league, never including the game itself. Adjusted YPC allowed = league + (actual − expected) per carry, then shrunk with 80 carries.
+
+**Walk-forward** (`scripts/def_quality_adjust_test.mjs`), next-game RB YPC error with no defense adjustment / raw / quality-adjusted:
+
+| Season | None | Raw | Quality-adjusted |
+|---|---|---|---|
+| 2023 | 1.1285 | 1.1461 | 1.1370 |
+| 2024 | 1.2040 | 1.1950 | 1.1950 |
+| 2025 | 1.3799 | 1.3729 | 1.3728 |
+
+Never worse than raw. Over a season, the backs a defense faces average within ~0.11 YPC of league, so the effect is usually small.
+
+**Examples:**
+- TEN: faced backs who normally get 4.11 YPC (league 4.13). Raw 3.76 → adjusted 3.77. Their backs weren't weak by their own records.
+- WSH: faced above-average backs (4.27). Raw 3.29 → adjusted 3.15.
+
+Applies in live and market-blind runs (nflverse weekly, week-filtered).
+
+### 2. Player skill ratings (`src/playerRatings.js`, Ratings page, a block on every card)
+
+0–100 per skill against qualifying players at the position: 50 = average, 100·Φ(z). Each metric is shrunk toward the position mean by its sample size. This season counts 1×, last season 0.5×.
+
+| Position | Skills |
+|---|---|
+| QB | EPA / dropback, CPOE (NGS), deep EPA, sack rate, INT rate, scramble yds / dropback, designed rush yds / game |
+| RB | RYOE / carry (NGS), success rate, 10+ yd run rate, short-yardage success (≤2 to go), receiving yds / target |
+| WR / TE | share of team attempts, separation (NGS), YAC over expected (NGS), catch rate over expected (air-yard buckets), yds / 20+ yd target, EPA / target |
+
+Overall = weighted blend (weights in `SKILLS`).
+
+**Week 4 top 3:**
+- QB: Purdy 83, Prescott 81, Allen 78
+- RB: Warren 89, Cook 84, Gibbs 84
+- WR: Flowers 96, Smith-Njigba 90, Nacua 87
+- TE: Kittle 84, Kincaid 82, LaPorta 82
+
+**Not yet model inputs.** The next step is to test each skill's week-to-week stability and its value as a projection input (e.g. an RYOE-informed YPC prior), and ship only what improves held-out accuracy. The earlier RB-quality × defense test (fbm-1.5.6) found no gain from a quality interaction.

@@ -134,3 +134,21 @@ export function teamRunsModel(curRows, prevRows, week, team, opp, spread, total,
   const est = L + f.reduce((a, v, i) => a + v * beta[i], 0);
   return { est, league: L, thisSeason: mean(c), games: c.length, lastSeason: lastT, oppAllows: mean(cd), oppLastSeason: lastO, spread, total };
 }
+
+/**
+ * Quality-adjusted run defense (scripts/def_quality_adjust_test.mjs): how far a defense held each RB below HIS OWN
+ * expected YPC (his other games this season + half of last season, shrunk with K carries toward league), weeks < week.
+ * Returns { lg, carries, raw, faced, adjYpc } where adjYpc = league + (actual − expected) per carry.
+ */
+export function rbDefenseQuality(curRows, prevRows, week, opp, K = 60) {
+  const isRb = (r) => (r.position === 'RB' || r.position === 'FB') && +r.carries > 0;
+  const cur = curRows.filter((r) => isRb(r) && +r.week < week).map((r) => ({ p: r.player_id, d: r.opponent_team, c: +r.carries, y: +r.rushing_yards }));
+  if (!cur.length) return null;
+  const pv = new Map(); for (const r of prevRows.filter(isRb)) { const a = pv.get(r.player_id) || pv.set(r.player_id, { c: 0, y: 0 }).get(r.player_id); a.c += +r.carries; a.y += +r.rushing_yards; }
+  const lg = cur.reduce((a, r) => a + r.y, 0) / cur.reduce((a, r) => a + r.c, 0);
+  const ps = new Map(); for (const r of cur) { const a = ps.get(r.p) || ps.set(r.p, { c: 0, y: 0 }).get(r.p); a.c += r.c; a.y += r.y; }
+  let c = 0, y = 0, ey = 0;
+  for (const r of cur.filter((x) => x.d === opp)) { const a = ps.get(r.p), p = pv.get(r.p) || { c: 0, y: 0 }; const cc = a.c - r.c + 0.5 * p.c, yy = a.y - r.y + 0.5 * p.y; c += r.c; y += r.y; ey += r.c * ((yy + K * lg) / (cc + K)); }
+  if (!c) return null;
+  return { lg, carries: c, raw: y / c, faced: ey / c, adjYpc: lg + (y - ey) / c };
+}

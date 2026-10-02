@@ -104,12 +104,26 @@ export async function loadParticipation(season) {
 export async function loadPlayerIds() {
   if (mem.has('ids')) return mem.get('ids');
   const file = await download(`${NV}/players/players.csv`, path.join(RAW, 'players.csv'), 7 * 86400e3);
-  const byEspn = new Map(), posByGsis = new Map();
-  await streamRows(file, false, ['gsis_id', 'espn_id', 'position'], ([g, e, pos]) => {
-    if (g) posByGsis.set(g, pos);
+  const byEspn = new Map(), posByGsis = new Map(), nameByGsis = new Map();
+  await streamRows(file, false, ['gsis_id', 'espn_id', 'position', 'display_name'], ([g, e, pos, nm]) => {
+    if (g) { posByGsis.set(g, pos); if (nm) nameByGsis.set(g, nm); }
     if (g && e) byEspn.set(String(e).replace(/\.0$/, ''), { gsis: g, pos });
   });
-  const out = { byEspn, posByGsis };
+  const out = { byEspn, posByGsis, nameByGsis };
   mem.set('ids', out);
   return out;
+}
+
+/** NFL Next Gen Stats (nflverse): kind = 'passing' | 'receiving' | 'rushing'. All seasons; week 0 = season totals. */
+export async function loadNgs(kind) {
+  const key = `ngs_${kind}`;
+  if (mem.has(key)) return mem.get(key);
+  const file = await download(`${NV}/nextgen_stats/ngs_${kind}.csv.gz`, path.join(RAW, `ngs_${kind}.csv.gz`), CURRENT_TTL_MS);
+  const rows = [];
+  let head = null;
+  const input = fs.createReadStream(file).pipe(zlib.createGunzip());
+  const rl = readline.createInterface({ input, crlfDelay: Infinity });
+  for await (const line of rl) { if (!head) { head = splitLine(line); continue; } if (!line) continue; const v = splitLine(line); rows.push(Object.fromEntries(head.map((h, i) => [h, v[i]]))); }
+  mem.set(key, rows);
+  return rows;
 }
