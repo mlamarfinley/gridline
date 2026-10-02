@@ -56,19 +56,25 @@ export async function buildContext(season, week) {
   const P = new Map();
   const player = (g) => { if (!P.has(g)) P.set(g, { tg: acc(), zone: Object.fromEntries(ZONES.map((z) => [z, 0])), zn: 0, man: acc(), zoneCov: acc(), car: acc(), inside: 0, sideN: 0, expl: acc(), routes: {}, team: null, lastW: -1 }); return P.get(g); };
 
+  // Team unit ratings use THIS SEASON ONLY from week 3 on (user choice; the 2022–25 test had this season only at
+  // 0.0763 vs 0.0752 for a 0.15 blend — nearly as good). Weeks 1–2 have too little, so last season still counts there.
+  // Player profiles (styles, zones, man/zone splits) and coverage-scheme tendencies keep last season at PRIOR_W:
+  // they describe the player / scheme, and 2026 has no public coverage charting.
+  const TEAM_PRIOR_W = week >= 3 ? 0 : PRIOR_W;
   for (const [p, w, part] of plays) {
+    const wt = w === 1 ? 1 : TEAM_PRIOR_W;
     const D = team(p.d), O = team(p.o);
     if (p.t === 'P') {
       // Dropback-level: pass rush / protection and EPA.
       const pressured = p.sk || p.hit || (part?.pres === 1) ? 1 : 0;
-      add(L.rush, w, pressured); add(D.def.rush, w, pressured); add(O.off.prot, w, pressured);
-      if (p.epa != null) { add(L.dropEPA, w, p.epa); add(D.def.dropEPA, w, p.epa); add(O.off.dropEPA, w, p.epa); }
+      add(L.rush, wt, pressured); add(D.def.rush, wt, pressured); add(O.off.prot, wt, pressured);
+      if (p.epa != null) { add(L.dropEPA, wt, p.epa); add(D.def.dropEPA, wt, p.epa); add(O.off.dropEPA, wt, p.epa); }
       if (part?.mz) { add(D.def.man, w, part.mz === 'man' ? 1 : 0); add(L.manRate, w, part.mz === 'man' ? 1 : 0); }
       if (!p.rec || p.sk) continue;
       // Target-level: yards per target (incompletions count as 0).
       const z = zoneOf(p), rp = pos(p.rec), y = p.y;
-      if (z) { add(L.zone[z], w, y); add(D.def.zone[z], w, y); add(O.off.zone[z], w, y); }
-      if (L.pos[rp]) { add(L.pos[rp], w, y); add(D.def.pos[rp], w, y); add(O.off.pos[rp], w, y); }
+      if (z) { add(L.zone[z], wt, y); add(D.def.zone[z], wt, y); add(O.off.zone[z], wt, y); }
+      if (L.pos[rp]) { add(L.pos[rp], wt, y); add(D.def.pos[rp], wt, y); add(O.off.pos[rp], wt, y); }
       if (part?.mz) add(L.mz[part.mz], w, y);
       const pl = player(p.rec);
       add(pl.tg, w, y);
@@ -78,9 +84,9 @@ export async function buildContext(season, week) {
       if (w === 1 && p.w >= pl.lastW) { pl.team = p.o; pl.lastW = p.w; } else if (!pl.team) pl.team = p.o;
     } else if (p.ru && !p.scr) {
       const side = runSideOf(p), ex = p.y >= 10 ? 1 : 0;
-      add(L.expl, w, ex); add(D.def.expl, w, ex); add(O.off.expl, w, ex);
-      if (p.epa != null) { add(L.rushEPA, w, p.epa); add(D.def.rushEPA, w, p.epa); add(O.off.rushEPA, w, p.epa); }
-      if (side) { add(L.run[side], w, p.y); add(D.def.run[side], w, p.y); add(O.off.run[side], w, p.y); }
+      add(L.expl, wt, ex); add(D.def.expl, wt, ex); add(O.off.expl, wt, ex);
+      if (p.epa != null) { add(L.rushEPA, wt, p.epa); add(D.def.rushEPA, wt, p.epa); add(O.off.rushEPA, wt, p.epa); }
+      if (side) { add(L.run[side], wt, p.y); add(D.def.run[side], wt, p.y); add(O.off.run[side], wt, p.y); }
       if (part?.box != null) add(D.def.box, w, part.box);
       const pl = player(p.ru);
       add(pl.car, w, p.y); add(pl.expl, w, ex);
@@ -141,7 +147,7 @@ export async function buildContext(season, week) {
   }
   for (const pl of players.values()) pl.style = styleTags(pl, league);
 
-  const ctx = { season, week, league, teams, players, meta: { currentPlays: plays.filter(([, w]) => w === 1).length, priorSeasonWeight: PRIOR_W, coverageFrom: prevPart ? season - 1 : null } };
+  const ctx = { season, week, league, teams, players, meta: { currentPlays: plays.filter(([, w]) => w === 1).length, priorSeasonWeight: PRIOR_W, teamPriorWeight: TEAM_PRIOR_W, coverageFrom: prevPart ? season - 1 : null } };
   cache.set(key, ctx);
   return ctx;
 }

@@ -302,3 +302,16 @@ Shipped weight: 0.15.
 **IND now ranks from worst:** run D 4th, CBs 3rd, short-middle 1st, overall pass D 7th (EPA/dropback includes sacks and INTs).
 
 **Big-miss model** refit on the new ratings. Game pick with the significance rule: 74–84 (46.8%). Without the rule: 139–117 (54.3%).
+
+## fbm-1.5.5: team ratings from this season only (2026-10-02)
+
+User choice: from week 3 on, team unit ratings (run D, coverage, pass rush, zones, etc.) use 2026 plays only. In the 2022–25 test, "this season only" scored 0.0763 vs 0.0752 for the 0.15 blend, so it costs almost nothing.
+
+Still blended with last season (PRIOR_W 0.15):
+- weeks 1–2 (too few plays yet);
+- player profiles (styles, target zones);
+- man/zone coverage tendencies (no public 2026 charting).
+
+**IND now ranks from worst:** CBs 1st, short-middle 1st, run D 2nd, pass rush 3rd, overall pass D 7th.
+
+**Big-miss model refit.** Game pick: without the gap rule 145–118 (55.1%); with it 74–85 (46.5%, live).
