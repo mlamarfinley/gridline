@@ -7,3 +7,4 @@ site/
 reports/madden_ratings.json
 reports/*Madden*.xlsx
 reports/madden25_iterations.json
+reports/player_ratings_current.json

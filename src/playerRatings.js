@@ -31,11 +31,12 @@ export const SKILLS = {
     ['run', 'Designed running (yards per game)', 4, true, 0.09, false],
   ],
   RB: [
-    ['ryoe', 'Creating yards (rush yds over expected / carry)', 80, true, 0.32, true],
-    ['success', 'Rushing success over expected', 100, true, 0.18, true],
-    ['explosive', 'Explosive runs over expected (10+ yd)', 100, true, 0.18, true],
-    ['short', 'Short yardage (success, ≤2 to go)', 25, true, 0.12, true],
-    ['recv', 'Receiving (yards per target)', 25, true, 0.20, true],
+    ['load', 'Workload (carries + targets per team play)', 60, true, 0.22, false],
+    ['ryoe', 'Creating yards (rush yds over expected / carry)', 80, true, 0.26, true],
+    ['success', 'Rushing success over expected', 100, true, 0.14, true],
+    ['explosive', 'Explosive runs over expected (10+ yd)', 100, true, 0.14, true],
+    ['short', 'Short yardage (success over expected, ≤2 to go)', 25, true, 0.08, true],
+    ['recv', 'Receiving (yards per target)', 25, true, 0.16, true],
   ],
   WR: [
     ['earn', 'Earning targets (share of team attempts)', 60, true, 0.25, false],
@@ -52,6 +53,7 @@ let FIT = null;
 try { FIT = JSON.parse(fs.readFileSync(new URL('./fitted_rating_decay.json', import.meta.url), 'utf8')); } catch { FIT = null; }
 export const fitFor = (pos, key) => FIT?.byPos?.[pos]?.[key] || { lambda: 0.95, adjust: true, kScale: 1, beta: 0 };
 
+const NGS_TEAM = { LAR: 'LA' }; // NGS team_abbr → nflverse play-by-play
 const bucket = (ay) => (ay == null ? 'na' : ay < 0 ? 'b' : ay < 5 ? 's' : ay < 10 ? 'm' : ay < 20 ? 'i' : 'd');
 const succOf = (p) => (p.dn == null || p.tg == null ? null : p.y >= (p.dn === 1 ? 0.4 : p.dn === 2 ? 0.6 : 1) * p.tg ? 1 : 0);
 
@@ -78,6 +80,8 @@ export async function buildRecords(seasons) {
     const E = (tbl, p) => { const a = EX[tbl]?.[sit(p)]; return a && a[1] >= 20 ? a[0] / a[1] : (() => { let n = 0, d = 0; for (const v of Object.values(EX[tbl] || {})) { n += v[0]; d += v[1]; } return d ? n / d : 0; })(); };
     const lgCatch = {}; for (const p of plays) if (p.t === 'P' && !p.sk && p.rec) { const b = bucket(p.ay); (lgCatch[b] ||= [0, 0]); lgCatch[b][0] += p.c; lgCatch[b][1]++; }
     const teamAtt = new Map(); for (const p of plays) if (p.t === 'P' && !p.sk) teamAtt.set(`${p.g}|${p.o}`, (teamAtt.get(`${p.g}|${p.o}`) || 0) + 1);
+    const teamPlays = new Map(); for (const p of plays) if (p.t === 'P' || p.t === 'R') teamPlays.set(`${p.g}|${p.o}`, (teamPlays.get(`${p.g}|${p.o}`) || 0) + 1);
+    const load = (r, p) => { if (!r.m.load) add(r, 'load', 0, teamPlays.get(`${p.g}|${p.o}`) || 0); add(r, 'load', 1, 0); }; // backs: share of ALL team plays
     const G = new Map(); // gsis|g → record
     const TEAMCTX = new Map(); // game|team|group → { skill: [num, den] } (all backs' runs / all targets that game)
     const teamAdd = (k, sk, num, den) => { const t = TEAMCTX.get(k) || TEAMCTX.set(k, {}).get(k); const a = (t[sk] ||= [0, 0]); a[0] += num; a[1] += den; };
@@ -100,7 +104,7 @@ export async function buildRecords(seasons) {
         if (!p.sk && p.rec) {
           const pos = posOf(p.rec); if (!pos) continue;
           const r = rec(p.rec, p);
-          if (pos === 'RB') add(r, 'recv', p.y, 1);
+          if (pos === 'RB') { add(r, 'recv', p.y, 1); load(r, p); }
           else {
             const lc = lgCatch[bucket(p.ay)];
             add(r, 'hands', p.c - (lc ? lc[0] / lc[1] : 0.65), 1);
@@ -117,10 +121,11 @@ export async function buildRecords(seasons) {
         if (p.scr) { if (pos === 'QB') { add(r, 'scramble', p.y, 1); if (p.epa != null) add(r, 'epa', p.epa - E('dbEpa', p), 1); add(r, 'sack', 0, 1); } }
         else if (pos === 'QB') add(r, 'runYds', p.y, 0);
         else if (pos === 'RB') {
+          load(r, p);
           const s = succOf(p);
           if (s != null) { const oe = s - E('succ', p); add(r, 'success', oe, 1); teamAdd(`${p.g}|${p.o}|run`, 'success', oe, 1); }
           const xo = (p.y >= 10 ? 1 : 0) - E('expl', p); add(r, 'explosive', xo, 1); teamAdd(`${p.g}|${p.o}|run`, 'explosive', xo, 1);
-          if (p.tg != null && p.tg <= 2 && s != null) add(r, 'short', s, 1);
+          if (p.tg != null && p.tg <= 2 && s != null) add(r, 'short', s - E('succ', p), 1); // vs league success in that exact situation (goal line, 3rd & 1 …)
         }
       }
     }
@@ -137,10 +142,13 @@ export async function buildRecords(seasons) {
   const attach = (rows, fn) => {
     for (const x of rows) {
       if (x.season_type !== 'REG' || x.week === '0' || !seasons.includes(+x.season)) continue;
-      const gk = gameKey.get(`${x.season}|${+x.week}|${x.team_abbr}`); if (!gk) continue;
+      // NGS spells some teams differently from play-by-play (Rams: LAR vs LA) — without this, every Rams player's NGS
+      // metrics were silently dropped.
+      const tm = NGS_TEAM[x.team_abbr] || x.team_abbr;
+      const gk = gameKey.get(`${x.season}|${+x.week}|${tm}`); if (!gk) continue;
       const list = R.get(x.player_gsis_id) || R.set(x.player_gsis_id, []).get(x.player_gsis_id);
       let r = list.find((z) => z.g === gk.g);
-      if (!r) { r = { gs: x.player_gsis_id, season: +x.season, week: +x.week, g: gk.g, opp: gk.opp, team: x.team_abbr, m: {} }; list.push(r); }
+      if (!r) { r = { gs: x.player_gsis_id, season: +x.season, week: +x.week, g: gk.g, opp: gk.opp, team: tm, m: {} }; list.push(r); }
       fn(r, x);
     }
   };
@@ -182,7 +190,7 @@ export function ratingsFrom({ R, posOf }, season, week, opts = {}) {
       const vals = {};
       for (const [k, , , , , canAdj] of SKILLS[pos]) {
         const l = lam(pos, k), doAdj = canAdj && adj(pos, k);
-        let num = 0, den = 0, raw = 0;
+        let num = 0, den = 0, raw = 0, w2 = 0;
         for (let i = games.length - 1, age = 0; i >= 0; i--, age++) {
           const r = games[i], m = r.m[k]; if (!m || !m[1]) continue;
           const w = Math.pow(l, age);
@@ -193,29 +201,45 @@ export function ratingsFrom({ R, posOf }, season, week, opts = {}) {
             const key = `${pos}|${r.season}|${k}`, lg = L[key], da = D.get(`${r.opp}|${key}`);
             if (lg && lg[1] > 0 && da) { const lgRate = lg[0] / lg[1]; const dRate = (da[0] + DEF_K[pos] * lgRate) / (da[1] + DEF_K[pos]); n -= m[1] * (dRate - lgRate); }
           }
-          num += w * n; den += w * m[1]; raw += m[1];
+          num += w * n; den += w * m[1]; raw += m[1]; w2 += w * w * m[1];
         }
-        if (den > 0) vals[k] = { v: num / den, n: den, raw };
+        // n = EFFECTIVE sample after recency weighting ((Σw·n)² / Σw²·n), so the shrink below is honest about decay.
+        if (den > 0) vals[k] = { v: num / den, n: (den * den) / w2, raw };
       }
       // Qualify on ACTUAL plays (not recency-weighted ones), so a backup's few recent snaps can't make him a top-5 player.
       const sample = pos === 'QB' ? vals.epa?.raw : pos === 'RB' ? (vals.success?.raw ?? vals.explosive?.raw) : vals.eff?.raw ?? vals.hands?.raw;
-      if ((sample || 0) >= MIN_SAMPLE[pos] * (opts.sampleScale ?? 1)) cand.push({ gs, vals, sample, team: games[games.length - 1].team });
+      // Rookies (no games last season) qualify on PACE — MIN_SAMPLE is a this-season-plus-last total they could never have
+      // reached by week 4. A thin sample isn't held against them: the shrink below pulls it to average (50), not down.
+      const rookie = !list.some((r) => r.season < season);
+      const need = MIN_SAMPLE[pos] * (opts.sampleScale ?? 1) * (rookie ? Math.min(1, (new Set(games.map((r) => r.g)).size) / 8) : 1);
+      if ((sample || 0) >= need) cand.push({ gs, vals, sample, rookie, team: games[games.length - 1].team });
     }
-    const out = cand.map((c) => ({ gsis: c.gs, team: c.team, pos, skills: {}, sample: Math.round(c.sample) }));
-    for (const [k, label, K0, up] of SKILLS[pos]) {
-      const K = K0 * ks(pos, k);
+    const out = cand.map((c) => ({ gsis: c.gs, team: c.team, pos, skills: {}, sample: Math.round(c.sample), rookie: c.rookie }));
+    // EMPIRICAL-BAYES scale, per skill. Noise per play (s²) comes from how much each player's game-to-game values bounce
+    // around his own average; true-talent spread (τ²) = spread between players − the part noise explains. Each player's
+    // value is shrunk by his own reliability (K = s²/τ²), and the rating is that estimate in TRUE-TALENT standard
+    // deviations — so a small or noisy sample lands near 50 instead of being stretched to 0 or 100 (the old scale divided
+    // by the spread of already-shrunk values, which re-inflated every small-sample extreme). Players with no data in a
+    // skill get the position average (50), flagged `noData`.
+    for (const [k, label, , up] of SKILLS[pos]) {
       const present = cand.map((c) => c.vals[k]).filter(Boolean);
-      const tot = present.reduce((s, x) => s + x.n, 0), mu = tot ? present.reduce((s, x) => s + x.v * x.n, 0) / tot : 0;
-      const shr = cand.map((c) => (c.vals[k] ? (c.vals[k].v * c.vals[k].n + mu * K) / (c.vals[k].n + K) : null));
-      const sv = shr.filter((x) => x != null), m = sv.reduce((s, v) => s + v, 0) / (sv.length || 1);
-      const sd = Math.sqrt(sv.reduce((s, v) => s + (v - m) ** 2, 0) / Math.max(1, sv.length - 1)) || 1;
-      shr.forEach((v, i) => { if (v == null) return; out[i].skills[k] = { rating: Math.round(100 * phi(((up ? 1 : -1) * (v - m)) / sd)), value: round3(cand[i].vals[k].v), est: round3(v), n: Math.round(cand[i].vals[k].raw), label }; });
+      if (present.length < 5) continue;
+      const tot = present.reduce((s, x) => s + x.n, 0), mu = present.reduce((s, x) => s + x.v * x.n, 0) / tot;
+      const s2 = noiseOf(R, cand, pos, k, season, week);
+      const between = present.reduce((s, x) => s + (x.v - mu) ** 2, 0) / Math.max(1, present.length - 1);
+      const sampling = present.reduce((s, x) => s + s2 / x.n, 0) / present.length;
+      const tau2 = Math.max(between - sampling, 0.1 * between) * (opts.tauScale ?? 1), tau = Math.sqrt(tau2), K = s2 / tau2;
+      cand.forEach((c, i) => {
+        const x = c.vals[k];
+        if (!x) { out[i].skills[k] = { rating: 50, value: null, est: round3(mu), n: 0, label, noData: true }; return; }
+        const est = (x.v * x.n + mu * K) / (x.n + K);
+        out[i].skills[k] = { rating: r100(phi(((up ? 1 : -1) * (est - mu)) / tau)), value: round3(x.v), est: round3(est), n: Math.round(x.raw), reliability: round3(x.n / (x.n + K)), label };
+      });
     }
-    for (const o of out) {
-      let ws = 0, s = 0; for (const [k, , , , w] of SKILLS[pos]) if (o.skills[k]) { ws += w; s += w * o.skills[k].rating; }
-      o.overall = ws ? Math.round(s / ws) : null;
-      players.set(o.gsis, o);
-    }
+    // OVERALL: weighted sum of skill z-scores, re-standardized across the position so it spreads like a normal rating.
+    const comp = out.map((o) => { let ws = 0, s = 0; for (const [k, , , , w] of SKILLS[pos]) { const r = o.skills[k]; if (!r || r.noData) continue; ws += w; s += w * zOf(r.rating); } return ws ? s / ws : null; });
+    const cv = comp.filter((x) => x != null), cm = cv.reduce((a, b) => a + b, 0) / (cv.length || 1), csd = Math.sqrt(cv.reduce((a, b) => a + (b - cm) ** 2, 0) / Math.max(1, cv.length - 1)) || 1;
+    out.forEach((o, i) => { o.overall = comp[i] == null ? null : r100(phi((comp[i] - cm) / csd)); players.set(o.gsis, o); });
     byPos[pos] = out.sort((a, b) => (b.overall ?? 0) - (a.overall ?? 0));
   }
   return { season, week, players, byPos };
@@ -245,6 +269,21 @@ export async function ratingsBoard(season, week, pos, { includeMadden = false } 
   list.sort((a, b) => (b.playerRating ?? -1) - (a.playerRating ?? -1) || (b.overall ?? 0) - (a.overall ?? 0));
   return { season, week, pos, method: R.method, combined, playerRatingWeights: PR?.weights?.[pos] || null, skills: SKILLS[pos].map(([key, label, , up, weight]) => ({ key, label, higherIsBetter: up, weight, lambda: fitFor(pos, key).lambda, adjusted: fitFor(pos, key).adjust })), players: list };
 }
+
+/** Per-play noise variance for a skill, pooled from each qualified player's game-to-game spread around his own mean. */
+function noiseOf(R, cand, pos, k, season, week) {
+  let ss = 0, df = 0;
+  for (const c of cand) {
+    const G = (R.get(c.gs) || []).filter((r) => (r.season === season - 1 || (r.season === season && r.week < week)) && r.m[k]?.[1] > 0);
+    if (G.length < 2) continue;
+    const n = G.reduce((a, r) => a + r.m[k][1], 0), m = G.reduce((a, r) => a + r.m[k][0], 0) / n;
+    for (const r of G) ss += r.m[k][1] * (r.m[k][0] / r.m[k][1] - m) ** 2;
+    df += G.length - 1;
+  }
+  return df ? ss / df : 1;
+}
+const r100 = (p) => Math.min(99, Math.max(1, Math.round(100 * p))); // 1–99 like a normal rating scale
+const zOf = (r) => { const p = Math.min(0.999, Math.max(0.001, r / 100)); let lo = -4, hi = 4; for (let i = 0; i < 40; i++) { const mid = (lo + hi) / 2; if (phi(mid) < p) lo = mid; else hi = mid; } return (lo + hi) / 2; };
 
 function phi(z) {
   const t = 1 / (1 + 0.2316419 * Math.abs(z)), d = 0.3989423 * Math.exp(-z * z / 2);
@@ -281,6 +320,6 @@ export function addCombined(pos, players) {
   const z = (f) => { const v = M.map(f), mu = v.reduce((a, b) => a + b, 0) / v.length, sd = Math.sqrt(v.reduce((a, b) => a + (b - mu) ** 2, 0) / v.length) || 1; return (x) => (f(x) - mu) / sd; };
   const zo = z((p) => p.overall), zm = z((p) => p.madden);
   const s = (p) => wO * zo(p) + (1 - wO) * zm(p), zs = z(s);
-  for (const p of players) p.combined = p.madden != null && p.overall != null ? Math.round(100 * phi(zs(p))) : null;
+  for (const p of players) p.combined = p.madden != null && p.overall != null ? r100(phi(zs(p))) : null;
   return { wOurs: wO, wMadden: +(1 - wO).toFixed(2), iteration: MI.iteration };
 }

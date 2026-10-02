@@ -23,13 +23,18 @@ export async function computePlayerRatings(season, week) {
   const ids = await loadPlayerIds();
   const players = {};
   for (const pos of ['QB', 'RB', 'WR', 'TE']) {
-    const S = [...productionScores(mon, { lambda: FIT[pos].lambda }).values()].filter((s) => s.pos === pos && s.eff != null && (s.effN || 0) >= MIN_N[pos]);
+    // Rookies (no games last season) qualify on pace, and their production counts in proportion to how much of it there is
+    // (reliability = touches / full sample): a thin rookie sample moves the rating toward Madden, never below it by default.
+    const rookie = (s) => !mon.get(s.id)?.games.some((g) => g.season < season);
+    const need = (s) => MIN_N[pos] * (rookie(s) ? Math.min(1, s.games / 8) : 1);
+    const S = [...productionScores(mon, { lambda: FIT[pos].lambda }).values()].filter((s) => s.pos === pos && s.eff != null && s.games >= 2 && (s.effN || 0) >= need(s));
+    const rel = (s) => Math.min(1, (s.effN || 0) / MIN_N[pos]);
     const L = S.map((s) => ({ s, m: MI.byKey.get(`${norm(s.name)}|${pos}`)?.overall ?? null })).filter((x) => x.m != null);
     if (L.length < 8) continue;
     const z = (f) => { const v = L.map(f), mu = v.reduce((a, b) => a + b, 0) / v.length, sd = Math.sqrt(v.reduce((a, b) => a + (b - mu) ** 2, 0) / v.length) || 1; return (x) => (f(x) - mu) / sd; };
     const zm = z((x) => x.m), ze = z((x) => x.s.eff), zu = z((x) => x.s.usage ?? 0), b = FIT[pos].beta;
-    const sc = (x) => b.madden * zm(x) + b.efficiency * ze(x) + b.usage * zu(x), zs = z(sc);
-    for (const x of L) players[x.s.id] = { name: x.s.name, pos, z: +zs(x).toFixed(3), rating: Math.round(100 * phi(zs(x))), effPerTouch: +x.s.eff.toFixed(2), usageVsUsual: x.s.usage != null ? +x.s.usage.toFixed(3) : null, games: x.s.games };
+    const sc = (x) => b.madden * zm(x) + rel(x.s) * (b.efficiency * ze(x) + b.usage * zu(x)), zs = z(sc);
+    for (const x of L) players[x.s.id] = { name: x.s.name, pos, z: +zs(x).toFixed(3), rating: Math.min(99, Math.max(1, Math.round(100 * phi(zs(x))))), effPerTouch: +x.s.eff.toFixed(2), usageVsUsual: x.s.usage != null ? +x.s.usage.toFixed(3) : null, games: x.s.games, rookie: rookie(x.s) || undefined };
   }
   void ids;
   return { season, week, computedAt: new Date().toISOString(), weights: Object.fromEntries(Object.entries(FIT).map(([p, v]) => [p, v.share])), players };

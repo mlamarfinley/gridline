@@ -1,5 +1,5 @@
 {
- "learnedAt": "2026-10-02T22:01:15.446Z",
+ "learnedAt": "2026-10-02T22:21:23.605Z",
  "method": "λ^(games ago) per skill; opponent adjustment kept only where it lowered next-4-game error",
  "evalPoints": [
   [
@@ -51,9 +51,9 @@
     "kScale": 0.5,
     "adjust": true,
     "beta": 0,
-    "mse": 19.086083205361632,
-    "mseFlatNoAdj": 19.217464545008742,
-    "mseBestNoAdj": 19.217464545008742
+    "mse": 18.738665000464618,
+    "mseFlatNoAdj": 18.874878456845618,
+    "mseBestNoAdj": 18.874878456845618
    },
    "deep": {
     "lambda": 1,
@@ -107,9 +107,9 @@
     "kScale": 4,
     "adjust": true,
     "beta": 0,
-    "mse": 1.0419789306483453,
-    "mseFlatNoAdj": 1.060937826876428,
-    "mseBestNoAdj": 1.0451467562927257
+    "mse": 1.016800502031426,
+    "mseFlatNoAdj": 1.0341284168302454,
+    "mseBestNoAdj": 1.02013135067013
    },
    "success": {
     "lambda": 0.95,
@@ -125,7 +125,7 @@
     "kScale": 4,
     "adjust": true,
     "beta": 0.5,
-    "mse": 0.0030416513040205156,
+    "mse": 0.003041651304020516,
     "mseFlatNoAdj": 0.0030593111221222783,
     "mseBestNoAdj": 0.0030593111221222783
    },
@@ -143,7 +143,7 @@
     "kScale": 4,
     "adjust": false,
     "beta": 0.5,
-    "mse": 7.959602538624107,
+    "mse": 7.959602538624109,
     "mseFlatNoAdj": 7.95960253862411,
     "mseBestNoAdj": 7.95960253862411
    }
@@ -153,28 +153,28 @@
     "lambda": 0.9,
     "kScale": 0.5,
     "adjust": false,
-    "beta": 0,
-    "mse": 0.0028721055663065397,
+    "beta": 1,
+    "mse": 0.002872105566306539,
     "mseFlatNoAdj": 0.003099053285187068,
     "mseBestNoAdj": 0.0028721055663065397
    },
    "sep": {
-    "lambda": 0.95,
+    "lambda": 0.9,
     "kScale": 0.5,
     "adjust": true,
     "beta": 0,
-    "mse": 0.3710941034630306,
-    "mseFlatNoAdj": 0.3763321576867555,
-    "mseBestNoAdj": 0.37255709284042854
+    "mse": 0.3730225880665455,
+    "mseFlatNoAdj": 0.38080620392754216,
+    "mseBestNoAdj": 0.3741319625490714
    },
    "yac": {
     "lambda": 1,
     "kScale": 2,
     "adjust": true,
     "beta": 0,
-    "mse": 1.9676751112876019,
-    "mseFlatNoAdj": 1.96996082056101,
-    "mseBestNoAdj": 1.96996082056101
+    "mse": 1.9393268515607534,
+    "mseFlatNoAdj": 1.9425157572817033,
+    "mseBestNoAdj": 1.9425157572817033
    },
    "hands": {
     "lambda": 1,
@@ -189,7 +189,7 @@
     "lambda": 0.9,
     "kScale": 4,
     "adjust": true,
-    "beta": 0,
+    "beta": 1,
     "mse": 91.36610709738456,
     "mseFlatNoAdj": 92.63098976380357,
     "mseBestNoAdj": 91.38708221328352
@@ -199,7 +199,7 @@
     "kScale": 4,
     "adjust": true,
     "beta": 0.5,
-    "mse": 0.20056915256623004,
+    "mse": 0.20056915256623006,
     "mseFlatNoAdj": 0.20073130962163957,
     "mseBestNoAdj": 0.2007018718618
    }
@@ -209,37 +209,37 @@
     "lambda": 0.9,
     "kScale": 0.5,
     "adjust": false,
-    "beta": 0,
-    "mse": 0.0017795824624353234,
+    "beta": 1,
+    "mse": 0.0017795824624353236,
     "mseFlatNoAdj": 0.0019605297367706106,
-    "mseBestNoAdj": 0.0017795824624353234
+    "mseBestNoAdj": 0.0017795824624353238
    },
    "sep": {
-    "lambda": 0.95,
-    "kScale": 1,
+    "lambda": 1,
+    "kScale": 2,
     "adjust": false,
     "beta": 0,
-    "mse": 0.5931992619788382,
-    "mseFlatNoAdj": 0.59320152013605,
-    "mseBestNoAdj": 0.5931992619788382
+    "mse": 0.5972568806846124,
+    "mseFlatNoAdj": 0.5972568806846124,
+    "mseBestNoAdj": 0.5972568806846124
    },
    "yac": {
     "lambda": 1,
     "kScale": 2,
     "adjust": false,
     "beta": 0,
-    "mse": 1.4737344418005727,
-    "mseFlatNoAdj": 1.4737344418005727,
-    "mseBestNoAdj": 1.4737344418005727
+    "mse": 1.494969182709416,
+    "mseFlatNoAdj": 1.494969182709416,
+    "mseBestNoAdj": 1.494969182709416
    },
    "hands": {
     "lambda": 1,
     "kScale": 4,
     "adjust": false,
     "beta": 0,
-    "mse": 0.017535253912077643,
-    "mseFlatNoAdj": 0.017535253912077643,
-    "mseBestNoAdj": 0.017535253912077643
+    "mse": 0.017535253912077647,
+    "mseFlatNoAdj": 0.017535253912077647,
+    "mseBestNoAdj": 0.017535253912077647
    },
    "deep": {
     "lambda": 1,

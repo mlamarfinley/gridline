@@ -24,3 +24,26 @@ test('baseline pads early-season averages with last season; opponent allowance i
   assert.ok(Math.abs(oppAllowLog(30, 0, 25)) < 1e-12); // no games → league
   assert.ok(oppAllowLog(30, 12, 25) > oppAllowLog(30, 2, 25)); // more games → trusted more
 });
+
+test('ratings: NGS metrics attach for every team (Rams are "LAR" in NGS, "LA" in play-by-play)', async () => {
+  const { buildRecords } = await import('../src/playerRatings.js');
+  const { R } = await buildRecords([2025]);
+  const teams = new Set(); for (const list of R.values()) for (const r of list) if (r.m.ryoe || r.m.cpoe || r.m.sep) teams.add(r.team);
+  assert.ok(teams.has('LA'), 'Rams NGS rows attached');
+  assert.equal(teams.size, 32);
+});
+
+test('ratings: reliability-scaled (1–99, no small-sample extremes), every skill present, rookies qualify on pace', async () => {
+  const { buildRecords, ratingsFrom, SKILLS } = await import('../src/playerRatings.js');
+  const res = ratingsFrom(await buildRecords([2024, 2025]), 2025, 4);
+  let rookies = 0;
+  for (const pos of ['QB', 'RB', 'WR', 'TE']) for (const p of res.byPos[pos]) {
+    if (p.rookie) rookies++;
+    for (const [k] of SKILLS[pos]) {
+      assert.ok(p.skills[k], `${pos} ${p.gsis} missing ${k}`);
+      const r = p.skills[k].rating; assert.ok(r >= 1 && r <= 99, `${k} ${r}`);
+      if (!p.skills[k].noData && p.skills[k].reliability < 0.25) assert.ok(r >= 3 && r <= 97, `${pos} ${k} reliability ${p.skills[k].reliability} rated ${r}: unreliable sample stretched to an extreme`);
+    }
+  }
+  assert.ok(rookies >= 5, `only ${rookies} rookies rated at week 4`);
+});
