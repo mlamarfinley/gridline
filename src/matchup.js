@@ -17,6 +17,8 @@ import { skeptic } from './skeptic.js';
 import { buildContext, playerFit, unitEdges } from './profiles.js';
 import { loadPlayerIds } from './pbp.js';
 import { buildRatings, SKILLS as RATING_SKILLS } from './playerRatings.js';
+import { playerRatingsFor } from './playerRating.js';
+import { monitorFor } from './productionMonitor.js';
 import { whyPick, edgeKeyFor } from './why.js';
 import { bigMissProbs, oppUnitFor, BIG, topDrivers } from './bigmiss.js';
 import { calibrationFor, calibrateSample } from './calibrate.js';
@@ -25,7 +27,8 @@ import { seasonState, situationInput, situationMultiplier, loadWeekly, teamRunsM
 import fsA from 'node:fs';
 let ANCHOR = null;
 try { ANCHOR = JSON.parse(fsA.readFileSync(new URL('./fitted_anchor.json', import.meta.url), 'utf8')).byStat; } catch { ANCHOR = null; }
-let SITFIT = null, SITBLEND = null, TEAMRUNS = null;
+let SITFIT = null, SITBLEND = null, TEAMRUNS = null, PRPROJ = null;
+try { PRPROJ = JSON.parse(fsA.readFileSync(new URL('./fitted_player_rating_projection.json', import.meta.url), 'utf8')).byStat; } catch { PRPROJ = null; }
 try { TEAMRUNS = JSON.parse(fsA.readFileSync(new URL('./fitted_team_runs.json', import.meta.url), 'utf8')).beta; } catch { TEAMRUNS = null; }
 try { SITFIT = JSON.parse(fsA.readFileSync(new URL('./fitted_situational.json', import.meta.url), 'utf8')).byStat; } catch { SITFIT = null; }
 try { SITBLEND = JSON.parse(fsA.readFileSync(new URL('./fitted_situational_blend.json', import.meta.url), 'utf8')).byStat; } catch { SITBLEND = null; }
@@ -220,6 +223,9 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
   // defense in both live and market-blind runs.
   let WEEKLY = null;
   if (lg === 'nfl' && ev?.week != null) { try { const [cw, pw] = await Promise.all([loadWeekly(season), loadWeekly(season - 1)]); WEEKLY = { cur: cw, prev: pw }; } catch { WEEKLY = null; } }
+  // Player Ratings (Madden + Production Monitor; derived file when Madden isn't local). Live NFL only.
+  let PRAT = null, PRIDS = null;
+  if (lg === 'nfl' && !blind && ev?.week != null && PRPROJ) { try { PRAT = await playerRatingsFor(season, ev.week); PRIDS = PRAT ? await loadPlayerIds() : null; } catch { PRAT = null; } }
   let SIT = null;
   if (lg === 'nfl' && !blind && ev?.week != null && SITFIT) {
     try { const [cur, prev, ids] = await Promise.all([loadWeekly(season), loadWeekly(season - 1), loadPlayerIds()]); SIT = { state: seasonState(cur, prev, ev.week), ids, cur, prev }; } catch { SIT = null; }
@@ -620,6 +626,20 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
             anchorInfo = { w: aw, seasonAvg: Math.round(sa * 10) / 10, before: Math.round(m0 * 10) / 10, shift: Math.round(shift * 10) / 10 };
           }
         }
+        // Player Rating correction (RB carries / rushing yards): the projection under-credited the best backs and
+        // over-credited the weakest; residual = b0 + b1·rating z + b2·z·(opponent YPC factor − 1), fitted on 2024
+        // (src/fitted_player_rating_projection.json; held-out MAE: rush yds −2.5%, carries −1.3%).
+        let ratingAdj = null;
+        const prb = PRPROJ?.[`${pos}|${k}`];
+        if (prb && PRAT && arrK?.length) {
+          const gs = PRIDS?.byEspn.get(String(id))?.gsis, pr = gs ? PRAT.players[gs] : null;
+          if (pr) {
+            const dq = (effOut[id]?.ypc?.oppMult ?? 1) - 1, b = prb.beta;
+            const shift = b[0] + b[1] * pr.z + b[2] * pr.z * dq;
+            arrK = Float64Array.from(arrK, (v) => Math.max(0, v + shift));
+            ratingAdj = { rating: pr.rating, z: pr.z, shift: Math.round(shift * 10) / 10 };
+          }
+        }
         // Situational multiplier model (src/situational.js): his baseline × learned multipliers for this game's
         // situation. Always shown as a second opinion; blended in only where that beat the model out of sample
         // (src/fitted_situational_blend.json). Skipped when an absence changed his role (his baseline is another job).
@@ -668,6 +688,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
           probOver: pOver, fairOdds: pOver != null ? { over: probToAmerican(pOver), under: probToAmerican(1 - pOver) } : null,
           calibration: v14Applied[k] != null ? { version: 'fbm-1.4.0', correction: Math.round(v14Applied[k] * 100) / 100 } : 'fbm-1.3.0',
           anchor: anchorInfo,
+          ratingAdj,
           situational,
           available: s != null,
           unavailableReason: s == null ? 'Not modelled' : (k === 'targets' && lg === 'cfb' ? null : null),
@@ -755,6 +776,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
     try {
       const mctx = await buildContext(season, ev.week);
       const RATINGS = await buildRatings(season, ev.week).catch(() => null);
+      const MON = await monitorFor(season, ev.week).catch(() => null);
       const nvIds = await loadPlayerIds();
       const NV = { WSH: 'WAS', LAR: 'LA' };
       const nv = (a) => NV[a] || a;
@@ -766,6 +788,12 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
           const id = nvIds.byEspn.get(String(c.id));
           const pl = id ? mctx.players.get(id.gsis) : null;
           c.matchup = pl ? { style: pl.style, fit: theirs ? playerFit(pl, theirs.def, mctx.league) : null, explRel: pl.explRate / mctx.league.expl - 1, deepShare: pl.share.deepOut + pl.share.deepMid } : null;
+          const pr = id && PRAT ? PRAT.players[id.gsis] : null;
+          c.playerRating = pr ? { rating: pr.rating, effPerTouch: pr.effPerTouch, usageVsUsual: pr.usageVsUsual } : null;
+          const mp = id && MON ? MON.get(id.gsis) : null;
+          c.monitor = mp ? mp.games.slice(-5).map((g) => { const part = c.pos === 'QB' ? g.parts.pass : c.pos === 'RB' ? g.parts.rush : g.parts.recv; const stat = c.pos === 'QB' ? 'pass_yds' : c.pos === 'RB' ? 'rush_yds' : 'rec_yds';
+            return { season: g.season, week: g.week, opp: g.opp, final: g.game?.pf != null ? `${g.game.pf}-${g.game.pa}` : null, leadShare: g.game?.leadShare, trailShare: g.game?.trailShare, stat, actual: g.actual[stat], expected: g.expected[stat] != null ? Math.round(g.expected[stat] * 10) / 10 : null,
+              opportunity: part?.opportunity != null ? Math.round(part.opportunity * 10) / 10 : null, efficiency: part?.efficiency != null ? Math.round(part.efficiency * 10) / 10 : null, oppFactor: part?.oppFactor != null ? Math.round(part.oppFactor * 100) / 100 : null }; }) : null;
           const rt = id ? RATINGS?.players.get(id.gsis) : null;
           c.ratings = rt ? { overall: rt.overall, pos: rt.pos, sample: rt.sample, skills: RATING_SKILLS[rt.pos].filter(([k]) => rt.skills[k]).map(([k, label]) => ({ key: k, label, ...rt.skills[k] })) } : null;
         }

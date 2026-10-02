@@ -441,3 +441,44 @@ Learning the skill weights by regression (fit 2025 → test 2024, `scripts/learn
 **Ranking system adopted: COMBINED rating** = per-position blend of z(production) and z(Madden OVR) (`src/fitted_rating_blend.json`). It is shown in the local app only: EA data stays local and gitignored. The public site shows production ratings.
 
 **Week 4 production vs Madden 27 correlation:** QB 0.72, WR 0.67, TE 0.63, RB 0.43.
+
+## fbm-1.7.0: Production Monitor + Player Rating, and ratings in the projections (2026-10-02)
+
+**Production Monitor** (`src/productionMonitor.js`). For every game (this season + last), expected vs actual for the player's main stat:
+- **Opportunity:** his usual share × the team's actual volume that day.
+- **Efficiency:** his usual yards per touch × that defense's prior allowance to his position (shrunk).
+- **Game:** final score and share of plays leading / trailing by 8+.
+- **Check:** RB carries actual − expected averaged +0.17 over 672 games, i.e. unbiased.
+
+**Player Rating** (`src/playerRating.js`) = z(Madden OVR) + z(production efficiency, recency-weighted) + z(usage vs usual), mixed per position (`scripts/player_rating_fit.mjs`, 2024 with Madden 25 weekly releases, two-fold by weeks). Held-out correlation with next-4-game production per touch:
+
+| Position | Player Rating | Madden | Production |
+|---|---|---|---|
+| QB | **0.36** | 0.27 | 0.33 |
+| RB | 0.53 | **0.53** | 0.20 |
+| WR | **0.29** | 0.23 | 0.22 |
+| TE | 0.21 | 0.14 | **0.25** |
+
+**Data handling:** the derived 0–100 ratings (no Madden numbers) go to `reports/player_ratings_live.json`, refreshed by `npm run snapshot`. The public site and the projections read that file, so they agree.
+
+**Ratings in projections** (`scripts/player_rating_projection_test.mjs`, 2024; baseline = live calibration + season anchor; held-out halves). Residual vs Player Rating (+ × opponent factor):
+
+| Stat | Result |
+|---|---|
+| RB rush yds | MAE 28.55 → 27.83 (−2.5%) |
+| RB carries | 4.60 → 4.54 (−1.3%) |
+| WR, TE, QB | no gain or worse, not used |
+
+**By tier (rush yds, actual − projection):**
+
+| Tier | n | Actual − projection | Linear fit |
+|---|---|---|---|
+| Elite (z ≥ 1.5) | 63 | +30.0 ± 5.7 | +24.1 |
+| Upper-good (1–1.5) | 22 | +2.7 | +16.5 |
+| Average-good (0–1) | 123 | +0.6 | +7.7 |
+| Below average (−1–0) | 205 | +2.6 | −2.1 |
+| Weak (z < −1) | 27 | −17.1 ± 4.3 | −10.9 |
+
+The projections mainly missed the extremes. A tiered correction did worse held-out (rush yds −1.5%, carries +0.4%), so the linear correction ships, with the caveat that it over-adjusts good-not-elite backs.
+
+**Caveat:** Madden history is available only for 2024 (Madden 26 is not published), so these fits rest on one season.

@@ -398,3 +398,7 @@ details.ratings td.num { text-align: right; font-variant-numeric: tabular-nums; 
 .rtable .num { text-align: right; font-variant-numeric: tabular-nums; }
 .rtable td.rt { font-weight: 600; color: color-mix(in srgb, var(--model) calc(var(--r) * 1%), var(--muted)); }
 .ljump a.on { color: inherit; border-bottom-color: currentColor; }
+
+.prating { font-size: 12px; margin-top: 8px; }
+.monitor td { white-space: nowrap; }
+.monitor table { display: block; overflow-x: auto; max-width: 100%; }

@@ -239,8 +239,11 @@ export async function ratingsBoard(season, week, pos, { includeMadden = false } 
   const ids = await loadPlayerIds();
   const list = (R.byPos[pos] || []).map((x) => ({ ...x, name: ids.nameByGsis.get(x.gsis) || x.gsis }));
   const combined = includeMadden ? addCombined(pos, list) : null;
-  if (combined) list.sort((a, b) => (b.combined ?? -1) - (a.combined ?? -1) || (b.overall ?? 0) - (a.overall ?? 0));
-  return { season, week, pos, method: R.method, combined, skills: SKILLS[pos].map(([key, label, , up, weight]) => ({ key, label, higherIsBetter: up, weight, lambda: fitFor(pos, key).lambda, adjusted: fitFor(pos, key).adjust })), players: list };
+  const { playerRatingsFor } = await import('./playerRating.js');
+  const PR = await playerRatingsFor(season, week).catch(() => null);
+  for (const x of list) { const p = PR?.players?.[x.gsis]; x.playerRating = p ? p.rating : null; }
+  list.sort((a, b) => (b.playerRating ?? -1) - (a.playerRating ?? -1) || (b.overall ?? 0) - (a.overall ?? 0));
+  return { season, week, pos, method: R.method, combined, playerRatingWeights: PR?.weights?.[pos] || null, skills: SKILLS[pos].map(([key, label, , up, weight]) => ({ key, label, higherIsBetter: up, weight, lambda: fitFor(pos, key).lambda, adjusted: fitFor(pos, key).adjust })), players: list };
 }
 
 function phi(z) {

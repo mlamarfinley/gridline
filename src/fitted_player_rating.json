@@ -1,0 +1,87 @@
+{
+ "learnedAt": "2026-10-02T22:10:03.289Z",
+ "season": 2024,
+ "target": "raw next-4-game production per touch (QB yds/att, RB yds/carry, WR/TE yds/target)",
+ "byPos": {
+  "QB": {
+   "lambda": 1,
+   "n": 115,
+   "outOfSample": {
+    "playerRating": 0.3623938506172808,
+    "maddenOnly": 0.2689512661836623,
+    "productionOnly": 0.3332386516688334
+   },
+   "beta": {
+    "intercept": 7.343059680650828,
+    "madden": 0.19795369012486935,
+    "efficiency": 0.2841383410407043,
+    "usage": 0
+   },
+   "share": {
+    "madden": 0.41061390217604016,
+    "efficiency": 0.5893860978239599,
+    "usage": 0
+   }
+  },
+  "RB": {
+   "lambda": 0.8,
+   "n": 135,
+   "outOfSample": {
+    "playerRating": 0.5284675429294935,
+    "maddenOnly": 0.5304583007239074,
+    "productionOnly": 0.2026034285282805
+   },
+   "beta": {
+    "intercept": 4.388025747036347,
+    "madden": 0.5111391502735213,
+    "efficiency": -0.0371554165522713,
+    "usage": 0.010371294543779226
+   },
+   "share": {
+    "madden": 0.9149281987992991,
+    "efficiency": -0.06650740473238266,
+    "usage": 0.0185643964683182
+   }
+  },
+  "WR": {
+   "lambda": 0.9,
+   "n": 289,
+   "outOfSample": {
+    "playerRating": 0.2931675222039427,
+    "maddenOnly": 0.2250580111171902,
+    "productionOnly": 0.2241147368868254
+   },
+   "beta": {
+    "intercept": 8.07527970804224,
+    "madden": 0.4549265034428017,
+    "efficiency": 0.4723542083343561,
+    "usage": -0.0922022100340157
+   },
+   "share": {
+    "madden": 0.44623258880550654,
+    "efficiency": 0.46332723994551095,
+    "usage": -0.09044017124898264
+   }
+  },
+  "TE": {
+   "lambda": 1,
+   "n": 161,
+   "outOfSample": {
+    "playerRating": 0.210612890463694,
+    "maddenOnly": 0.14240685555354432,
+    "productionOnly": 0.25172565372859956
+   },
+   "beta": {
+    "intercept": 7.536705912052509,
+    "madden": 0.07587758561419784,
+    "efficiency": 0.6081451829091011,
+    "usage": 0.0478353022165679
+   },
+   "share": {
+    "madden": 0.10367800622529162,
+    "efficiency": 0.8309605471649727,
+    "usage": 0.06536144660973557
+   }
+  }
+ }
+}

@@ -402,6 +402,8 @@ function cardBody(m, c, key) {
     <div class="chart">${last5Chart(s)}${h2hBlock(s)}${vsPosBlock(s)}</div>
   </div>
   ${s.explain ? `<details class="why"><summary>Why this projection</summary><div class="expl">${esc(s.explain)}</div></details>` : ''}
+  ${c.playerRating ? `<div class="prating">Player Rating <b>${c.playerRating.rating}</b> <span class="faint">(Madden + production; ${c.playerRating.effPerTouch >= 0 ? '+' : ''}${c.playerRating.effPerTouch} yds/touch vs expected, recent)</span></div>` : ''}
+  ${c.monitor?.length ? monitorBlock(c) : ''}
   ${c.ratings ? ratingsBlock(c.ratings) : ''}
   ${c.notes?.length ? `<ul class="notes">${c.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}`;
 }
@@ -436,6 +438,14 @@ async function wireModelOnly(lg) {
     const el = document.getElementById('moProof');
     if (el && r?.stats) el.textContent = `Projections never read player lines: week ${r.week ?? ''} check rebuilt every game with lines removed — ${r.differing} of ${r.stats} projected numbers changed (${r.withLines} of them have a book line).`;
   } catch { /* proof text is optional */ }
+}
+
+function monitorBlock(c) {
+  const lbl = { rush_yds: 'rush yds', rec_yds: 'rec yds', pass_yds: 'pass yds' };
+  const sg = (v) => (v == null ? '—' : `${v >= 0 ? '+' : ''}${f1(v)}`);
+  return `<details class="ratings monitor"><summary>Production monitor · last ${c.monitor.length} games <span class="faint">(actual vs what that game should have produced)</span></summary>
+    <table><tr class="faint"><td>Game</td><td>Result</td><td class="num">Actual</td><td class="num">Expected</td><td class="num" title="more/fewer touches than his usual share of the team's volume that day">Opportunity</td><td class="num" title="more/fewer yards per touch than this defense usually allows him">Efficiency</td></tr>
+    ${c.monitor.map((g) => `<tr><td class="faint">'${String(g.season).slice(2)} wk ${g.week} vs ${esc(g.opp)}${g.oppFactor != null ? ` <span title="this defense's usual allowance vs league">(D ×${g.oppFactor.toFixed(2)})</span>` : ''}</td><td class="faint">${g.final ? esc(g.final) : ''}${g.leadShare != null && g.leadShare > 0.4 ? ' · led' : g.trailShare != null && g.trailShare > 0.4 ? ' · trailed' : ''}</td><td class="num">${f1(g.actual)} ${lbl[g.stat] || ''}</td><td class="num">${f1(g.expected)}</td><td class="num">${sg(g.opportunity)}</td><td class="num">${sg(g.efficiency)}</td></tr>`).join('')}</table></details>`;
 }
 
 function ratingsBlock(r) {
@@ -634,9 +644,9 @@ async function renderRatings(pos) {
     <div class="lhead"><h1>NFL ${esc(pos)} skill ratings · before week ${d.week}</h1>
       <p class="faint">0–100 against qualifying ${esc(pos)}s (50 = average, 84 ≈ one standard deviation better). Built from nflverse play-by-play and NFL Next Gen Stats: this season's games count fully, last season half. Every metric is shrunk toward average by sample size, so small samples sit nearer 50.</p>
       <nav class="ljump">${['QB', 'RB', 'WR', 'TE'].map((p) => `<a href="#/nfl/ratings?pos=${p}" class="${p === pos ? 'on' : ''}">${p}</a>`).join('')}</nav></div>
-    ${d.combined ? `<p class="faint">Combined = ${Math.round(d.combined.wOurs * 100)}% our production rating + ${Math.round(d.combined.wMadden * 100)}% Madden (${esc(d.combined.iteration)}), the mix that best predicted real production in a 2024 test. Madden numbers are shown only in this local app.</p>` : ''}
-    <div class="scroll"><table class="rtable"><thead><tr><th>#</th><th>Player</th>${d.combined ? '<th class="num">Combined</th><th class="num">Madden</th>' : ''}<th class="num">Production</th>${d.skills.map((k) => `<th class="num" title="${esc(k.label)} · weight ${Math.round(k.weight * 100)}%${k.higherIsBetter ? '' : ' · lower raw value is better'}">${esc(k.label.split(' (')[0])}</th>`).join('')}</tr></thead>
-    <tbody>${d.players.map((x, i) => `<tr><td class="faint">${i + 1}</td><td>${esc(x.name)} <span class="faint">${esc(x.team || '')}</span></td>${d.combined ? `${cell(x.combined)}<td class="num faint">${x.madden ?? '—'}</td>` : ''}${cell(x.overall)}${d.skills.map((k) => cell(x.skills[k.key]?.rating)).join('')}</tr>`).join('')}</tbody></table></div>
+    <p class="faint">Player Rating = Madden overall + our Production Monitor (each game's actual vs expected for that opponent and game), mixed per position by what best predicted real production in a 2024 test${d.playerRatingWeights ? ` (${esc(d.pos)}: Madden ${Math.round(d.playerRatingWeights.madden * 100)}%, production efficiency ${Math.round(d.playerRatingWeights.efficiency * 100)}%, usage ${Math.round(d.playerRatingWeights.usage * 100)}%)` : ''}. ${d.combined ? 'Madden numbers appear only in this local app.' : ''}</p>
+    <div class="scroll"><table class="rtable"><thead><tr><th>#</th><th>Player</th><th class="num" title="Madden + Production Monitor, mixed per position by what best predicted real production">Player Rating</th>${d.combined ? '<th class="num">Madden</th>' : ''}<th class="num">Production skills</th>${d.skills.map((k) => `<th class="num" title="${esc(k.label)} · weight ${Math.round(k.weight * 100)}%${k.higherIsBetter ? '' : ' · lower raw value is better'}">${esc(k.label.split(' (')[0])}</th>`).join('')}</tr></thead>
+    <tbody>${d.players.map((x, i) => `<tr><td class="faint">${i + 1}</td><td>${esc(x.name)} <span class="faint">${esc(x.team || '')}</span></td>${cell(x.playerRating)}${d.combined ? `<td class="num faint">${x.madden ?? '—'}</td>` : ''}${cell(x.overall)}${d.skills.map((k) => cell(x.skills[k.key]?.rating)).join('')}</tr>`).join('')}</tbody></table></div>
   </section>`;
 }
 

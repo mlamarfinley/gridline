@@ -1,0 +1,27 @@
+{
+ "learnedAt": "2026-10-02T22:11:41.746Z",
+ "source": "scripts/player_rating_projection_test.mjs (2024, Madden 25 weekly releases; baseline = live calibration + season anchor; two-fold by weeks)",
+ "note": "residual = b0 + b1·PR + b2·PR·(opponent YPC factor − 1); shipped only where held-out MAE improved",
+ "byStat": {
+  "RB|carries": {
+   "beta": [
+    0.4056541984752595,
+    1.2042139046914,
+    -0.2215652101523298
+   ],
+   "base": 4.5959185831114295,
+   "withPR": 4.5366260168496915,
+   "n": 440
+  },
+  "RB|rush_yds": {
+   "beta": [
+    3.274529591499311,
+    10.822540597972433,
+    -4.251208861753411
+   ],
+   "base": 28.546827917779186,
+   "withPR": 27.82962526188609,
+   "n": 440
+  }
+ }
+}
