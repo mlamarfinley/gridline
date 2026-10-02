@@ -571,10 +571,18 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       const oppYpcMult = dq ? clamp(((dq.adjYpc * dq.carries + priorYpc * 80) / (dq.carries + 80)) / dq.lg, 0.8, 1.25) : clamp(ox.defense.rbYpcAllowedShrunk / P.ypc.RB, 0.8, 1.25);
       if (dq) info.defQuality = { raw: dq.raw, faced: dq.faced, adj: dq.adjYpc, lg: dq.lg, carries: dq.carries, lastSeason: dPrior != null ? +(dPrior * dq.lg).toFixed(2) : null, shrinkTarget: +priorYpc.toFixed(2) };
       const ypcMult = Math.pow(oppYpcMult, pos === 'QB' ? 0.5 * SHRINK.oppRunExp / 0.8 : SHRINK.oppRunExp);
-      const ypc = ypcPlayer * ypcMult;
       const lgR10 = pos === 'QB' ? P.qbRun10 : P.run10, lgR20 = pos === 'QB' ? P.qbRun20 : P.run20;
-      const r10p = shrink(info.pbp.carries ? info.pbp.r10 / info.pbp.carries : null, info.pbp.carries || 0, lgR10, SHRINK.explosiveRun);
-      const r20p = shrink(info.pbp.carries ? info.pbp.r20 / info.pbp.carries : null, info.pbp.carries || 0, lgR20, SHRINK.explosiveRun * 1.5);
+      // EXPLOSIVENESS (scripts/explosive_mean_test.mjs, RB games 2022–25):
+      //  · the 10+/20+ tails are shrunk over 250/400 carries for backs (was 80/120): the old tails were too extreme
+      //    (predicted 7.1% → actual 8.5%; 13.6% → 12.1%);
+      //  · the AVERAGE: a back whose YPC leans on long runs regresses, one who grinds it out keeps it — YPC −0.09 per point
+      //    of 10+ rate above league (rate shrunk over 80 carries; held-out 2024–25 error 3.330 → 3.305). Capped ±0.5.
+      const rb = pos === 'RB' && lg === 'nfl';
+      const r10raw = info.pbp.carries ? info.pbp.r10 / info.pbp.carries : null;
+      const explAdj = rb ? clamp(EXPL.meanCoef * (shrink(r10raw, info.pbp.carries || 0, lgR10, 80) - lgR10), -0.5, 0.5) : 0;
+      const ypc = Math.max(1.5, ypcPlayer * ypcMult + explAdj);
+      const r10p = shrink(r10raw, info.pbp.carries || 0, lgR10, rb ? EXPL.k10 : SHRINK.explosiveRun);
+      const r20p = shrink(info.pbp.carries ? info.pbp.r20 / info.pbp.carries : null, info.pbp.carries || 0, lgR20, rb ? EXPL.k20 : SHRINK.explosiveRun * 1.5);
       const exR = ox.defense.explosiveRates;
       const m10 = clamp((pos === 'QB' ? exR.qbRun10.shrunk / P.qbRun10 : exR.rbRun10.shrunk / P.run10), 0.7, 1.45);
       const m20 = clamp((pos === 'QB' ? exR.qbRun20.shrunk / P.qbRun20 : exR.rbRun20.shrunk / P.run20), 0.6, 1.6);
@@ -604,7 +612,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
         ypc: { player: ypcPlayer, prior: ypcPrior, oppMult: ypcMult, final: ypc, sample: info.cur.carries || 0, prevSample: prev.carries || 0 },
         catchRate: { player: crPlayer, oppMult: crMult, final: pl.catchRate, sample: info.cur.targets || 0 },
         ypCatch: { player: ypPlayer, oppMult: ypMult, final: pl.catch.ypCatch, sample: info.cur.receptions || 0 },
-        explosive: { run10: pl.run.p10, run20: pl.run.p20, catch20: pl.catch.c20, catch40: pl.catch.c40, oppRun10Mult: m10, oppRun20Mult: m20, oppCatch20Mult: mc20, oppCatch40Mult: mc40, playerRun10: r10p, playerCatch20: c20p },
+        explosive: { run10: pl.run.p10, run20: pl.run.p20, ypcAdj: Math.round(explAdj * 100) / 100, catch20: pl.catch.c20, catch40: pl.catch.c40, oppRun10Mult: m10, oppRun20Mult: m20, oppCatch20Mult: mc20, oppCatch40Mult: mc40, playerRun10: r10p, playerCatch20: c20p },
       };
     }
 
@@ -1104,6 +1112,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
 }
 
 // ---------- helpers ----------
+const EXPL = { k10: 250, k20: 400, meanCoef: -9.05 }; // scripts/explosive_mean_test.mjs
 const DEF_PRIOR_W = 0.75; // scripts/run_context_tests.mjs A
 /** A defense's quality-adjusted RB YPC allowed last season, as a ratio to that season's league average. */
 function priorRunDefense(WEEKLY, opp) {

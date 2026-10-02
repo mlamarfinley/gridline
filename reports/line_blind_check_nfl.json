@@ -1,7 +1,7 @@
 {
  "league": "nfl",
  "week": 4,
- "checkedAt": "2026-10-02T23:24:56.757Z",
+ "checkedAt": "2026-10-02T23:48:06.969Z",
  "games": [
   {
    "id": "401872964",
@@ -124,7 +124,7 @@
    "id": "401872977",
    "matchup": "LAC @ SEA",
    "stats": 94,
-   "withLines": 28,
+   "withLines": 30,
    "differing": 0,
    "maxAbsDiff": 0,
    "linesInBlindRun": false
@@ -151,5 +151,5 @@
  "stats": 1492,
  "differing": 0,
  "maxAbsDiff": 0,
- "withLines": 639
+ "withLines": 641
 }
