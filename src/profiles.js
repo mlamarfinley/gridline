@@ -10,7 +10,7 @@
 // plus who gets targeted (WR / TE / RB) and, from last season's FTN charting, man-vs-zone coverage.
 import { loadPlays, loadParticipation, loadPlayerIds } from './pbp.js';
 
-export const PRIOR_W = 0.25;            // a previous-season play counts as 1/4 of a current one
+export const PRIOR_W = 0.15;            // a previous-season play counts 0.15 of a current one (scripts/def_prior_weight.mjs: 0.10–0.15 best for EPA, 2022–25)
 export const ZONES = ['deepOut', 'deepMid', 'interOut', 'interMid', 'shortOut', 'shortMid'];
 export const ZONE_LABEL = { deepOut: 'deep outside', deepMid: 'deep middle', interOut: 'intermediate outside', interMid: 'intermediate middle', shortOut: 'short outside', shortMid: 'short middle' };
 const K = { zone: 60, pos: 80, run: 120, rush: 300, cov: 150, playerShare: 15, playerRun: 40, playerExpl: 60, playerMZ: 25 };

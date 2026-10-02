@@ -285,3 +285,20 @@ Not changed. Three games of team run volume are mostly game script.
 - Week 4 range: DL 15 (NYG) to 88 (MIN); OL 20–89. Display only; projections unchanged.
 
 **Pass rate by game state:** NO has no plays this season while leading by 8+. The model uses the league rate for that state (47%), scaled to NO's overall passing volume (51% in the simulation). The page now shows each state's sample size and labels the fallback.
+
+## fbm-1.5.4: defense ratings lean less on last season (2026-10-02)
+
+**Trigger:** IND is the worst defense by yards/play (6.64) and yards/game (418) through week 3, yet rated only 6th–9th worst. With last season's plays at 0.25 weight each, 2025 still made up ~57% of every early-season rating.
+
+**Test** (`scripts/def_prior_weight.mjs`, 2022–25): predict a defense's rest-of-season EPA/play allowed from what was known at week W.
+
+| Week | Weight 0.25 (old) | Best | This season only |
+|---|---|---|---|
+| Wk 4 | 0.0799 | 0.0752 at 0.15 | 0.0763 |
+| Wk 6 | 0.0796 | 0.0753 at 0.10 | 0.0756 |
+
+Shipped weight: 0.15.
+
+**IND now ranks from worst:** run D 4th, CBs 3rd, short-middle 1st, overall pass D 7th (EPA/dropback includes sacks and INTs).
+
+**Big-miss model** refit on the new ratings. Game pick with the significance rule: 74–84 (46.8%). Without the rule: 139–117 (54.3%).
