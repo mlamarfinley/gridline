@@ -40,6 +40,10 @@ async function api(req, res, url) {
     const week = q.get('week') ? Number(q.get('week')) : undefined;
     return send(res, 200, await getSlate(league(q), { week, seasontype: q.get('seasontype') ? Number(q.get('seasontype')) : undefined }));
   }
+  if (p === '/api/lineblind') {
+    try { return send(res, 200, JSON.parse(fs.readFileSync(path.join(ROOT, 'reports', `line_blind_check_${league(q)}.json`), 'utf8'))); }
+    catch { return send(res, 404, { error: 'line-blind check not run yet (node scripts/line_blind_check.mjs)' }); }
+  }
   if (p === '/api/leaders') {
     const lg = league(q);
     const season = (await getSlate(lg)).season;

@@ -64,7 +64,7 @@ async function findEvent(lg, eventId, dateISO, prov) {
  * In blind mode the target game's summary/box/plays/odds/props, current rosters, depth charts,
  * injuries, weather, snaps and optional APIs are never requested.
  */
-export async function buildMatchup(lg, eventId, { forceRetro = false, blind = null } = {}) {
+export async function buildMatchup(lg, eventId, { forceRetro = false, blind = null, noPlayerLines = false } = {}) {
   const prov = new Provenance();
   let sumR = null, sum = null, hdr, season, kickoff, ev, state, pregame, mode, home, away, odds, oddsMeta, implied, mlNoVig;
   if (blind) {
@@ -201,11 +201,14 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
   const weather = pregame ? await kickoffWeather(venue, kickoff, prov) : { available: false, reason: 'Retrospective view — historical forecasts are not reconstructed' };
   const wx = weather.available && weather.effects ? weather.effects : { passEff: 1, catchRate: 1, passRate: 0, fumble: 1, dispersion: 1, notes: [] };
   let props = {}, propsMeta = { available: false, source: 'DraftKings lines via ESPN core API' };
-  const pr = blind ? { data: null, meta: { error: 'market-blind: props not requested' } } : await espn.getProps(lg, eventId);
-  if (!blind) prov.add(pr.meta);
+  // noPlayerLines: player prop lines are never fetched (game lines — spread, total — are still used). The projection
+  // pipeline never reads prop lines anyway (they are attached after the numbers are final, for comparison only);
+  // scripts/line_blind_check.mjs runs every game both ways and verifies the projections are identical.
+  const pr = blind || noPlayerLines ? { data: null, meta: { error: noPlayerLines ? 'line-blind run: player props not requested' : 'market-blind: props not requested' } } : await espn.getProps(lg, eventId);
+  if (!blind && !noPlayerLines) prov.add(pr.meta);
   if (pr.data?.items) { props = espn.parseProps(pr.data); propsMeta = { available: Object.keys(props).length > 0, source: 'DraftKings lines via ESPN core API (line only — this feed carries no over/under prices)', retrievedAt: pr.meta.fetchedAt }; }
   else propsMeta.reason = pr.meta.status === 404 ? 'No player props posted for this game in the ESPN feed' : (pr.meta.error || 'unavailable');
-  const oddsApi = pregame ? await oddsApiProps(lg, home, away, kickoff, prov) : { enabled: false };
+  const oddsApi = pregame && !noPlayerLines ? await oddsApiProps(lg, home, away, kickoff, prov) : { enabled: false };
 
   // ---------- fbm-1.2.0 NFL priors (prior season only; fitted constants in src/fitted_v12.json) ----------
   const V12 = lg === 'nfl';

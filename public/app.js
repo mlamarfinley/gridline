@@ -28,6 +28,7 @@ function staticPath(p) {
     case '/api/ledger': return `api/ledger/${q.get('kind') || 'pregame'}-${q.get('model') || ''}.json`;
     case '/api/blind': return `api/blind${q.get('batch') ? `-${q.get('batch')}` : ''}.json`;
     case '/api/leaders': return `api/leaders/${q.get('league') || 'nfl'}.json`;
+    case '/api/lineblind': return `api/lineblind/${q.get('league') || 'nfl'}.json`;
     default: return null;
   }
 }
@@ -179,6 +180,7 @@ async function renderGame(lg, id) {
   const vars = ['away', 'home'].map((k) => `--${k}:${th[k].accent};--${k}-fill:${th[k].fill};--${k}-ink:${th[k].ink};--${k}-accent-ink:${th[k].accentInk}`).join(';');
   app.innerHTML = `<div class="matchup" style="${vars}">
     <a class="back" href="#/${lg}${m.week ? `?week=${m.week}` : ''}">← ${esc(m.leagueLabel)} week ${m.week ?? ''} slate</a>
+    <div class="modelonly"><label><input type="checkbox" id="moToggle" ${modelOnly() ? 'checked' : ''}> Model only — hide every sportsbook player line</label> <span class="faint" id="moProof">Projections are built from game context (spread, total) and player history only.</span></div>
     <section class="mh">
       <div class="side away">${A.logo ? `<img src="${esc(A.logo)}" alt="">` : ''}<div><div class="abbr">${esc(A.abbr)}</div><div class="full">${esc(A.name)}${A.record ? ` · ${esc(A.record)}` : ''}</div></div>${A.score != null && m.status.state !== 'pre' ? `<div class="score">${A.score}</div>` : ''}</div>
       <div class="mid"><div class="ko">${esc(ET(m.kickoff, { weekday: 'short', month: 'short', day: 'numeric' }))} · ${etTime(m.kickoff)}</div>
@@ -216,6 +218,7 @@ async function renderGame(lg, id) {
     <div class="scroll"><table class="src"><tbody>${m.sources.map((s) => `<tr><td>${esc(s.label || '')}</td><td>${esc(s.source)}</td><td>${etStamp(s.fetchedAt)}</td><td>${s.error ? `<span class="tag ${s.stale ? 'warn' : 'bad'}">${s.stale ? 'stale cache' : 'error'}: ${esc(s.error)}</span>` : s.fromCache ? 'cache' : 'fresh'}</td><td class="u">${esc(s.url)}</td></tr>`).join('')}</tbody></table></div></div>`;
   wireCards();
   wireSideToggle();
+  wireModelOnly(lg);
   const sb = $('#snapbtn');
   if (sb) sb.onclick = async () => {
     sb.disabled = true; sb.textContent = 'Recording…';
@@ -386,8 +389,8 @@ function cardBody(m, c, key) {
       <div class="rng">range ${f1(s.p10)}–${f1(s.p90)} · median ${f1(s.p50)}</div>
       <dl>
         <dt>Season avg</dt><dd>${f1(s.seasonAvg)} <span class="faint">(${s.seasonGames}g)</span></dd>
-        <dt>Book line</dt><dd class="book">${bk ? `${bk.line}` : '<span class="faint">none</span>'}</dd>
-        <dt>Book price</dt><dd class="book">${bk?.overPrice != null ? `O ${am(bk.overPrice)} / U ${am(bk.underPrice)}` : bk ? '<span class="faint" title="The free ESPN feed publishes lines without prices">n/a</span>' : '—'}</dd>
+        <dt class="bk">Book line</dt><dd class="book">${bk ? `${bk.line}` : '<span class="faint">none</span>'}</dd>
+        <dt class="bk">Book price</dt><dd class="book">${bk?.overPrice != null ? `O ${am(bk.overPrice)} / U ${am(bk.underPrice)}` : bk ? '<span class="faint" title="The free ESPN feed publishes lines without prices">n/a</span>' : '—'}</dd>
         ${actual != null ? `<dt>Actual</dt><dd class="actual ${hit}">${f1(actual)}</dd>` : ''}
       </dl>
       ${s.situational ? `<div class="sitm" title="Learned from 2022–25 games: his baseline times how this kind of situation changed output for players at his position"><span class="faint">Situation model</span> ${esc(sitText(s.situational))}${s.situational.w ? ` <span class="faint">· ${Math.round(s.situational.w * 100)}% blended in</span>` : ' <span class="faint">· reference only</span>'}</div>` : ''}
@@ -415,8 +418,20 @@ function sitText(x) {
 function h2hBlock(s) {
   const h = s.h2h;
   if (!h || !h.games?.some((g) => g.value != null)) return '';
-  return `<div class="vspos"><div class="vspos-h">His last ${h.games.length} vs ${esc(h.opp)}${h.avg != null ? ` · avg <b>${f1(h.avg)}</b>` : ''}${s.book?.line != null ? ` · line ${s.book.line}` : ''}</div>
+  return `<div class="vspos"><div class="vspos-h">His last ${h.games.length} vs ${esc(h.opp)}${h.avg != null ? ` · avg <b>${f1(h.avg)}</b>` : ''}${s.book?.line != null ? `<span class="bookref"> · line ${s.book.line}</span>` : ''}</div>
     <table>${h.games.map((g) => `<tr><td class="faint" title="${g.season} season">${ET(g.date, { month: 'numeric', day: 'numeric', year: '2-digit' })}${g.postseason ? ' · playoffs' : ''}</td><td class="faint">${esc(g.atVs || '')}${g.team ? ` <span title="his team then">(${esc(g.team)})</span>` : ''}</td><td></td><td class="num">${g.value == null ? '—' : f1(g.value)}</td></tr>`).join('')}</table></div>`;
+}
+
+function modelOnly() { try { return localStorage.getItem('gridline.modelOnly') === '1'; } catch { return false; } }
+function applyModelOnly(on) { document.body.classList.toggle('model-only', !!on && !!document.getElementById('moToggle')); try { localStorage.setItem('gridline.modelOnly', on ? '1' : '0'); } catch { /* storage unavailable */ } }
+async function wireModelOnly(lg) {
+  applyModelOnly(modelOnly());
+  const t = document.getElementById('moToggle'); if (t) t.onchange = (e) => applyModelOnly(e.target.checked);
+  try {
+    const r = await api(`/api/lineblind?league=${lg}`);
+    const el = document.getElementById('moProof');
+    if (el && r?.stats) el.textContent = `Projections never read player lines: week ${r.week ?? ''} check rebuilt every game with lines removed — ${r.differing} of ${r.stats} projected numbers changed (${r.withLines} of them have a book line).`;
+  } catch { /* proof text is optional */ }
 }
 
 function vsPosBlock(s) {
@@ -456,8 +471,8 @@ function last5Chart(s) {
     svg += `<text class="opp" x="${cx}" y="${base + 13}" text-anchor="middle" style="fill:var(--model)">PROJ</text>`;
   }
   if (s.book?.line != null) {
-    svg += `<line x1="0" x2="${W}" y1="${y(s.book.line)}" y2="${y(s.book.line)}" stroke="var(--book)" stroke-dasharray="4 3"/>`;
-    svg += `<text x="2" y="${y(s.book.line) - 3}" text-anchor="start" class="halo" style="fill:var(--book)">line ${s.book.line}</text>`;
+    svg += `<line class="bookline" x1="0" x2="${W}" y1="${y(s.book.line)}" y2="${y(s.book.line)}" stroke="var(--book)" stroke-dasharray="4 3"/>`;
+    svg += `<text x="2" y="${y(s.book.line) - 3}" text-anchor="start" class="halo bookline" style="fill:var(--book)">line ${s.book.line}</text>`;
   }
   if (!games.length) svg += `<text x="${W / 2}" y="${Hh / 2}" text-anchor="middle">No prior games in feed</text>`;
   return svg + '</svg>';

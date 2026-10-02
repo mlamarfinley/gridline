@@ -1,0 +1,155 @@
+{
+ "league": "nfl",
+ "week": 4,
+ "checkedAt": "2026-10-02T21:07:22.519Z",
+ "games": [
+  {
+   "id": "401872964",
+   "matchup": "PIT @ CLE",
+   "stats": 94,
+   "withLines": 42,
+   "differing": 0,
+   "maxAbsDiff": 0,
+   "linesInBlindRun": false
+  },
+  {
+   "id": "401872965",
+   "matchup": "IND @ WSH",
+   "stats": 94,
+   "withLines": 32,
+   "differing": 0,
+   "maxAbsDiff": 0,
+   "linesInBlindRun": false
+  },
+  {
+   "id": "401872971",
+   "matchup": "NE @ BUF",
+   "stats": 88,
+   "withLines": 43,
+   "differing": 0,
+   "maxAbsDiff": 0,
+   "linesInBlindRun": false
+  },
+  {
+   "id": "401872972",
+   "matchup": "NYJ @ CHI",
+   "stats": 94,
+   "withLines": 40,
+   "differing": 0,
+   "maxAbsDiff": 0,
+   "linesInBlindRun": false
+  },
+  {
+   "id": "401872969",
+   "matchup": "JAX @ CIN",
+   "stats": 100,
+   "withLines": 48,
+   "differing": 0,
+   "maxAbsDiff": 0,
+   "linesInBlindRun": false
+  },
+  {
+   "id": "401872966",
+   "matchup": "ARI @ NYG",
+   "stats": 88,
+   "withLines": 40,
+   "differing": 0,
+   "maxAbsDiff": 0,
+   "linesInBlindRun": false
+  },
+  {
+   "id": "401872970",
+   "matchup": "LAR @ PHI",
+   "stats": 94,
+   "withLines": 38,
+   "differing": 0,
+   "maxAbsDiff": 0,
+   "linesInBlindRun": false
+  },
+  {
+   "id": "401872968",
+   "matchup": "GB @ TB",
+   "stats": 94,
+   "withLines": 44,
+   "differing": 0,
+   "maxAbsDiff": 0,
+   "linesInBlindRun": false
+  },
+  {
+   "id": "401872973",
+   "matchup": "TEN @ BAL",
+   "stats": 94,
+   "withLines": 42,
+   "differing": 0,
+   "maxAbsDiff": 0,
+   "linesInBlindRun": false
+  },
+  {
+   "id": "401872967",
+   "matchup": "DAL @ HOU",
+   "stats": 100,
+   "withLines": 45,
+   "differing": 0,
+   "maxAbsDiff": 0,
+   "linesInBlindRun": false
+  },
+  {
+   "id": "401872974",
+   "matchup": "MIA @ MIN",
+   "stats": 94,
+   "withLines": 37,
+   "differing": 0,
+   "maxAbsDiff": 0,
+   "linesInBlindRun": false
+  },
+  {
+   "id": "401872976",
+   "matchup": "KC @ LV",
+   "stats": 88,
+   "withLines": 41,
+   "differing": 0,
+   "maxAbsDiff": 0,
+   "linesInBlindRun": false
+  },
+  {
+   "id": "401872975",
+   "matchup": "DEN @ SF",
+   "stats": 88,
+   "withLines": 37,
+   "differing": 0,
+   "maxAbsDiff": 0,
+   "linesInBlindRun": false
+  },
+  {
+   "id": "401872977",
+   "matchup": "LAC @ SEA",
+   "stats": 94,
+   "withLines": 28,
+   "differing": 0,
+   "maxAbsDiff": 0,
+   "linesInBlindRun": false
+  },
+  {
+   "id": "401872978",
+   "matchup": "DET @ CAR",
+   "stats": 94,
+   "withLines": 41,
+   "differing": 0,
+   "maxAbsDiff": 0,
+   "linesInBlindRun": false
+  },
+  {
+   "id": "401872979",
+   "matchup": "ATL @ NO",
+   "stats": 94,
+   "withLines": 41,
+   "differing": 0,
+   "maxAbsDiff": 0,
+   "linesInBlindRun": false
+  }
+ ],
+ "stats": 1492,
+ "differing": 0,
+ "maxAbsDiff": 0,
+ "withLines": 639
+}

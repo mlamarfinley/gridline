@@ -376,3 +376,10 @@ details.why .expl, details.why p { margin: 6px 0 0; font-size: 12px; color: var(
 .lboard .v { font-variant-numeric: tabular-nums; text-align: right; }
 
 .sitm { font-size: 12px; margin: 8px 0 2px; line-height: 1.45; }
+
+/* Model only: hide every sportsbook player line (game lines stay) */
+.modelonly { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; font-size: 13px; margin: 6px 0 10px; padding: 8px 0; border-top: 1px solid var(--rule-2); border-bottom: 1px solid var(--rule-2); }
+.modelonly label { cursor: pointer; font-weight: 600; }
+.modelonly input { accent-color: var(--model); margin-right: 4px; }
+.model-only .book, .model-only dt.bk, .model-only .prob, .model-only .bookline, .model-only .bookref,
+.model-only section.outlier, .model-only section.outliers { display: none !important; }

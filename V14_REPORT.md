@@ -315,3 +315,15 @@ Still blended with last season (PRIOR_W 0.15):
 **IND now ranks from worst:** CBs 1st, short-middle 1st, run D 2nd, pass rush 3rd, overall pass D 7th.
 
 **Big-miss model refit.** Game pick: without the gap rule 145–118 (55.1%); with it 74–85 (46.5%, live).
+
+## Line-blind verification + "Model only" view (2026-10-02)
+
+**Question:** do the projections lean on sportsbook player lines?
+
+**Check:** `buildMatchup(…, { noPlayerLines: true })` never fetches player props (ESPN or Odds API). Game lines (spread, total) are still used. `scripts/line_blind_check.mjs` builds every game both ways and compares every projected number, including the p10 / p90 range.
+
+**Week 4 NFL result:** 1,492 projected stats across 16 games, 639 of them with a book line. **0 differ** (max abs diff 0).
+
+This holds by construction. Prop lines are attached only after a stat's distribution is final, for the over/under threshold, P(over), outliers and the game pick. Every learned layer (v1.3, v1.4, anchor, situational, team runs) was fit on market-blind batches that never saw a player line.
+
+**UI:** a "Model only" switch on each game page hides every sportsbook player line: the line and price rows, the chart's line, P(over), outliers, the game pick, and line references in the head-to-head and same-slot blocks. It is remembered per browser. The verification result is shown next to the switch (`/api/lineblind`, also exported to the static site).
