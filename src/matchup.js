@@ -28,6 +28,7 @@ import fsA from 'node:fs';
 let ANCHOR = null;
 try { ANCHOR = JSON.parse(fsA.readFileSync(new URL('./fitted_anchor.json', import.meta.url), 'utf8')).byStat; } catch { ANCHOR = null; }
 let SITFIT = null, SITBLEND = null, TEAMRUNS = null, PRPROJ = null;
+const RAMP = { rise: 0.1, rookieRise: 0.5, fall: 0.25 }; // scripts/rookie_ramp_test.mjs → src/fitted_rookie_ramp.json
 let SKPROJ = null; // player skill ratings → projection (user-requested; slopes only, near-neutral out of sample)
 try { SKPROJ = JSON.parse(fsA.readFileSync(new URL('./fitted_skill_projection.json', import.meta.url), 'utf8')).byStat; } catch { SKPROJ = null; }
 try { PRPROJ = JSON.parse(fsA.readFileSync(new URL('./fitted_player_rating_projection.json', import.meta.url), 'utf8')).byStat; } catch { PRPROJ = null; }
@@ -378,16 +379,56 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       }
       const nEff = sw2 > 0 ? (sw * sw) / sw2 : 0;
       let carryShare = wtc > 0 ? wc / wtc : 0;
+      // A back who MISSED his team's last game (no box-score line, not on the injury report as out): his share from only
+      // the games he appeared in overstates his role. Meet halfway with the share that counts the team games he missed
+      // since his first appearance as zero carries (scripts/missing_games_share_test.mjs, 2022–25: backs who missed their
+      // last game and played the next — error 11.0 → 10.4 pts; 2024–25 held out 10.3 → 9.7; all such backs 17.6 → 13.1).
+      let gapNote = null, gapGames = 0;
+      if (pos === 'RB' && lg === 'nfl' && lastGame && !lastGame.appeared.has(id) && played.length && !partial.size) {
+        const firstIdx = teamTotals.findIndex((y) => y.appeared.has(id));
+        const span = teamTotals.slice(Math.max(0, firstIdx)).filter((y) => wOf.has(y.eventId));
+        const dW = span.reduce((a, y) => a + wOf.get(y.eventId) * y.teamCarries, 0);
+        if (firstIdx >= 0 && dW > 0) {
+          const zeroFilled = wc / dW, before = carryShare;
+          carryShare = (carryShare + zeroFilled) / 2; gapGames = span.length;
+          const miss = span.length - played.length;
+          if (before - carryShare > 0.005) gapNote = `Missed ${miss} of his team's last ${span.length} games (incl. the last one) without an injury designation: his share from games he appeared in (${fmtPct(before)}) is met halfway with one counting those as zero carries → ${fmtPct(carryShare)}.`;
+        }
+      }
       let targetShare = wtt > 0 ? wt / wtt : 0;
       if (V12 && prior) {
         // Prior-season same-team share as a prior (fitted weight in games).
         const ps = prior.share(nameMap.get(id), t.abbr);
         if (ps.games >= 4) {
           const n = played.length;
+          const nC = Math.max(n, gapGames); // a back's missed team games this season count as evidence about his role too
           // Last season's share stays in even when this season's role looks bigger: dropping it for "grown" roles was
           // tested twice (blind batches 10 and 12 vs 13) and made those players' projections worse — early jumps regress.
           if (ps.target != null) targetShare = (n * targetShare + FIT.share.target.k * ps.target) / (n + FIT.share.target.k);
-          if (ps.carry != null && pos === 'RB') carryShare = (n * carryShare + FIT.share.carry.k * ps.carry) / (n + FIT.share.carry.k);
+          if (ps.carry != null && pos === 'RB') carryShare = (nC * carryShare + FIT.share.carry.k * ps.carry) / (nC + FIT.share.carry.k);
+        }
+      }
+      // ROLE MOVES that stick (scripts/rookie_ramp_test.mjs, nflverse 2021–25, α picked on 2022–23, checked on 2024–25):
+      //  · a ROOKIE back whose carry share rose 3 games running (+10 pts vs his earlier games): lean 50% toward his latest
+      //    game (held-out error 14.8 → 13.8 pts) — rookies climbing the depth chart keep the job; one-game bumps don't;
+      //  · ANY back whose carry share fell 10+ pts (demoted, e.g. the veteran a rookie passed): lean 25% toward his latest
+      //    game (12.3 → 11.7). Target shares: no version helped (rising or falling), so receivers are unchanged.
+      const rampNotes = [];
+      if (pos === 'RB' && lg === 'nfl') {
+        const rf = r.filter((x) => !partial.has(x.eventId) && wOf.has(x.eventId));
+        if (rf.length >= 3) {
+          const sh = rf.map((x) => x.share.carry || 0), last = sh[sh.length - 1], earlier = sh.slice(0, -1).reduce((a, b) => a + b, 0) / (sh.length - 1);
+          const rookie = !!prior && prior.games(nameMap.get(id)) === 0;
+          const steady = sh.slice(-3).every((v, j, a) => j === 0 || v >= a[j - 1]);
+          let a = 0;
+          if (rookie && steady && last - earlier >= RAMP.rise) a = RAMP.rookieRise;
+          else if (earlier - last >= RAMP.rise) a = RAMP.fall;
+          if (a) {
+            const before = carryShare; carryShare += a * (last - carryShare);
+            rampNotes.push(a === RAMP.rookieRise
+              ? `Rookie ramp: his carry share has climbed three games running (${sh.slice(-3).map((v) => fmtPct(v)).join(' → ')}), so his projection leans ${Math.round(a * 100)}% toward his latest role (${fmtPct(before)} → ${fmtPct(carryShare)}) — rookies rising like this kept the job in 2021–25.`
+              : `Role loss: his carry share fell to ${fmtPct(last)} last game from ${fmtPct(earlier)} before, so his projection leans ${Math.round(a * 100)}% toward that (${fmtPct(before)} → ${fmtPct(carryShare)}) — backs' drops mostly stuck in 2021–25.`);
+          }
         }
       }
       // Small floors: a rostered RB/receiver with no recent targets still has a non-zero chance
@@ -395,7 +436,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       if (pos === 'RB') { carryShare = Math.max(carryShare, 0.03); targetShare = Math.max(targetShare, 0.025); }
       if (pos === 'WR' || pos === 'TE') targetShare = Math.max(targetShare, 0.03);
       if (pos === 'QB') targetShare = 0;
-      const notes = [];
+      const notes = [...rampNotes, ...(gapNote ? [gapNote] : [])];
       for (const [, pg] of partial) notes.push(`Week ${pg.week} vs ${pg.opp} treated as a partial game (${pg.evidence}) — likely an early exit (injury); it barely counts toward his usage.`);
       const redistribution = []; // structured record of usage moved from absent teammates (audited by src/skeptic.js)
       // Redistribute usage vacated by unavailable key teammates (to the extent the sample does
@@ -746,7 +787,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
 
     teams[t.id] = {
       ...t, opponent: opp.abbr, impliedPts, expMargin, scriptWeights: weights, scriptSource,
-      params: { plays: team.plays, passRate: team.passRate, sackRate: team.sackRate, intRate: team.intRate, tdScale: team.tdScale, pace, fgPerGame }, v12: V12 ? v12 : null,
+      simCarriesBy: Object.fromEntries(players.map((p) => [nameMap.get(p.id) || p.id, +avg(sim.out[p.id].stats.carries).toFixed(2)]).filter(([, v]) => v > 0.05)), params: { plays: team.plays, passRate: team.passRate, sackRate: team.sackRate, intRate: team.intRate, tdScale: team.tdScale, pace, fgPerGame }, v12: V12 ? v12 : null,
       context: slimContext(cx), roles: { qbSource: roles.qbSource, notes: roles.notes, excluded: roles.excluded.map((e) => ({ ...e, name: nameMap.get(e.id) || e.id })) },
       cards, kicker: kCard, gamesUsed: teamTotals.map((g) => ({ eventId: g.eventId, date: g.date, opp: g.oppAbbr, week: g.week })),
       injuries: [...injMap.values()].filter((i) => (i.teamId || t.id) === t.id).map((i) => ({ ...i, severity: espn.injurySeverity(i.status), relevant: ['QB', 'RB', 'WR', 'TE', 'K', 'PK'].includes(i.pos) })),

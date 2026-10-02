@@ -52,6 +52,8 @@ export async function loadPriorSeason(season, prov) {
       const rows = (players.get(normName(name)) || []).filter((x) => x.att > 0);
       return { att: rows.reduce((s, x) => s + x.att, 0), yds: rows.reduce((s, x) => s + x.passYds, 0) };
     },
+    /** Regular-season games he played last season for ANY team (0 = rookie, or a season-long absence). */
+    games: (name) => (players.get(normName(name)) || []).length,
     share: (name, abbr) => {
       const rows = (players.get(normName(name)) || []).filter((x) => x.team === nv(abbr));
       const ts = [], cs = [];

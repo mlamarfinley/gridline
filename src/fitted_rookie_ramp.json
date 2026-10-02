@@ -1,0 +1,289 @@
+{
+ "learnedAt": "2026-10-02T23:07:12.628Z",
+ "rise": {
+  "carry": 0.1,
+  "target": 0.05
+ },
+ "byGroup": {
+  "rookies, share rising|carry": {
+   "n": 116,
+   "maeByAlpha": {
+    "0": 0.1339,
+    "1": 0.162,
+    "0.25": 0.1293,
+    "0.5": 0.133,
+    "0.75": 0.1443
+   },
+   "alphaTrain": 0.5,
+   "heldOut2024_25": {
+    "n": 57,
+    "base": 0.122,
+    "ramp": 0.1337
+   },
+   "heldOutFixed": {
+    "0.25": 0.124,
+    "0.5": 0.1337
+   }
+  },
+  "rookies, share rising|target": {
+   "n": 323,
+   "maeByAlpha": {
+    "0": 0.0545,
+    "1": 0.0833,
+    "0.25": 0.0568,
+    "0.5": 0.0628,
+    "0.75": 0.0719
+   },
+   "alphaTrain": 0,
+   "heldOut2024_25": {
+    "n": 153,
+    "base": 0.0529,
+    "ramp": 0.0529
+   },
+   "heldOutFixed": {
+    "0.25": 0.0551,
+    "0.5": 0.0609
+   }
+  },
+  "rookies, rising 3 games in a row|carry": {
+   "n": 63,
+   "maeByAlpha": {
+    "0": 0.1507,
+    "1": 0.1594,
+    "0.25": 0.141,
+    "0.5": 0.1394,
+    "0.75": 0.1453
+   },
+   "alphaTrain": 0.5,
+   "heldOut2024_25": {
+    "n": 30,
+    "base": 0.1475,
+    "ramp": 0.138
+   },
+   "heldOutFixed": {
+    "0.25": 0.1398,
+    "0.5": 0.138
+   }
+  },
+  "rookies, rising 3 games in a row|target": {
+   "n": 183,
+   "maeByAlpha": {
+    "0": 0.0541,
+    "1": 0.0846,
+    "0.25": 0.0567,
+    "0.5": 0.0633,
+    "0.75": 0.0726
+   },
+   "alphaTrain": 0,
+   "heldOut2024_25": {
+    "n": 91,
+    "base": 0.0565,
+    "ramp": 0.0565
+   },
+   "heldOutFixed": {
+    "0.25": 0.0578,
+    "0.5": 0.0627
+   }
+  },
+  "veterans, rising 3 in a row (control)|carry": {
+   "n": 240,
+   "maeByAlpha": {
+    "0": 0.129,
+    "1": 0.1689,
+    "0.25": 0.1282,
+    "0.5": 0.135,
+    "0.75": 0.1491
+   },
+   "alphaTrain": 0,
+   "heldOut2024_25": {
+    "n": 126,
+    "base": 0.1386,
+    "ramp": 0.1386
+   },
+   "heldOutFixed": {
+    "0.25": 0.1347,
+    "0.5": 0.1382
+   }
+  },
+  "veterans, rising 3 in a row (control)|target": {
+   "n": 784,
+   "maeByAlpha": {
+    "0": 0.0585,
+    "1": 0.0933,
+    "0.25": 0.0624,
+    "0.5": 0.0698,
+    "0.75": 0.0805
+   },
+   "alphaTrain": 0,
+   "heldOut2024_25": {
+    "n": 401,
+    "base": 0.0584,
+    "ramp": 0.0584
+   },
+   "heldOutFixed": {
+    "0.25": 0.0611,
+    "0.5": 0.0676
+   }
+  },
+  "all players, share falling|carry": {
+   "n": 547,
+   "maeByAlpha": {
+    "0": 0.1247,
+    "1": 0.141,
+    "0.25": 0.118,
+    "0.5": 0.1183,
+    "0.75": 0.1264
+   },
+   "alphaTrain": 0.25,
+   "heldOut2024_25": {
+    "n": 277,
+    "base": 0.123,
+    "ramp": 0.1169
+   },
+   "heldOutFixed": {
+    "0.25": 0.1169,
+    "0.5": 0.1169
+   }
+  },
+  "all players, share falling|target": {
+   "n": 1726,
+   "maeByAlpha": {
+    "0": 0.0563,
+    "1": 0.0754,
+    "0.25": 0.0563,
+    "0.5": 0.0597,
+    "0.75": 0.0663
+   },
+   "alphaTrain": 0.25,
+   "heldOut2024_25": {
+    "n": 858,
+    "base": 0.0562,
+    "ramp": 0.0563
+   },
+   "heldOutFixed": {
+    "0.25": 0.0563,
+    "0.5": 0.0598
+   }
+  },
+  "veterans, share rising (control)|carry": {
+   "n": 452,
+   "maeByAlpha": {
+    "0": 0.1254,
+    "1": 0.1645,
+    "0.25": 0.1247,
+    "0.5": 0.1314,
+    "0.75": 0.1451
+   },
+   "alphaTrain": 0,
+   "heldOut2024_25": {
+    "n": 238,
+    "base": 0.1304,
+    "ramp": 0.1304
+   },
+   "heldOutFixed": {
+    "0.25": 0.128,
+    "0.5": 0.133
+   }
+  },
+  "veterans, share rising (control)|target": {
+   "n": 1513,
+   "maeByAlpha": {
+    "0": 0.0605,
+    "1": 0.0949,
+    "0.25": 0.0645,
+    "0.5": 0.0718,
+    "0.75": 0.0823
+   },
+   "alphaTrain": 0,
+   "heldOut2024_25": {
+    "n": 754,
+    "base": 0.0593,
+    "ramp": 0.0593
+   },
+   "heldOutFixed": {
+    "0.25": 0.0623,
+    "0.5": 0.0688
+   }
+  },
+  "veteran losing work to a ramping rookie|carry": {
+   "n": 63,
+   "maeByAlpha": {
+    "0": 0.1199,
+    "1": 0.1658,
+    "0.25": 0.1158,
+    "0.5": 0.1238,
+    "0.75": 0.1421
+   },
+   "alphaTrain": 0.25,
+   "heldOut2024_25": {
+    "n": 32,
+    "base": 0.1267,
+    "ramp": 0.1239
+   },
+   "heldOutFixed": {
+    "0.25": 0.1239,
+    "0.5": 0.1294
+   }
+  },
+  "veteran losing work to a ramping rookie|target": {
+   "n": 142,
+   "maeByAlpha": {
+    "0": 0.0526,
+    "1": 0.0789,
+    "0.25": 0.0538,
+    "0.5": 0.0594,
+    "0.75": 0.0682
+   },
+   "alphaTrain": 0,
+   "heldOut2024_25": {
+    "n": 65,
+    "base": 0.0525,
+    "ramp": 0.0525
+   },
+   "heldOutFixed": {
+    "0.25": 0.0544,
+    "0.5": 0.0601
+   }
+  },
+  "other veterans, share falling (control)|carry": {
+   "n": 418,
+   "maeByAlpha": {
+    "0": 0.1269,
+    "1": 0.1343,
+    "0.25": 0.1182,
+    "0.5": 0.1158,
+    "0.75": 0.1215
+   },
+   "alphaTrain": 0.5,
+   "heldOut2024_25": {
+    "n": 213,
+    "base": 0.1256,
+    "ramp": 0.1151
+   },
+   "heldOutFixed": {
+    "0.25": 0.1173,
+    "0.5": 0.1151
+   }
+  },
+  "other veterans, share falling (control)|target": {
+   "n": 1364,
+   "maeByAlpha": {
+    "0": 0.0564,
+    "1": 0.0749,
+    "0.25": 0.0562,
+    "0.5": 0.0595,
+    "0.75": 0.066
+   },
+   "alphaTrain": 0.25,
+   "heldOut2024_25": {
+    "n": 695,
+    "base": 0.0565,
+    "ramp": 0.0565
+   },
+   "heldOutFixed": {
+    "0.25": 0.0565,
+    "0.5": 0.0599
+   }
+  }
+ }
+}
