@@ -7,7 +7,7 @@
 // site build read — so local and public projections match.
 import fs from 'node:fs';
 import { buildMonitor, productionScores } from './productionMonitor.js';
-import { maddenIndex } from './playerRatings.js';
+import { maddenIndex, onScale } from './playerRatings.js';
 import { loadPlayerIds } from './pbp.js';
 
 const FIT = (() => { try { return JSON.parse(fs.readFileSync(new URL('./fitted_player_rating.json', import.meta.url), 'utf8')).byPos; } catch { return null; } })();
@@ -34,7 +34,7 @@ export async function computePlayerRatings(season, week) {
     const z = (f) => { const v = L.map(f), mu = v.reduce((a, b) => a + b, 0) / v.length, sd = Math.sqrt(v.reduce((a, b) => a + (b - mu) ** 2, 0) / v.length) || 1; return (x) => (f(x) - mu) / sd; };
     const zm = z((x) => x.m), ze = z((x) => x.s.eff), zu = z((x) => x.s.usage ?? 0), b = FIT[pos].beta;
     const sc = (x) => b.madden * zm(x) + rel(x.s) * (b.efficiency * ze(x) + b.usage * zu(x)), zs = z(sc);
-    for (const x of L) players[x.s.id] = { name: x.s.name, pos, z: +zs(x).toFixed(3), rating: Math.min(99, Math.max(1, Math.round(100 * phi(zs(x))))), effPerTouch: +x.s.eff.toFixed(2), usageVsUsual: x.s.usage != null ? +x.s.usage.toFixed(3) : null, games: x.s.games, rookie: rookie(x.s) || undefined };
+    for (const x of L) players[x.s.id] = { name: x.s.name, pos, z: +zs(x).toFixed(3), rating: onScale(pos, zs(x)), effPerTouch: +x.s.eff.toFixed(2), usageVsUsual: x.s.usage != null ? +x.s.usage.toFixed(3) : null, games: x.s.games, rookie: rookie(x.s) || undefined };
   }
   void ids;
   return { season, week, computedAt: new Date().toISOString(), weights: Object.fromEntries(Object.entries(FIT).map(([p, v]) => [p, v.share])), players };

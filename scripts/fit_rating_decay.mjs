@@ -4,9 +4,9 @@
 // player's shrunk skill estimate with his actual rate over his next 4 games (sample-weighted squared error).
 import fs from 'node:fs';
 import { buildRecords, ratingsFrom, SKILLS } from '../src/playerRatings.js';
-const recs = await buildRecords([2023, 2024, 2025]);
+const recs = await buildRecords([2023, 2024, 2025]);  // ratings use HISTORY=1 past season (scripts/rating_history_test.mjs)
 const LAMBDAS = [0.6, 0.75, 0.9, 0.95, 1.0];
-const KS = [0.5, 1, 2, 4];
+const KS = [1]; // shrink is now empirical-Bayes per skill (src/playerRatings.js); kScale no longer applies
 const BETAS = [0, 0.5, 1];
 const points = [];
 for (const S of [2024, 2025]) for (const W of [4, 7, 10, 13]) points.push([S, W]);

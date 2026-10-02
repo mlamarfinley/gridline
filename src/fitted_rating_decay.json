@@ -1,5 +1,5 @@
 {
- "learnedAt": "2026-10-02T22:21:23.605Z",
+ "learnedAt": "2026-10-02T22:48:36.377Z",
  "method": "λ^(games ago) per skill; opponent adjustment kept only where it lowered next-4-game error",
  "evalPoints": [
   [
@@ -38,226 +38,235 @@
  "byPos": {
   "QB": {
    "epa": {
-    "lambda": 0.95,
-    "kScale": 2,
-    "adjust": false,
+    "lambda": 0.9,
+    "kScale": 1,
+    "adjust": true,
     "beta": 0,
-    "mse": 0.029761216658294447,
-    "mseFlatNoAdj": 0.029931093630767205,
-    "mseBestNoAdj": 0.029761216658294447
+    "mse": 0.030267515819954117,
+    "mseFlatNoAdj": 0.030841807413458055,
+    "mseBestNoAdj": 0.030417369562725022
    },
    "cpoe": {
     "lambda": 1,
-    "kScale": 0.5,
+    "kScale": 1,
     "adjust": true,
     "beta": 0,
-    "mse": 18.738665000464618,
-    "mseFlatNoAdj": 18.874878456845618,
-    "mseBestNoAdj": 18.874878456845618
+    "mse": 18.981135352249577,
+    "mseFlatNoAdj": 18.992263271452035,
+    "mseBestNoAdj": 18.992263271452035
    },
    "deep": {
     "lambda": 1,
-    "kScale": 4,
-    "adjust": false,
+    "kScale": 1,
+    "adjust": true,
     "beta": 0,
-    "mse": 0.48246355277335806,
-    "mseFlatNoAdj": 0.48246355277335806,
-    "mseBestNoAdj": 0.48246355277335806
+    "mse": 0.4955159806718968,
+    "mseFlatNoAdj": 0.4964927272487808,
+    "mseBestNoAdj": 0.4964927272487808
    },
    "sack": {
     "lambda": 0.95,
     "kScale": 1,
     "adjust": false,
     "beta": 0,
-    "mse": 0.0008772761065931146,
-    "mseFlatNoAdj": 0.0008839052931214505,
-    "mseBestNoAdj": 0.0008772761065931146
+    "mse": 0.0008835165723571447,
+    "mseFlatNoAdj": 0.0008912337089371517,
+    "mseBestNoAdj": 0.0008835165723571447
    },
    "ints": {
-    "lambda": 0.95,
-    "kScale": 4,
+    "lambda": 0.9,
+    "kScale": 1,
     "adjust": true,
     "beta": 0,
-    "mse": 0.0002986959043742238,
-    "mseFlatNoAdj": 0.000300857041314207,
-    "mseBestNoAdj": 0.0002988597181245763
+    "mse": 0.00033516678852288243,
+    "mseFlatNoAdj": 0.00033835659726416537,
+    "mseBestNoAdj": 0.00033614017110936357
    },
    "scramble": {
     "lambda": 1,
     "kScale": 1,
     "adjust": false,
     "beta": 0,
-    "mse": 0.058431770158236564,
-    "mseFlatNoAdj": 0.058431770158236564,
-    "mseBestNoAdj": 0.058431770158236564
+    "mse": 0.06136964125714051,
+    "mseFlatNoAdj": 0.06136964125714051,
+    "mseBestNoAdj": 0.06136964125714051
    },
    "run": {
     "lambda": 0.9,
-    "kScale": 0.5,
+    "kScale": 1,
     "adjust": false,
     "beta": 0,
-    "mse": 27.100431805154635,
-    "mseFlatNoAdj": 28.95847951546392,
-    "mseBestNoAdj": 27.100431805154635
+    "mse": 27.13514981294234,
+    "mseFlatNoAdj": 28.70793037108189,
+    "mseBestNoAdj": 27.13514981294234
    }
   },
   "RB": {
-   "ryoe": {
-    "lambda": 0.95,
-    "kScale": 4,
-    "adjust": true,
-    "beta": 0,
-    "mse": 1.016800502031426,
-    "mseFlatNoAdj": 1.0341284168302454,
-    "mseBestNoAdj": 1.02013135067013
-   },
-   "success": {
-    "lambda": 0.95,
-    "kScale": 4,
-    "adjust": true,
-    "beta": 0,
-    "mse": 0.008235168614992459,
-    "mseFlatNoAdj": 0.008317229667077135,
-    "mseBestNoAdj": 0.00824052325159722
-   },
-   "explosive": {
-    "lambda": 1,
-    "kScale": 4,
-    "adjust": true,
-    "beta": 0.5,
-    "mse": 0.003041651304020516,
-    "mseFlatNoAdj": 0.0030593111221222783,
-    "mseBestNoAdj": 0.0030593111221222783
-   },
-   "short": {
-    "lambda": 0.6,
-    "kScale": 4,
+   "load": {
+    "lambda": 0.75,
+    "kScale": 1,
     "adjust": false,
     "beta": 0,
-    "mse": 0.048470323052989976,
-    "mseFlatNoAdj": 0.04944101929061371,
-    "mseBestNoAdj": 0.048470323052989976
+    "mse": 0.003943287511758242,
+    "mseFlatNoAdj": 0.004910215282106674,
+    "mseBestNoAdj": 0.003943287511758242
+   },
+   "ryoe": {
+    "lambda": 0.95,
+    "kScale": 1,
+    "adjust": true,
+    "beta": 0.5,
+    "mse": 1.0355136187962515,
+    "mseFlatNoAdj": 1.0624299407623463,
+    "mseBestNoAdj": 1.0506076961338833
+   },
+   "success": {
+    "lambda": 0.9,
+    "kScale": 1,
+    "adjust": true,
+    "beta": 0,
+    "mse": 0.008429138614337162,
+    "mseFlatNoAdj": 0.008521145764062904,
+    "mseBestNoAdj": 0.008465658788793348
+   },
+   "explosive": {
+    "lambda": 0.95,
+    "kScale": 1,
+    "adjust": true,
+    "beta": 0.5,
+    "mse": 0.0030949730084668713,
+    "mseFlatNoAdj": 0.0031063052775099987,
+    "mseBestNoAdj": 0.0031063052775099987
+   },
+   "short": {
+    "lambda": 0.9,
+    "kScale": 1,
+    "adjust": true,
+    "beta": 0,
+    "mse": 0.04793286127346838,
+    "mseFlatNoAdj": 0.04800963428846236,
+    "mseBestNoAdj": 0.04797820904835045
    },
    "recv": {
     "lambda": 1,
-    "kScale": 4,
+    "kScale": 1,
     "adjust": false,
-    "beta": 0.5,
-    "mse": 7.959602538624109,
-    "mseFlatNoAdj": 7.95960253862411,
-    "mseBestNoAdj": 7.95960253862411
+    "beta": 1,
+    "mse": 7.90622438627775,
+    "mseFlatNoAdj": 7.906224386277752,
+    "mseBestNoAdj": 7.906224386277752
    }
   },
   "WR": {
    "earn": {
-    "lambda": 0.9,
-    "kScale": 0.5,
+    "lambda": 0.75,
+    "kScale": 1,
     "adjust": false,
-    "beta": 1,
-    "mse": 0.002872105566306539,
-    "mseFlatNoAdj": 0.003099053285187068,
-    "mseBestNoAdj": 0.0028721055663065397
+    "beta": 0,
+    "mse": 0.00283651736869051,
+    "mseFlatNoAdj": 0.003071415310715621,
+    "mseBestNoAdj": 0.00283651736869051
    },
    "sep": {
     "lambda": 0.9,
-    "kScale": 0.5,
+    "kScale": 1,
     "adjust": true,
     "beta": 0,
-    "mse": 0.3730225880665455,
-    "mseFlatNoAdj": 0.38080620392754216,
-    "mseBestNoAdj": 0.3741319625490714
+    "mse": 0.3955507979327338,
+    "mseFlatNoAdj": 0.4034026255243496,
+    "mseBestNoAdj": 0.3983742926546187
    },
    "yac": {
     "lambda": 1,
-    "kScale": 2,
+    "kScale": 1,
     "adjust": true,
     "beta": 0,
-    "mse": 1.9393268515607534,
-    "mseFlatNoAdj": 1.9425157572817033,
-    "mseBestNoAdj": 1.9425157572817033
+    "mse": 2.1198818571993585,
+    "mseFlatNoAdj": 2.12033258085301,
+    "mseBestNoAdj": 2.12033258085301
    },
    "hands": {
     "lambda": 1,
-    "kScale": 4,
-    "adjust": false,
+    "kScale": 1,
+    "adjust": true,
     "beta": 0,
-    "mse": 0.01570950185146655,
-    "mseFlatNoAdj": 0.01570950185146655,
-    "mseBestNoAdj": 0.01570950185146655
+    "mse": 0.016543439445445122,
+    "mseFlatNoAdj": 0.016543786265990425,
+    "mseBestNoAdj": 0.016543786265990425
    },
    "deep": {
-    "lambda": 0.9,
-    "kScale": 4,
+    "lambda": 0.75,
+    "kScale": 1,
     "adjust": true,
-    "beta": 1,
-    "mse": 91.36610709738456,
-    "mseFlatNoAdj": 92.63098976380357,
-    "mseBestNoAdj": 91.38708221328352
+    "beta": 0,
+    "mse": 92.1178483327662,
+    "mseFlatNoAdj": 93.45327289929139,
+    "mseBestNoAdj": 92.14049490070683
    },
    "eff": {
     "lambda": 1,
-    "kScale": 4,
+    "kScale": 1,
     "adjust": true,
     "beta": 0.5,
-    "mse": 0.20056915256623006,
-    "mseFlatNoAdj": 0.20073130962163957,
-    "mseBestNoAdj": 0.2007018718618
+    "mse": 0.208890274815897,
+    "mseFlatNoAdj": 0.2095026807194263,
+    "mseBestNoAdj": 0.2095026807194263
    }
   },
   "TE": {
    "earn": {
     "lambda": 0.9,
-    "kScale": 0.5,
+    "kScale": 1,
     "adjust": false,
-    "beta": 1,
-    "mse": 0.0017795824624353236,
-    "mseFlatNoAdj": 0.0019605297367706106,
-    "mseBestNoAdj": 0.0017795824624353238
+    "beta": 0,
+    "mse": 0.0018013919704056012,
+    "mseFlatNoAdj": 0.0019773257797838055,
+    "mseBestNoAdj": 0.0018013919704056012
    },
    "sep": {
     "lambda": 1,
-    "kScale": 2,
-    "adjust": false,
-    "beta": 0,
-    "mse": 0.5972568806846124,
-    "mseFlatNoAdj": 0.5972568806846124,
-    "mseBestNoAdj": 0.5972568806846124
+    "kScale": 1,
+    "adjust": true,
+    "beta": 0.5,
+    "mse": 0.6052578851121497,
+    "mseFlatNoAdj": 0.607430094002756,
+    "mseBestNoAdj": 0.6061657059632057
    },
    "yac": {
     "lambda": 1,
-    "kScale": 2,
+    "kScale": 1,
     "adjust": false,
     "beta": 0,
-    "mse": 1.494969182709416,
-    "mseFlatNoAdj": 1.494969182709416,
-    "mseBestNoAdj": 1.494969182709416
+    "mse": 1.6279375204444109,
+    "mseFlatNoAdj": 1.6279375204444109,
+    "mseBestNoAdj": 1.6279375204444109
    },
    "hands": {
-    "lambda": 1,
-    "kScale": 4,
+    "lambda": 0.95,
+    "kScale": 1,
     "adjust": false,
     "beta": 0,
-    "mse": 0.017535253912077647,
-    "mseFlatNoAdj": 0.017535253912077647,
-    "mseBestNoAdj": 0.017535253912077647
+    "mse": 0.017773048676964952,
+    "mseFlatNoAdj": 0.0177740526153616,
+    "mseBestNoAdj": 0.017773048676964952
    },
    "deep": {
     "lambda": 1,
-    "kScale": 2,
-    "adjust": false,
+    "kScale": 1,
+    "adjust": true,
     "beta": 0,
-    "mse": 163.58196788382477,
-    "mseFlatNoAdj": 163.58196788382477,
-    "mseBestNoAdj": 163.58196788382477
+    "mse": 175.2877261611111,
+    "mseFlatNoAdj": 175.59315922301576,
+    "mseBestNoAdj": 175.59315922301576
    },
    "eff": {
     "lambda": 1,
-    "kScale": 4,
+    "kScale": 1,
     "adjust": false,
     "beta": 0,
-    "mse": 0.20199808733835184,
-    "mseFlatNoAdj": 0.20199808733835184,
-    "mseBestNoAdj": 0.20199808733835184
+    "mse": 0.20334132690669499,
+    "mseFlatNoAdj": 0.20334132690669499,
+    "mseBestNoAdj": 0.20334132690669499
    }
   }
  }

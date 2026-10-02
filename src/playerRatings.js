@@ -16,6 +16,8 @@ import fs from 'node:fs';
 import { loadPlays, loadNgs, loadPlayerIds } from './pbp.js';
 import { stateOf } from './volume.js';
 
+const VOLUME = new Set(['load', 'earn']);
+export const HISTORY = 1; // past seasons included (set by scripts/rating_history_test.mjs)
 const MIN_SAMPLE = { QB: 150, RB: 60, WR: 30, TE: 25 }; // ACTUAL dropbacks / carries / targets over this season + last
 const DEF_K = { QB: 150, RB: 150, WR: 80, TE: 60 };     // shrink for a defense's allowance (in that metric's sample)
 
@@ -49,6 +51,11 @@ export const SKILLS = {
 };
 SKILLS.TE = SKILLS.WR;
 
+// Overall = skills weighted by what predicted next-4-game production (scripts/learn_overall_weights.mjs); a position keeps
+// the hand-set weights in SKILLS unless the learned ones ranked players better in BOTH walk-forward directions.
+let OW = null;
+try { OW = JSON.parse(fs.readFileSync(new URL('./fitted_overall_weights.json', import.meta.url), 'utf8')).byPos; } catch { OW = null; }
+export const overallWeight = (pos, k, hand) => (OW?.[pos]?.ship ? OW[pos].weights[k] ?? 0 : hand);
 let FIT = null;
 try { FIT = JSON.parse(fs.readFileSync(new URL('./fitted_rating_decay.json', import.meta.url), 'utf8')); } catch { FIT = null; }
 export const fitFor = (pos, key) => FIT?.byPos?.[pos]?.[key] || { lambda: 0.95, adjust: true, kScale: 1, beta: 0 };
@@ -185,14 +192,22 @@ export function ratingsFrom({ R, posOf }, season, week, opts = {}) {
     const cand = [];
     for (const [gs, list] of R) {
       if (posOf(gs) !== pos) continue;
-      const games = list.filter((r) => r.season === season - 1 || (r.season === season && r.week < week));
+      const games = list.filter((r) => (r.season >= season - (opts.history ?? HISTORY) && r.season < season) || (r.season === season && r.week < week));
       if (!games.length) continue;
       const vals = {};
       for (const [k, , , , , canAdj] of SKILLS[pos]) {
         const l = lam(pos, k), doAdj = canAdj && adj(pos, k);
+        // PARTIAL GAMES (injury exit, early blowout pull): for the volume skills, a game where his share was under 40% of
+        // his own median isn't his role — it's a game he didn't finish. Left out, so one early exit can't sink a starter.
+        let cut = -Infinity;
+        if (VOLUME.has(k) && !opts.keepPartial) {
+          const sh = games.map((r) => r.m[k]).filter((m) => m && m[1] > 0).map((m) => m[0] / m[1]).sort((a, b) => a - b);
+          if (sh.length >= 4) cut = 0.4 * sh[Math.floor(sh.length / 2)];
+        }
         let num = 0, den = 0, raw = 0, w2 = 0;
         for (let i = games.length - 1, age = 0; i >= 0; i--, age++) {
           const r = games[i], m = r.m[k]; if (!m || !m[1]) continue;
+          if (m[0] / m[1] < cut) continue;
           const w = Math.pow(l, age);
           let n = m[0];
           const b = bet(pos, k), cx = r.ctx?.[k];
@@ -237,9 +252,9 @@ export function ratingsFrom({ R, posOf }, season, week, opts = {}) {
       });
     }
     // OVERALL: weighted sum of skill z-scores, re-standardized across the position so it spreads like a normal rating.
-    const comp = out.map((o) => { let ws = 0, s = 0; for (const [k, , , , w] of SKILLS[pos]) { const r = o.skills[k]; if (!r || r.noData) continue; ws += w; s += w * zOf(r.rating); } return ws ? s / ws : null; });
+    const comp = out.map((o) => { let ws = 0, s = 0; for (const [k, , , , w0] of SKILLS[pos]) { const w = overallWeight(pos, k, w0); const r = o.skills[k]; if (!r || r.noData) continue; ws += w; s += w * zOf(r.rating); } return ws ? s / ws : null; });
     const cv = comp.filter((x) => x != null), cm = cv.reduce((a, b) => a + b, 0) / (cv.length || 1), csd = Math.sqrt(cv.reduce((a, b) => a + (b - cm) ** 2, 0) / Math.max(1, cv.length - 1)) || 1;
-    out.forEach((o, i) => { o.overall = comp[i] == null ? null : r100(phi((comp[i] - cm) / csd)); players.set(o.gsis, o); });
+    out.forEach((o, i) => { o.z = comp[i] == null ? null : round3((comp[i] - cm) / csd); o.overall = o.z == null ? null : onScale(pos, o.z); players.set(o.gsis, o); });
     byPos[pos] = out.sort((a, b) => (b.overall ?? 0) - (a.overall ?? 0));
   }
   return { season, week, players, byPos };
@@ -267,7 +282,7 @@ export async function ratingsBoard(season, week, pos, { includeMadden = false } 
   const PR = await playerRatingsFor(season, week).catch(() => null);
   for (const x of list) { const p = PR?.players?.[x.gsis]; x.playerRating = p ? p.rating : null; }
   list.sort((a, b) => (b.playerRating ?? -1) - (a.playerRating ?? -1) || (b.overall ?? 0) - (a.overall ?? 0));
-  return { season, week, pos, method: R.method, combined, playerRatingWeights: PR?.weights?.[pos] || null, skills: SKILLS[pos].map(([key, label, , up, weight]) => ({ key, label, higherIsBetter: up, weight, lambda: fitFor(pos, key).lambda, adjusted: fitFor(pos, key).adjust })), players: list };
+  return { season, week, pos, method: R.method, combined, playerRatingWeights: PR?.weights?.[pos] || null, skills: SKILLS[pos].map(([key, label, , up, weight]) => ({ key, label, higherIsBetter: up, weight: overallWeight(pos, key, weight), lambda: fitFor(pos, key).lambda, adjusted: fitFor(pos, key).adjust })), players: list };
 }
 
 /** Per-play noise variance for a skill, pooled from each qualified player's game-to-game spread around his own mean. */
@@ -282,8 +297,13 @@ function noiseOf(R, cand, pos, k, season, week) {
   }
   return df ? ss / df : 1;
 }
+// Overall ratings are shown on a MADDEN-STYLE scale so they read like the Madden column beside them: position average and
+// spread of Madden 27 OVR among the players we rate (week 4, 2026: QB 78±10, RB 81±7, WR 80±7, TE 77±8). Only those two
+// numbers per position are used — no player's Madden rating enters his own Overall.
+export const SCALE = { QB: [78, 10], RB: [81, 7], WR: [80, 7], TE: [77, 8] };
+export const onScale = (pos, z) => Math.max(40, Math.min(99, Math.round(SCALE[pos][0] + SCALE[pos][1] * z)));
 const r100 = (p) => Math.min(99, Math.max(1, Math.round(100 * p))); // 1–99 like a normal rating scale
-const zOf = (r) => { const p = Math.min(0.999, Math.max(0.001, r / 100)); let lo = -4, hi = 4; for (let i = 0; i < 40; i++) { const mid = (lo + hi) / 2; if (phi(mid) < p) lo = mid; else hi = mid; } return (lo + hi) / 2; };
+export const zOf = (r) => { const p = Math.min(0.999, Math.max(0.001, r / 100)); let lo = -4, hi = 4; for (let i = 0; i < 40; i++) { const mid = (lo + hi) / 2; if (phi(mid) < p) lo = mid; else hi = mid; } return (lo + hi) / 2; };
 
 function phi(z) {
   const t = 1 / (1 + 0.2316419 * Math.abs(z)), d = 0.3989423 * Math.exp(-z * z / 2);
