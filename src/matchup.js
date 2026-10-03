@@ -132,12 +132,27 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
     if (tid === home.id || tid === away.id) prov.add(r.meta);
     rosters.set(tid, espn.parseRoster(r.data));
   }));
-  const posMap = new Map(), nameMap = new Map(), rosterById = new Map(), headshots = new Map();
+  const posMap = new Map(), nameMap = new Map(), rosterById = new Map(), headshots = new Map(), inferredPos = new Map();
   for (const [tid, list] of rosters) for (const p of list) {
     posMap.set(p.id, p.pos); nameMap.set(p.id, p.name); if (p.headshot) headshots.set(p.id, p.headshot);
     if (tid === home.id || tid === away.id) rosterById.set(p.id, { ...p, teamId: tid });
   }
   for (const g of [...H.games, ...A.games]) for (const r of g.box.values()) if (!nameMap.has(r.athleteId)) nameMap.set(r.athleteId, r.name);
+  // College: ESPN team rosters miss many players (transfers especially — Northwestern's co-lead back Gavin Sawchuk was
+  // absent, so his 22 carries in three games went to "other"). A player with box-score usage but no roster position gets
+  // one inferred from that usage: passer → QB, mostly carries → RB, otherwise targets → WR.
+  if (lg === 'cfb') {
+    const use = new Map();
+    for (const g of [...H.games, ...A.games]) for (const r of g.box.values()) {
+      if (posMap.has(r.athleteId)) continue;
+      const u = use.get(r.athleteId) || use.set(r.athleteId, { att: 0, car: 0, tgt: 0 }).get(r.athleteId);
+      u.att += r.stats.pass_att || 0; u.car += r.stats.carries || 0; u.tgt += r.stats.targets ?? r.stats.receptions ?? 0;
+    }
+    for (const [id, u] of use) {
+      const pos = u.att >= 5 ? 'QB' : u.car >= 3 && u.car >= 1.5 * u.tgt ? 'RB' : u.tgt > 0 ? 'WR' : null;
+      if (pos && !/^\s*team\s*$/i.test(nameMap.get(id) || '')) { posMap.set(id, pos); inferredPos.set(id, pos); }
+    }
+  }
   // Blind mode: positions come only from as-of-week data (never a current roster).
   if (blind) {
     const bp = blind.positionsFor ? blind.positionsFor([...H.games, ...A.games]) : (blind.positions || new Map());
@@ -381,9 +396,10 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       let carryShare = wtc > 0 ? wc / wtc : 0;
       // Backs: role measured WITHOUT blowout plays (|margin| ≥ 17) — garbage-time carries (a third back mopping up down 24)
       // aren't his job in a normal game script; blowout scripts keep their own measured shares below. Next-game share
-      // error 14.9 → 14.6 pts, depth backs 10.9 → 10.5 (scripts/run_context_tests.mjs B, 2022–25).
+      // error 14.9 → 14.6 pts, depth backs 10.9 → 10.5 (scripts/run_context_tests.mjs B, 2022–25). College (blowout = 21+):
+      // 10.8 → 10.3 pts, lead backs 14.3 → 14.1 (scripts/cfb_run_tests.mjs B, 2025 play-by-play).
       const nbT = ['trail', 'close', 'lead'].reduce((a, k) => a + (stTC[k] || 0), 0);
-      if (pos === 'RB' && lg === 'nfl' && nbT >= 15 && wtc > 0) carryShare = ['trail', 'close', 'lead'].reduce((a, k) => a + (stC[k] || 0), 0) / nbT;
+      if (pos === 'RB' && nbT >= 15 && wtc > 0) carryShare = ['trail', 'close', 'lead'].reduce((a, k) => a + (stC[k] || 0), 0) / nbT;
       // A back who MISSED his team's last game (no box-score line, not on the injury report as out): his share from only
       // the games he appeared in overstates his role. Meet halfway with the share that counts the team games he missed
       // since his first appearance as zero carries (scripts/missing_games_share_test.mjs, 2022–25: backs who missed their
@@ -497,7 +513,9 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
 
       // Availability flags.
       const av = pregame ? availability(id, { injuries: injMap, roster: teamRoster, rosterCheck }) : { available: true, injury: null, severity: null };
-      let dispersion = 1 * wx.dispersion;
+      // College workloads swing far more than NFL ones: a lead back's carries ran 0.34×–1.74× expectation (p10–p90, 2025
+      // FBS, scripts/cfb_spread_test.mjs) vs the old 0.47×–1.63× band — widened to match.
+      let dispersion = (lg === 'cfb' ? CFB_DISPERSION : 1) * wx.dispersion;
       if (played.length <= 2) { dispersion *= 1.2; notes.push(`Small sample (${played.length} game${played.length === 1 ? '' : 's'} this season) — range widened.`); }
       if (av.severity === 'questionable') {
         dispersion *= 1.2;
@@ -578,11 +596,14 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       //  · the AVERAGE: a back whose YPC leans on long runs regresses, one who grinds it out keeps it — YPC −0.09 per point
       //    of 10+ rate above league (rate shrunk over 80 carries; held-out 2024–25 error 3.330 → 3.305). Capped ±0.5.
       const rb = pos === 'RB' && lg === 'nfl';
+      // College: a back's own long-run rate barely carries over game to game — shrunk over 700 (10+) / 250 (20+) carries
+      // toward the measured FBS rates (scripts/cfb_run_tests.mjs T); the YPC-on-explosiveness effect is NFL-only (untested).
+      const cfbRb = pos === 'RB' && lg === 'cfb';
       const r10raw = info.pbp.carries ? info.pbp.r10 / info.pbp.carries : null;
       const explAdj = rb ? clamp(EXPL.meanCoef * (shrink(r10raw, info.pbp.carries || 0, lgR10, 80) - lgR10), -0.5, 0.5) : 0;
       const ypc = Math.max(1.5, ypcPlayer * ypcMult + explAdj);
-      const r10p = shrink(r10raw, info.pbp.carries || 0, lgR10, rb ? EXPL.k10 : SHRINK.explosiveRun);
-      const r20p = shrink(info.pbp.carries ? info.pbp.r20 / info.pbp.carries : null, info.pbp.carries || 0, lgR20, rb ? EXPL.k20 : SHRINK.explosiveRun * 1.5);
+      const r10p = shrink(r10raw, info.pbp.carries || 0, lgR10, rb ? EXPL.k10 : cfbRb ? EXPL.cfbK10 : SHRINK.explosiveRun);
+      const r20p = shrink(info.pbp.carries ? info.pbp.r20 / info.pbp.carries : null, info.pbp.carries || 0, lgR20, rb ? EXPL.k20 : cfbRb ? EXPL.cfbK20 : SHRINK.explosiveRun * 1.5);
       const exR = ox.defense.explosiveRates;
       const m10 = clamp((pos === 'QB' ? exR.qbRun10.shrunk / P.qbRun10 : exR.rbRun10.shrunk / P.run10), 0.7, 1.45);
       const m20 = clamp((pos === 'QB' ? exR.qbRun20.shrunk / P.qbRun20 : exR.rbRun20.shrunk / P.run20), 0.6, 1.6);
@@ -645,6 +666,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
     const pilotTd = avg(pilot.teamTds);
     const targetTd = Math.max(0.4, (impliedPts - 3 * fgPerGame) / 6.95);
     team.tdScale = clamp(pilotTd > 0 ? targetTd / pilotTd : 1, 0.4, 2.5);
+    if (lg === 'cfb') team.runEffCv = CFB_RUN_EFF_CV; // scripts/cfb_spread_test.mjs: college yards 0.14×–2.16× expectation (p10–p90)
     const sim = simulateTeam(team, players, weights, { sims: SIMS, seed });
     const kick = roles.k ? simulateKicker(sim.teamTds, { fgPerGame, xpRate: P.xpPerTd, seed: seed ^ 0x51 }) : null;
 
@@ -1112,7 +1134,8 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
 }
 
 // ---------- helpers ----------
-const EXPL = { k10: 250, k20: 400, meanCoef: -9.05 }; // scripts/explosive_mean_test.mjs
+const CFB_DISPERSION = 1.45, CFB_RUN_EFF_CV = 0.4;
+const EXPL = { k10: 250, k20: 400, meanCoef: -9.05, cfbK10: 700, cfbK20: 250 }; // scripts/explosive_mean_test.mjs
 const DEF_PRIOR_W = 0.75; // scripts/run_context_tests.mjs A
 /** A defense's quality-adjusted RB YPC allowed last season, as a ratio to that season's league average. */
 function priorRunDefense(WEEKLY, opp) {

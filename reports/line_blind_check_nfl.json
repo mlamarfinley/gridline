@@ -1,7 +1,7 @@
 {
  "league": "nfl",
  "week": 4,
- "checkedAt": "2026-10-02T23:48:06.969Z",
+ "checkedAt": "2026-10-03T04:25:12.590Z",
  "games": [
   {
    "id": "401872964",
@@ -34,7 +34,7 @@
    "id": "401872972",
    "matchup": "NYJ @ CHI",
    "stats": 94,
-   "withLines": 40,
+   "withLines": 47,
    "differing": 0,
    "maxAbsDiff": 0,
    "linesInBlindRun": false
@@ -151,5 +151,5 @@
  "stats": 1492,
  "differing": 0,
  "maxAbsDiff": 0,
- "withLines": 641
+ "withLines": 648
 }

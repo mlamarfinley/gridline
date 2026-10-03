@@ -162,6 +162,9 @@ export function simulateTeam(team, players, weights, { sims = SIMS, seed = 1, op
     const multT = players.map((p) => { const k = WORKLOAD_K.target / (p.dispersion * p.dispersion); return R.gamma(k) / k; });
     const plays = Math.max(35, Math.round(team.plays * (1 + PLAYS_CV * R.normal())));
     const prShift = PASS_RATE_SD * R.normal(); // game-level play-calling noise
+    // Game-level run-efficiency swing (blocking, fronts, weather — the whole team's day). College only (team.runEffCv):
+    // per-run draws alone made yardage ranges too tight vs history. Mean-preserving lognormal.
+    const runEff = team.runEffCv ? Math.exp(team.runEffCv * R.normal() - (team.runEffCv * team.runEffCv) / 2) : 1;
     const openN = Math.round(plays * openingCloseShare);
     const cache = {};
     const getShares = (state) => (cache[state] ||= { c: sharesFor('carryShare', state, multC), t: sharesFor('targetShare', state, multT) });
@@ -207,7 +210,7 @@ export function simulateTeam(team, players, weights, { sims = SIMS, seed = 1, op
         const ri = pickIdx(sh.c);
         const rp = ri >= 0 ? players[ri] : null;
         const d = rp ? rp.run : team.other.run;
-        const y = drawRun(d, R);
+        const y = runEff === 1 ? drawRun(d, R) : Math.round(drawRun(d, R) * runEff);
         const td = R() < (rp ? rp.rushTd : team.other.rushTd) * team.tdScale;
         if (td) tds++;
         if (rp) {

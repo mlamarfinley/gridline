@@ -39,7 +39,7 @@ export const CFBD_API_KEY = process.env.CFBD_API_KEY || '';
 //            absorbs at most 55% of an absent lead back's share (measured 2022–25).
 // 1.4.4 NFL: lead backs (RB1) get +0.78 carries on top of the pooled RB calibration — the pooled shift is learned
 //            on RB1s and RB2s together and left RB1s ~0.8 carries short (walk-forward: 2026 MAE 4.48 → 4.36).
-export const MODEL_VERSION = 'fbm-1.9.2';
+export const MODEL_VERSION = 'fbm-2.0.0';
 // 1.7.0 NFL: Player Rating (Madden + Production Monitor) corrects RB carries / rushing yards (2024 held-out MAE
 //            −1.3% / −2.5%); Production Monitor and Player Rating on every card.
 // 1.6.0 NFL: run defense judged against the quality of backs it faced (each back vs his own normal YPC);
@@ -118,11 +118,11 @@ export const PRIORS = {
     playsPerGame: 70,
     passRate: { blowTrail: 0.66, trail: 0.60, close: 0.50, lead: 0.40, blowLead: 0.34 },
     sackRate: 0.065,
-    ypc: { QB: 5.0, RB: 5.0, WR: 7.0, TE: 4.5 },
+    ypc: { QB: 5.0, RB: 4.75, WR: 7.0, TE: 4.5 }, // RB: 4.73 on 15.5k non-QB FBS runs, 2025 ESPN play-by-play (scripts/cfb_runs.mjs)
     catchRate: { RB: 0.74, WR: 0.62, TE: 0.68 },
     yardsPerCatch: { RB: 8.5, WR: 13.5, TE: 11.5 },
     intRate: 0.024,
-    run10: 0.14, run20: 0.05,
+    run10: 0.117, run20: 0.030, // measured, 2025 FBS non-QB runs (were assumed 0.14 / 0.05); NFL is ~0.10 / 0.022
     qbRun10: 0.18, qbRun20: 0.05,
     catch20: { RB: 0.07, WR: 0.22, TE: 0.15 },
     catch40: { RB: 0.015, WR: 0.06, TE: 0.03 },
