@@ -368,6 +368,8 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       if (d) for (const s2 of STATES) passRate[s2] = clamp(passRate[s2] + d, 0.2, 0.85);
     }
 
+    // College: last season's role on this team (ESPN box scores of that season), as a light prior — see CFB_PRIOR_K.
+    const CFBP = lg === 'cfb' && !blind ? await cfbPriorShares(t.id, season - 1).catch(() => null) : null;
     const players = [];
     const pInfo = {};
     for (const id of simIds) {
@@ -433,6 +435,16 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
           if (shrunkRole) notes0.push(`Last season's role (${fmtPct(ps.carry)} of ${t.abbr}'s carries) not used: he has ${fmtPct(mine / allTC)} this season — backs whose role shrank like this didn't get it back (2022–25).`);
           if (ps.carry != null && pos === 'RB' && !shrunkRole) carryShare = (nC * carryShare + FIT.share.carry.k * ps.carry) / (nC + FIT.share.carry.k);
         }
+      }
+      // College: last season's same-team share worth half a game (scripts/cfb_prior_test.mjs, 2024 → 2025: first-three-game
+      // error carries 9.88 → 9.78 pts, receptions share 7.84 → 7.80; neutral later in the season; more weight was worse —
+      // college roles turn over). Efficiency already blends last season at half weight (tested best for YPC and yds/catch).
+      const cp = CFBP?.get(String(id));
+      if (cp && cp.g >= 4) {
+        const n = played.length, k = CFB_PRIOR_K;
+        if (pos !== 'QB') carryShare = (n * carryShare + k * cp.cs) / (n + k);
+        if (pos !== 'QB') targetShare = (n * targetShare + k * cp.ts) / (n + k);
+        notes0.push(`Last season with ${t.abbr} (${cp.g} games): ${fmtPct(cp.cs)} of carries, ${fmtPct(cp.ts)} of catches — counted as half a game alongside his ${n} this season.`);
       }
       // ROLE MOVES that stick (scripts/rookie_ramp_test.mjs, nflverse 2021–25, α picked on 2022–23, checked on 2024–25):
       //  · a ROOKIE back whose carry share rose 3 games running (+10 pts vs his earlier games): lean 50% toward his latest
@@ -1134,6 +1146,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
 }
 
 // ---------- helpers ----------
+const CFB_PRIOR_K = 0.5; // scripts/cfb_prior_test.mjs
 const CFB_DISPERSION = 1.45, CFB_RUN_EFF_CV = 0.4;
 const EXPL = { k10: 250, k20: 400, meanCoef: -9.05, cfbK10: 700, cfbK20: 250 }; // scripts/explosive_mean_test.mjs
 const DEF_PRIOR_W = 0.75; // scripts/run_context_tests.mjs A
@@ -1144,6 +1157,24 @@ function priorRunDefense(WEEKLY, opp) {
   const lg = L.reduce((a, r) => a + +r.rushing_yards, 0) / L.reduce((a, r) => a + +r.carries, 0);
   const q = rbDefenseQuality(WEEKLY.prev, WEEKLY.prev2 || [], 99, opp);
   return q ? q.adjYpc / lg : null;
+}
+const cfbPriorCache = new Map();
+/** College: each player's share of team carries and catches in last season's regular-season games for this team. */
+async function cfbPriorShares(teamId, season) {
+  const key = `${teamId}|${season}`; if (cfbPriorCache.has(key)) return cfbPriorCache.get(key);
+  const p = (async () => {
+    const sched = espn.parseSchedule((await espn.getSchedule('cfb', teamId, season)).data).filter((g) => g.completed && g.seasonType === 2);
+    const out = new Map();
+    for (const g of sched) {
+      let box; try { box = espn.parseBoxscore((await espn.getSummary('cfb', g.id, { final: true })).data); } catch { continue; }
+      const mine = [...box.values()].filter((r) => String(r.teamId) === String(teamId)); if (!mine.length) continue;
+      const tc = mine.reduce((a, r) => a + (r.stats.carries || 0), 0), tr = mine.reduce((a, r) => a + (r.stats.receptions || 0), 0);
+      for (const r of mine) { if ((r.stats.pass_att || 0) >= 5) continue; const a = out.get(String(r.athleteId)) || out.set(String(r.athleteId), { cs: 0, ts: 0, g: 0 }).get(String(r.athleteId)); a.g++; a.cs += tc ? (r.stats.carries || 0) / tc : 0; a.ts += tr ? (r.stats.receptions || 0) / tr : 0; }
+    }
+    for (const a of out.values()) { a.cs /= a.g; a.ts /= a.g; }
+    return out;
+  })();
+  cfbPriorCache.set(key, p); return p;
 }
 function avg(a) { let s = 0; for (const x of a) s += x; return a.length ? s / a.length : 0; }
 /**

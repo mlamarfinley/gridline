@@ -1,7 +1,7 @@
 {
  "league": "nfl",
  "week": 4,
- "checkedAt": "2026-10-03T04:25:12.590Z",
+ "checkedAt": "2026-10-03T06:40:57.950Z",
  "games": [
   {
    "id": "401872964",
@@ -70,7 +70,7 @@
    "id": "401872968",
    "matchup": "GB @ TB",
    "stats": 94,
-   "withLines": 44,
+   "withLines": 43,
    "differing": 0,
    "maxAbsDiff": 0,
    "linesInBlindRun": false
@@ -151,5 +151,5 @@
  "stats": 1492,
  "differing": 0,
  "maxAbsDiff": 0,
- "withLines": 648
+ "withLines": 647
 }
