@@ -388,6 +388,7 @@ function cardBody(m, c, key) {
   const bk = s.book;
   return `<div class="core">
     <div class="proj">
+      <div class="faint">Baseline projection</div>
       <div class="big">${f1(s.proj)}</div>
       <div class="rng">range ${f1(s.p10)}–${f1(s.p90)} · median ${f1(s.p50)}</div>
       <dl>
@@ -401,6 +402,7 @@ function cardBody(m, c, key) {
     </div>
     <div class="chart">${last5Chart(s)}${h2hBlock(s)}${vsPosBlock(s)}</div>
   </div>
+  ${s.experimental ? `<section class="experimental-forecast"><div><span>Experimental forecast</span><strong>${f1(s.experimental.projection)}</strong><span>${s.experimental.adjustmentPct > 0 ? '+' : ''}${s.experimental.adjustmentPct}% vs baseline</span></div><p>Context experiment · unvalidated · ${s.experimental.groupsAvailable}/5 evidence groups</p><details><summary>Why the experimental number changed</summary><ul>${s.experimental.signals.map(g => `<li><b>${esc(g.group)}</b> · ${g.score > 0 ? 'upward' : g.score < 0 ? 'downward' : 'neutral'} signal<ul>${g.evidence.map(e => `<li>${esc(e)}</li>`).join('')}</ul></li>`).join('')}</ul>${s.experimental.constraint ? `<p>${esc(s.experimental.constraint)}</p>` : ''}<p>${esc(s.experimental.note)}</p></details></section>` : ''}
   ${s.explain ? `<details class="why"><summary>Why this projection</summary><div class="expl">${esc(s.explain)}</div></details>` : ''}
   ${c.playerRating ? `<div class="prating">Player Rating <b>${c.playerRating.rating}</b> <span class="faint">(Madden + production; ${c.playerRating.effPerTouch >= 0 ? '+' : ''}${c.playerRating.effPerTouch} yds/touch vs expected, recent)</span></div>` : ''}
   ${c.monitor?.length ? monitorBlock(c) : ''}
@@ -464,13 +466,13 @@ function vsPosBlock(s) {
 function last5Chart(s) {
   const games = s.last5 || [];
   const W = 340, Hh = 150, top = 18, bottom = 34, left = 4;
-  const n = games.length + 1;
+  const n = games.length + (s.experimental ? 2 : 1);
   const bw = (W - left) / n;
   const vals = games.map((g) => g.value ?? 0);
-  const maxV = Math.max(1, ...vals, s.p90 ?? 0, s.book?.line ?? 0) * 1.08;
+  const maxV = Math.max(1, ...vals, s.p90 ?? 0, s.proj ?? 0, s.experimental?.projection ?? 0, s.book?.line ?? 0) * 1.08;
   const y = (v) => top + (Hh - top - bottom) * (1 - v / maxV);
   const base = y(0);
-  let svg = `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Last ${games.length} games, ${esc(s.label)}">`;
+  let svg = `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Last ${games.length} games, ${esc(s.label)}; baseline ${f1(s.proj)}${s.experimental ? `; experimental ${f1(s.experimental.projection)}` : ''}">`;
   svg += `<line x1="0" x2="${W}" y1="${base}" y2="${base}" stroke="var(--rule-2)"/>`;
   games.forEach((g, i) => {
     const x = left + i * bw + bw * 0.18, w = bw * 0.64;
@@ -488,14 +490,19 @@ function last5Chart(s) {
     svg += `<line x1="${cx - 6}" x2="${cx + 6}" y1="${y(s.p90)}" y2="${y(s.p90)}" stroke="var(--model)"/><line x1="${cx - 6}" x2="${cx + 6}" y1="${y(s.p10)}" y2="${y(s.p10)}" stroke="var(--model)"/>`;
     svg += `<rect x="${x + w * 0.2}" y="${y(s.proj) - 2}" width="${w * 0.6}" height="4" fill="var(--model)"/>`;
     svg += `<text class="val" x="${cx}" y="${y(s.p90) - 5}" text-anchor="middle" style="fill:var(--model)">${f1(s.proj)}</text>`;
-    svg += `<text class="opp" x="${cx}" y="${base + 13}" text-anchor="middle" style="fill:var(--model)">PROJ</text>`;
+    svg += `<text class="opp" x="${cx}" y="${base + 13}" text-anchor="middle" style="fill:var(--model)">BASE</text>`;
+  }
+  if (s.experimental) {
+    const ex = left + (games.length + 1) * bw + bw / 2, ey = y(s.experimental.projection);
+    svg += `<path d="M ${ex} ${ey-5} L ${ex+5} ${ey} L ${ex} ${ey+5} L ${ex-5} ${ey} Z" fill="var(--experiment)"><title>Experimental forecast: ${f1(s.experimental.projection)}; unvalidated point forecast</title></path>`;
+    svg += `<text class="val" x="${ex}" y="${ey-9}" text-anchor="middle" style="fill:var(--experiment)">${f1(s.experimental.projection)}</text><text class="opp" x="${ex}" y="${base+13}" text-anchor="middle" style="fill:var(--experiment)">EXP</text>`;
   }
   if (s.book?.line != null) {
     svg += `<line class="bookline" x1="0" x2="${W}" y1="${y(s.book.line)}" y2="${y(s.book.line)}" stroke="var(--book)" stroke-dasharray="4 3"/>`;
     svg += `<text x="2" y="${y(s.book.line) - 3}" text-anchor="start" class="halo bookline" style="fill:var(--book)">line ${s.book.line}</text>`;
   }
   if (!games.length) svg += `<text x="${W / 2}" y="${Hh / 2}" text-anchor="middle">No prior games in feed</text>`;
-  return svg + '</svg>';
+  return svg + '</svg>' + (s.experimental ? '<div class="forecast-legend">BASE: baseline + range · <span class="exp">◆ EXP: experimental point forecast</span></div>' : '');
 }
 
 function details(m, c, key) {

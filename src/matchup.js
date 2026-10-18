@@ -1,3 +1,4 @@
+import { addExperimental } from './experimental.js';
 // Builds the full matchup payload: header (odds/implied score), team context, injuries,
 // role selection, player projections with explanations, and provenance.
 import * as espn from './espn.js';
@@ -1090,12 +1091,15 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
     }
   }
 
+  // Live experimental second opinion; never synthesize historical experimental picks.
+  if (pregame && !blind) for (const t of Object.values(teams)) addExperimental(t);
+
   // Ledger rows: every displayed card (incl. kicker and an outlier-pick card).
   for (const t of Object.values(teams)) {
     const { opp: oppAbbr, expMargin, impliedPts } = t._ctx;
     for (const c of [...t.cards, ...(t.kicker ? [t.kicker] : [])]) for (const s of Object.values(c.stats)) {
       if (!s.available) continue;
-      flat.push({ playerId: c.id, playerName: c.name, team: t.abbr, opponent: oppAbbr, position: c.pos, role: c.role, stat: s.key, projection: s.proj, p10: s.p10, p50: s.p50, p90: s.p90, threshold: s.threshold, thresholdSource: s.thresholdSource, probOver: s.probOver, fairOver: s.fairOdds?.over ?? null, bookLine: s.book?.line ?? null, bookOver: s.book?.overPrice ?? null, bookUnder: s.book?.underPrice ?? null, bookSource: s.book?.source ?? null, bookUpdated: s.book?.updated ?? null, opportunity: c.opportunity, efficiency: c.efficiency ? { ypc: c.efficiency.ypc.final, catchRate: c.efficiency.catchRate.final, ypCatch: c.efficiency.ypCatch.final } : null, expMargin, impliedPts });
+      flat.push({ playerId: c.id, playerName: c.name, team: t.abbr, opponent: oppAbbr, position: c.pos, role: c.role, stat: s.key, experimental: s.experimental || null, projection: s.proj, p10: s.p10, p50: s.p50, p90: s.p90, threshold: s.threshold, thresholdSource: s.thresholdSource, probOver: s.probOver, fairOver: s.fairOdds?.over ?? null, bookLine: s.book?.line ?? null, bookOver: s.book?.overPrice ?? null, bookUnder: s.book?.underPrice ?? null, bookSource: s.book?.source ?? null, bookUpdated: s.book?.updated ?? null, opportunity: c.opportunity, efficiency: c.efficiency ? { ypc: c.efficiency.ypc.final, catchRate: c.efficiency.catchRate.final, ypCatch: c.efficiency.ypCatch.final } : null, expMargin, impliedPts });
     }
     delete t._support; delete t._ctx; delete t._hist;
   }

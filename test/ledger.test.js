@@ -96,3 +96,15 @@ test('backtests are stored separately and never counted as pregame accuracy', ()
   assert.equal(evaluationRows({ kind: 'backtest' }, d).length, 2);
   closeLedger();
 });
+
+test('experimental forecasts and their reasoning are archived independently of baseline changes', () => {
+  const d=openLedger(':memory:');
+  const m=matchup();m.projections[0].experimental={version:'context-experiment-1',projection:72,signals:[{group:'Workload',score:1}]};
+  const a=recordSnapshot(m,{},d);assert(a.ok);
+  const g=JSON.parse(d.prepare('SELECT game_json FROM runs WHERE id=?').get(a.runId).game_json);
+  assert.equal(g.experimental?.[0]?.forecast.projection,72);
+  m.projections[0].experimental.projection=68;
+  const b=recordSnapshot(m,{},d);assert(b.ok&&!b.duplicate);
+  assert.equal(d.prepare('SELECT projection FROM snapshots WHERE run_id=? AND player_id=?').get(a.runId,'p1').projection,60);
+  closeLedger();
+});

@@ -402,3 +402,15 @@ details.ratings td.num { text-align: right; font-variant-numeric: tabular-nums; 
 .prating { font-size: 12px; margin-top: 8px; }
 .monitor td { white-space: nowrap; }
 .monitor table { display: block; overflow-x: auto; max-width: 100%; }
+
+/* A separate forecast; color and diamond marker distinguish it from the baseline. */
+:root { --experiment: #c49bff; }
+.experimental-forecast { border: 1px solid var(--experiment); border-radius: 8px; padding: 10px 12px; margin: 10px 0; background: rgba(150,100,230,.07); }
+.experimental-forecast > div { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.experimental-forecast strong { color: var(--experiment); font-size: 24px; font-variant-numeric: tabular-nums; }
+.experimental-forecast p, .experimental-forecast details { font-size: 12px; line-height: 1.5; }
+.experimental-forecast p { color: var(--muted); margin: 5px 0; }
+.experimental-forecast summary { cursor: pointer; }
+.experimental-forecast ul { padding-left: 18px; }
+.forecast-legend { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+.forecast-legend .exp { color: var(--experiment); }

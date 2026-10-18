@@ -83,7 +83,7 @@ export function openLedger(file = DB_PATH) {
 export function closeLedger() { if (db) { db.close(); db = null; } }
 
 function hashProjections(m) {
-  const core = m.projections.map((p) => [p.playerId, p.stat, p.projection, p.p10, p.p90, p.bookLine]).sort();
+  const core = m.projections.map((p) => [p.playerId, p.stat, p.projection, p.p10, p.p90, p.bookLine, p.experimental || null]).sort();
   return crypto.createHash('sha1').update(JSON.stringify(core)).digest('hex');
 }
 
@@ -108,6 +108,7 @@ export function recordSnapshot(m0, { kind = 'pregame', now = new Date() } = {}, 
     odds: m.odds, implied: m.implied, status: m.status, mode: m.mode,
     teams: [m.away, m.home].map((t) => ({ abbr: t.abbr, impliedPts: t.impliedPts, expMargin: t.expMargin, scriptWeights: t.scriptWeights, params: t.params })),
     weather: m.weather, disclosures: m.disclosures,
+    experimental: m.projections.filter(p => p.experimental).map(p => ({ playerId: p.playerId, playerName: p.playerName, team: p.team, stat: p.stat, line: p.bookLine ?? null, forecast: p.experimental })),
   };
   d.exec('BEGIN');
   try {
