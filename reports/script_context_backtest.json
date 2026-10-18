@@ -1,0 +1,394 @@
+{
+  "generatedAt": "2026-10-18T01:21:19.998Z",
+  "note": "Fixed heuristic candidate; reconstructed historical player/team inputs. Original archived game totals and player lines. No current injury/weather applied. Not prospective validation; original historical data revisions and current model reconstruction limit inference.",
+  "summary": {
+    "games": 15,
+    "baseline": {
+      "checkpointAccuracy": 0.5277777777777778,
+      "scoreMAE": 4.320833333333334,
+      "brier": 0.5333879594444445
+    },
+    "candidate": {
+      "checkpointAccuracy": 0.5922222222222223,
+      "scoreMAE": 4.298222222222222,
+      "brier": 0.5203202783333333
+    }
+  },
+  "games": [
+    {
+      "id": "401872965",
+      "home": "WSH",
+      "away": "IND",
+      "baseline": {
+        "finalWinnerCorrect": true,
+        "expectedHomeMargin": -4.5,
+        "actualHomeMargin": -17,
+        "marginError": 12.5,
+        "checkpointAccuracy": 0.6,
+        "checkpointCount": 60,
+        "scoreMAE": 3.675,
+        "brier": 0.4934544083333332
+      },
+      "candidate": {
+        "finalWinnerCorrect": true,
+        "expectedHomeMargin": -3.099999999999998,
+        "actualHomeMargin": -17,
+        "marginError": 13.900000000000002,
+        "checkpointAccuracy": 0.6,
+        "checkpointCount": 60,
+        "scoreMAE": 4.0825,
+        "brier": 0.4979773499999998
+      }
+    },
+    {
+      "id": "401872966",
+      "home": "NYG",
+      "away": "ARI",
+      "baseline": {
+        "finalWinnerCorrect": false,
+        "expectedHomeMargin": -2.5,
+        "actualHomeMargin": 12,
+        "marginError": 14.5,
+        "checkpointAccuracy": 0.21666666666666667,
+        "checkpointCount": 60,
+        "scoreMAE": 5.374166666666666,
+        "brier": 0.5894393499999998
+      },
+      "candidate": {
+        "finalWinnerCorrect": false,
+        "expectedHomeMargin": -0.1999999999999993,
+        "actualHomeMargin": 12,
+        "marginError": 12.2,
+        "checkpointAccuracy": 0.5,
+        "checkpointCount": 60,
+        "scoreMAE": 4.989166666666668,
+        "brier": 0.5736366999999999
+      }
+    },
+    {
+      "id": "401872967",
+      "home": "HOU",
+      "away": "DAL",
+      "baseline": {
+        "finalWinnerCorrect": false,
+        "expectedHomeMargin": 3,
+        "actualHomeMargin": -4,
+        "marginError": 7,
+        "checkpointAccuracy": 0.7166666666666667,
+        "checkpointCount": 60,
+        "scoreMAE": 3.160833333333333,
+        "brier": 0.4761586749999999
+      },
+      "candidate": {
+        "finalWinnerCorrect": false,
+        "expectedHomeMargin": 2.700000000000003,
+        "actualHomeMargin": -4,
+        "marginError": 6.700000000000003,
+        "checkpointAccuracy": 0.7333333333333333,
+        "checkpointCount": 60,
+        "scoreMAE": 3.1841666666666666,
+        "brier": 0.48063462499999987
+      }
+    },
+    {
+      "id": "401872968",
+      "home": "TB",
+      "away": "GB",
+      "baseline": {
+        "finalWinnerCorrect": true,
+        "expectedHomeMargin": -3,
+        "actualHomeMargin": -3,
+        "marginError": 0,
+        "checkpointAccuracy": 0.8,
+        "checkpointCount": 60,
+        "scoreMAE": 2.745,
+        "brier": 0.46838106666666673
+      },
+      "candidate": {
+        "finalWinnerCorrect": true,
+        "expectedHomeMargin": -1.1999999999999993,
+        "actualHomeMargin": -3,
+        "marginError": 1.8000000000000007,
+        "checkpointAccuracy": 0.8,
+        "checkpointCount": 60,
+        "scoreMAE": 3.1824999999999997,
+        "brier": 0.5061672583333333
+      }
+    },
+    {
+      "id": "401872969",
+      "home": "CIN",
+      "away": "JAX",
+      "baseline": {
+        "finalWinnerCorrect": false,
+        "expectedHomeMargin": 2.5,
+        "actualHomeMargin": -5,
+        "marginError": 7.5,
+        "checkpointAccuracy": 0.6,
+        "checkpointCount": 60,
+        "scoreMAE": 5.501666666666668,
+        "brier": 0.5620327333333335
+      },
+      "candidate": {
+        "finalWinnerCorrect": true,
+        "expectedHomeMargin": -1,
+        "actualHomeMargin": -5,
+        "marginError": 4,
+        "checkpointAccuracy": 0.85,
+        "checkpointCount": 60,
+        "scoreMAE": 5.2875,
+        "brier": 0.49448626666666673
+      }
+    },
+    {
+      "id": "401872970",
+      "home": "PHI",
+      "away": "LAR",
+      "baseline": {
+        "finalWinnerCorrect": true,
+        "expectedHomeMargin": -3.5,
+        "actualHomeMargin": -4,
+        "marginError": 0.5,
+        "checkpointAccuracy": 0.13333333333333333,
+        "checkpointCount": 60,
+        "scoreMAE": 4.256666666666668,
+        "brier": 0.6603083833333332
+      },
+      "candidate": {
+        "finalWinnerCorrect": true,
+        "expectedHomeMargin": -2.1999999999999993,
+        "actualHomeMargin": -4,
+        "marginError": 1.8000000000000007,
+        "checkpointAccuracy": 0.13333333333333333,
+        "checkpointCount": 60,
+        "scoreMAE": 3.985833333333334,
+        "brier": 0.6326042833333332
+      }
+    },
+    {
+      "id": "401872971",
+      "home": "BUF",
+      "away": "NE",
+      "baseline": {
+        "finalWinnerCorrect": false,
+        "expectedHomeMargin": 7,
+        "actualHomeMargin": -3,
+        "marginError": 10,
+        "checkpointAccuracy": 0.2833333333333333,
+        "checkpointCount": 60,
+        "scoreMAE": 2.8866666666666663,
+        "brier": 0.6675106333333335
+      },
+      "candidate": {
+        "finalWinnerCorrect": false,
+        "expectedHomeMargin": 4.600000000000001,
+        "actualHomeMargin": -3,
+        "marginError": 7.600000000000001,
+        "checkpointAccuracy": 0.35,
+        "checkpointCount": 60,
+        "scoreMAE": 2.5458333333333343,
+        "brier": 0.6291254833333328
+      }
+    },
+    {
+      "id": "401872972",
+      "home": "CHI",
+      "away": "NYJ",
+      "baseline": {
+        "finalWinnerCorrect": true,
+        "expectedHomeMargin": 3.5,
+        "actualHomeMargin": 11,
+        "marginError": 7.5,
+        "checkpointAccuracy": 0.9333333333333333,
+        "checkpointCount": 60,
+        "scoreMAE": 3.899166666666667,
+        "brier": 0.42763128333333345
+      },
+      "candidate": {
+        "finalWinnerCorrect": true,
+        "expectedHomeMargin": 4,
+        "actualHomeMargin": 11,
+        "marginError": 7,
+        "checkpointAccuracy": 0.9333333333333333,
+        "checkpointCount": 60,
+        "scoreMAE": 3.969166666666667,
+        "brier": 0.4247300583333332
+      }
+    },
+    {
+      "id": "401872973",
+      "home": "BAL",
+      "away": "TEN",
+      "baseline": {
+        "finalWinnerCorrect": true,
+        "expectedHomeMargin": 11.5,
+        "actualHomeMargin": 6,
+        "marginError": 5.5,
+        "checkpointAccuracy": 0.7666666666666667,
+        "checkpointCount": 60,
+        "scoreMAE": 2.7208333333333328,
+        "brier": 0.3107434083333333
+      },
+      "candidate": {
+        "finalWinnerCorrect": true,
+        "expectedHomeMargin": 9.599999999999998,
+        "actualHomeMargin": 6,
+        "marginError": 3.599999999999998,
+        "checkpointAccuracy": 0.7666666666666667,
+        "checkpointCount": 60,
+        "scoreMAE": 2.9233333333333342,
+        "brier": 0.3244377166666667
+      }
+    },
+    {
+      "id": "401872974",
+      "home": "MIN",
+      "away": "MIA",
+      "baseline": {
+        "finalWinnerCorrect": true,
+        "expectedHomeMargin": 10,
+        "actualHomeMargin": 5,
+        "marginError": 5,
+        "checkpointAccuracy": 0.9666666666666667,
+        "checkpointCount": 60,
+        "scoreMAE": 4.5325,
+        "brier": 0.2733737750000001
+      },
+      "candidate": {
+        "finalWinnerCorrect": true,
+        "expectedHomeMargin": 11.5,
+        "actualHomeMargin": 5,
+        "marginError": 6.5,
+        "checkpointAccuracy": 0.9666666666666667,
+        "checkpointCount": 60,
+        "scoreMAE": 5.199166666666667,
+        "brier": 0.25346076666666667
+      }
+    },
+    {
+      "id": "401872975",
+      "home": "SF",
+      "away": "DEN",
+      "baseline": {
+        "finalWinnerCorrect": true,
+        "expectedHomeMargin": 3,
+        "actualHomeMargin": 10,
+        "marginError": 7,
+        "checkpointAccuracy": 0.5,
+        "checkpointCount": 60,
+        "scoreMAE": 6.796666666666668,
+        "brier": 0.6151827666666668
+      },
+      "candidate": {
+        "finalWinnerCorrect": true,
+        "expectedHomeMargin": 2.3999999999999986,
+        "actualHomeMargin": 10,
+        "marginError": 7.600000000000001,
+        "checkpointAccuracy": 0.5166666666666667,
+        "checkpointCount": 60,
+        "scoreMAE": 6.810833333333335,
+        "brier": 0.6244837166666666
+      }
+    },
+    {
+      "id": "401872976",
+      "home": "LV",
+      "away": "KC",
+      "baseline": {
+        "finalWinnerCorrect": true,
+        "expectedHomeMargin": -4.5,
+        "actualHomeMargin": -3,
+        "marginError": 1.5,
+        "checkpointAccuracy": 0.3333333333333333,
+        "checkpointCount": 60,
+        "scoreMAE": 3.2225000000000006,
+        "brier": 0.6525954750000001
+      },
+      "candidate": {
+        "finalWinnerCorrect": true,
+        "expectedHomeMargin": -4.199999999999999,
+        "actualHomeMargin": -3,
+        "marginError": 1.1999999999999993,
+        "checkpointAccuracy": 0.3333333333333333,
+        "checkpointCount": 60,
+        "scoreMAE": 2.821666666666666,
+        "brier": 0.6318564916666667
+      }
+    },
+    {
+      "id": "401872977",
+      "home": "SEA",
+      "away": "LAC",
+      "baseline": {
+        "finalWinnerCorrect": true,
+        "expectedHomeMargin": 7,
+        "actualHomeMargin": 7,
+        "marginError": 0,
+        "checkpointAccuracy": 0.8666666666666667,
+        "checkpointCount": 60,
+        "scoreMAE": 4.769999999999999,
+        "brier": 0.4458139
+      },
+      "candidate": {
+        "finalWinnerCorrect": true,
+        "expectedHomeMargin": 7.899999999999999,
+        "actualHomeMargin": 7,
+        "marginError": 0.8999999999999986,
+        "checkpointAccuracy": 0.85,
+        "checkpointCount": 60,
+        "scoreMAE": 4.652500000000001,
+        "brier": 0.4387110499999998
+      }
+    },
+    {
+      "id": "401872978",
+      "home": "CAR",
+      "away": "DET",
+      "baseline": {
+        "finalWinnerCorrect": false,
+        "expectedHomeMargin": -3.5,
+        "actualHomeMargin": 6,
+        "marginError": 9.5,
+        "checkpointAccuracy": 0.03333333333333333,
+        "checkpointCount": 60,
+        "scoreMAE": 3.6775,
+        "brier": 0.7217684833333333
+      },
+      "candidate": {
+        "finalWinnerCorrect": false,
+        "expectedHomeMargin": -3.3999999999999986,
+        "actualHomeMargin": 6,
+        "marginError": 9.399999999999999,
+        "checkpointAccuracy": 0.08333333333333333,
+        "checkpointCount": 60,
+        "scoreMAE": 3.670833333333333,
+        "brier": 0.7044063166666669
+      }
+    },
+    {
+      "id": "401872979",
+      "home": "NO",
+      "away": "ATL",
+      "baseline": {
+        "finalWinnerCorrect": false,
+        "expectedHomeMargin": 2.5,
+        "actualHomeMargin": -21,
+        "marginError": 23.5,
+        "checkpointAccuracy": 0.16666666666666666,
+        "checkpointCount": 60,
+        "scoreMAE": 7.593333333333333,
+        "brier": 0.6364250499999999
+      },
+      "candidate": {
+        "finalWinnerCorrect": false,
+        "expectedHomeMargin": 0.6000000000000014,
+        "actualHomeMargin": -21,
+        "marginError": 21.6,
+        "checkpointAccuracy": 0.4666666666666667,
+        "checkpointCount": 60,
+        "scoreMAE": 7.168333333333334,
+        "brier": 0.5880860916666666
+      }
+    }
+  ]
+}

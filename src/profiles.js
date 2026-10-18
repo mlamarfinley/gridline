@@ -1,3 +1,4 @@
+import { ExpiringMap } from './expiringMap.js';
 // MATCHUP ENGINE: player styles, defensive profiles by unit/zone, 0–100 unit ratings, and player-vs-defense fit.
 // Built from nflverse play-by-play (src/pbp.js) as of a given week: current-season plays strictly before that
 // week plus the previous season at reduced weight (PRIOR_W), all shrunk toward league averages.
@@ -27,7 +28,7 @@ export const runSideOf = (p) => (p.rl === 'middle' || p.rg === 'guard' || p.rg =
 const shrink = (sum, n, prior, k) => (n + k > 0 ? (sum + k * prior) / (n + k) : prior);
 
 // ---------------------------------------------------------------------------------------------------------
-const cache = new Map();
+const cache = new ExpiringMap();
 
 /**
  * Everything the matchup engine knows going into `week` of `season` (no play from week >= `week` of `season`).

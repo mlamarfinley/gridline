@@ -16,7 +16,7 @@ const csv = (t) => { const L = t.trim().split('\n'); const H = L[0].split(','); 
 
 /** Game context: final margin and share of the team's plays spent leading / trailing by 8+. */
 async function gameContext(seasons) {
-  const g = await fetchCached('https://github.com/nflverse/nfldata/raw/master/data/games.csv', { ttl: 86400, as: 'text', label: 'nflverse games' });
+  const g = await fetchCached('https://github.com/nflverse/nfldata/raw/master/data/games.csv', { ttl: 1800, as: 'text', label: 'nflverse games' });
   const G = new Map();
   for (const x of csv(g.data)) if (seasons.includes(+x.season)) G.set(x.game_id, { home: x.home_team, away: x.away_team, hs: x.home_score === '' ? null : +x.home_score, as: x.away_score === '' ? null : +x.away_score, spread: x.spread_line === '' ? null : +x.spread_line });
   const S = new Map(); // game|team → {n, lead, trail}

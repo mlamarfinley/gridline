@@ -1,3 +1,4 @@
+import { ExpiringMap } from './expiringMap.js';
 // PLAYER RATING = Madden overall + Production Monitor (src/productionMonitor.js), blended per position with the weights
 // that best predicted real next-4-game production in a 2024 test (scripts/player_rating_fit.mjs →
 // src/fitted_player_rating.json). Output: z-score within position and a 0–100 rating (100·Φ(z)).
@@ -47,16 +48,16 @@ export async function refreshPlayerRatings(season, week) {
   return r;
 }
 
-const memo = new Map();
+const memo = new ExpiringMap();
 /** Player Ratings for a game week: computed live when Madden is available locally, else the committed derived file. */
 export async function playerRatingsFor(season, week) {
   const key = `${season}|${week}`; if (memo.has(key)) return memo.get(key);
   let r = null, file = null;
-  try { file = JSON.parse(fs.readFileSync(LIVE, 'utf8')); if (file.season === season && file.week === week) r = file; } catch { /* none */ }
+  try { file = JSON.parse(fs.readFileSync(LIVE, 'utf8')); if (file.season === season && file.week === week && Date.now() - Date.parse(file.computedAt) < 30*60e3) r = file; } catch { /* none */ }
   if (!r) r = await computePlayerRatings(season, week).catch(() => null);
   // No local Madden (e.g. the GitHub site build) and the file is from an earlier week of this season: use it rather than
   // silently dropping player quality from the projections. Marked stale so the age is visible.
-  if (!r && file && file.season === season && file.week < week) r = { ...file, staleFromWeek: file.week };
+  if (!r && file && file.season === season && file.week <= week) r = { ...file, staleFromWeek: file.week };
   memo.set(key, r);
   return r;
 }

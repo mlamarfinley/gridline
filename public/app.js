@@ -105,7 +105,7 @@ if (STATIC) {
   new MutationObserver(strip).observe(document.getElementById('app'), { childList: true, subtree: true });
   const b = document.createElement('div');
   b.className = 'staticbar';
-  b.innerHTML = `Read-only public snapshot · data built ${new Date(STATIC.generatedAt).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} ET · refreshes about every 6 hours · projections are experimental, not betting advice`;
+  b.innerHTML = `Read-only public snapshot · data built ${new Date(STATIC.generatedAt).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} ET · scheduled refresh every 15 minutes (provider/GitHub delays possible) · projections are experimental, not betting advice`;
   document.body.insertBefore(b, document.querySelector('main'));
 }
 $('#week').addEventListener('change', (e) => { location.hash = `#/${state.league}?week=${e.target.value}`; });
@@ -183,7 +183,7 @@ async function renderGame(lg, id) {
   const vars = ['away', 'home'].map((k) => `--${k}:${th[k].accent};--${k}-fill:${th[k].fill};--${k}-ink:${th[k].ink};--${k}-accent-ink:${th[k].accentInk}`).join(';');
   app.innerHTML = `<div class="matchup" style="${vars}">
     <a class="back" href="#/${lg}${m.week ? `?week=${m.week}` : ''}">← ${esc(m.leagueLabel)} week ${m.week ?? ''} slate</a>
-    <div class="modelonly"><label><input type="checkbox" id="moToggle" ${modelOnly() ? 'checked' : ''}> Model only — hide every sportsbook player line</label> <span class="faint" id="moProof">Projections are built from game context (spread, total) and player history only.</span></div>
+    <div class="modelonly"><label><input type="checkbox" id="moToggle" ${modelOnly() ? 'checked' : ''}> Model only — hide every sportsbook player line</label> <span class="faint" id="moProof">Baseline player forecasts use game context and player history; experimental scripts also use posted player lines.</span></div>
     <section class="mh">
       <div class="side away">${A.logo ? `<img src="${esc(A.logo)}" alt="">` : ''}<div><div class="abbr">${esc(A.abbr)}</div><div class="full">${esc(A.name)}${A.record ? ` · ${esc(A.record)}` : ''}</div></div>${A.score != null && m.status.state !== 'pre' ? `<div class="score">${A.score}</div>` : ''}</div>
       <div class="mid"><div class="ko">${esc(ET(m.kickoff, { weekday: 'short', month: 'short', day: 'numeric' }))} · ${etTime(m.kickoff)}</div>
@@ -226,7 +226,7 @@ async function renderGame(lg, id) {
   const sb = $('#snapbtn');
   if (sb) sb.onclick = async () => {
     sb.disabled = true; sb.textContent = 'Recording…';
-    try { const r = await api(`/api/snapshot?league=${lg}&id=${id}`, { method: 'POST' }); sb.textContent = r.ok ? (r.duplicate ? `Unchanged (run #${r.runId})` : `Recorded run #${r.runId}`) : r.reason; }
+    try { const r = await api(`/api/snapshot?league=${lg}&id=${id}`, { method: 'POST' }); sb.textContent = r.ok ? (r.duplicate ? `Unchanged (run #${esc(r.runId)})` : `Recorded run #${esc(r.runId)}`) : r.reason; }
     catch (e) { sb.textContent = e.message; }
   };
 }
@@ -248,7 +248,7 @@ function scriptBlock(A, H) {
 }
 
 function gameTimelineBlock(m) {
-  const r=m.scriptReview, f=r?.forecast||m.gameScript, a=r?.actual;
+  const r=m.scriptReview, f=m.mode==='pregame'?m.gameScript:r?.forecast, a=r?.actual;
   if(!f&&!r)return '';
   const name=k=>k==='home'?m.home.abbr:k==='away'?m.away.abbr:k==='tie'?'Tied':'Uncertain';
   const lead=p=>`${esc(name(p.likelyLeader))}${p.likelyLeader==='uncertain'?'':` · ${pct(p[p.likelyLeader+'Probability'])}`}`;
@@ -263,7 +263,8 @@ function gameTimelineBlock(m) {
   const graph=`<svg viewBox="0 0 700 215" role="img" aria-label="Home score minus away score over regulation. Dashed line is forecast, solid line is actual."><line x1="40" x2="660" y1="100" y2="100" stroke="currentColor" opacity=".4"/>${[0,15,30,45,60].map(t=>`<line x1="${x(t)}" x2="${x(t)}" y1="30" y2="170" stroke="currentColor" opacity=".12"/><text x="${x(t)}" y="195" text-anchor="middle" fill="currentColor" font-size="12">${t}m</text>`).join('')}<text x="40" y="18" fill="currentColor" font-size="12">${esc(m.home.abbr)} ahead (+${f1(max)})</text><text x="40" y="212" fill="currentColor" font-size="12">${esc(m.away.abbr)} ahead (−${f1(max)})</text>${path?`<path d="${path}" fill="none" stroke="#b29aff" stroke-width="3" stroke-dasharray="7 4"/>`:''}${a?.complete?`<path d="${actualPath}" fill="none" stroke="currentColor" stroke-width="2.5"/>`:''}</svg>`;
   const review=r?.review;
   return `<section class="script timeline"><h2 class="sec" style="margin-top:0">Game clock · expected leader &amp; script review</h2>
-    <p>${r?`Original pregame snapshot #${r.runId} saved <b>${etStamp(r.forecastTimestamp)}</b>.`:`Forecast generated <b>${etStamp(f.generatedAt)}</b>; save a snapshot to freeze it.`} ${f?`Timeline model ${esc(f.version)} · ${f.sims.toLocaleString()} simulations.`:'No minute forecast was saved for this game; only the original final-margin expectation can be graded.'}</p>
+    <p>${m.mode==='pregame'&&f?`Current forecast generated <b>${etStamp(f.generatedAt)}</b>. ${r?`Last archived run #${esc(r.runId)} at ${etStamp(r.forecastTimestamp)}; review uses that frozen version.`:''}`:r?`Original pregame snapshot #${esc(r.runId)} saved <b>${etStamp(r.forecastTimestamp)}</b>.`:`Forecast generated <b>${etStamp(f.generatedAt)}</b>; save a snapshot to freeze it.`} ${f?`Timeline model ${esc(f.version)} · ${f.sims.toLocaleString()} simulations.`:'No minute forecast was saved for this game; only the original final-margin expectation can be graded.'}</p>
+    ${f?.inputs?`<details><summary>Inputs driving this script · market, player production, and line matchups</summary><p>Experimental context model. On 15 reconstructed week-4 games, minute accuracy was 59.2% versus 52.8% for timing alone; this is not prospective validation. The independent scoring assumptions still omit possession and field position.</p>${['away','home'].map(side=>`<h4>${esc(m[side].abbr)} · market/context ${f1(f.inputs[side].marketPoints)} → experimental ${f1(f.inputs[side].points)} points</h4><ul>${f.inputs[side].groups.map(g=>`<li><b>${esc(g.name)}</b> (${Math.round(g.weight*100)}% log-ratio weight): ${esc(g.detail)}</li>`).join('')}</ul><p class="muted">${esc(f.inputs[side].note)}</p>`).join('')}<p>Game lines retrieved ${etStamp(m.odds?.meta?.retrievedAt)}. Player prop lines: ${etStamp(m.sources?.find(s=>s.label==='Player prop lines')?.fetchedAt)}. Madden + production rating file: ${etStamp(m.ratingFreshness?.computedAt)}${m.ratingFreshness?.staleFromWeek?' · older derived file; local Madden source unavailable on public host':''}. Other inputs refresh when their providers publish new data.</p></details>`:''}
     ${review?.finalWinnerCorrect!=null?`<div class="callout"><b>Saved final winner: ${review.finalWinnerCorrect?'correct':'wrong'}.</b> Expected ${esc(m.home.abbr)} margin ${sgn(review.expectedHomeMargin)}; actual ${sgn(review.actualHomeMargin)}. Margin error ${f1(review.marginError)} points.${review.checkpointCount?` Minute leader accuracy ${pct(review.checkpointAccuracy)} across ${review.checkpointCount} checkpoints; score MAE ${f1(review.scoreMAE)} points; Brier score ${f2(review.brier)} (lower is better).`:' Minute accuracy: unavailable — no original timeline.'}</div>`:''}
     ${a?.complete?`<p>Regulation time leading: ${esc(m.away.abbr)} ${f1(a.leadSeconds.away/60)} min · tied ${f1(a.leadSeconds.tie/60)} min · ${esc(m.home.abbr)} ${f1(a.leadSeconds.home/60)} min. ${a.leadChanges} lead changes.${a.overtime?' Game went to overtime; final winner includes OT, chart ends at regulation.':''} Results retrieved ${etStamp(r.source?.fetchedAt)}.</p>`:a?`<p>${esc(a.reason)}</p>`:''}
     ${points.length?graph:''}<p class="muted">Dashed purple: expected margin. Solid: actual margin. Above zero means ${esc(m.home.abbr)} leads. Game clock is regulation playing time, not real time.</p>
@@ -466,7 +467,7 @@ async function wireModelOnly(lg) {
   try {
     const r = await api(`/api/lineblind?league=${lg}`);
     const el = document.getElementById('moProof');
-    if (el && r?.stats) el.textContent = `Projections never read player lines: week ${r.week ?? ''} check rebuilt every game with lines removed — ${r.differing} of ${r.stats} projected numbers changed (${r.withLines} of them have a book line).`;
+    if (el && r?.stats) el.textContent = `Baseline player projections never read player lines (experimental game scripts can): week ${r.week ?? ''} check rebuilt every game with lines removed — ${r.differing} of ${r.stats} projected numbers changed (${r.withLines} of them have a book line).`;
   } catch { /* proof text is optional */ }
 }
 
@@ -676,10 +677,10 @@ async function renderRatings(pos) {
   setTitle(`${pos} skill ratings`);
   const cell = (v) => (v == null ? '<td class="faint num">—</td>' : `<td class="num rt" style="--r:${v}">${v}</td>`);
   app.innerHTML = `<section class="leaders ratingspage">
-    <div class="lhead"><h1>NFL ${esc(pos)} skill ratings · before week ${d.week}</h1>
+    <div class="lhead"><h1>NFL ${esc(pos)} skill ratings · through available week ${d.week - 1} data</h1>
       <p class="faint">Overall and Player Rating use a Madden-style scale (the position's average Madden OVR ± its spread), so they read like the Madden column; Overall uses no Madden data. Skill columns are 1–99 against qualifying ${esc(pos)}s (50 = average, 84 ≈ one standard deviation of true talent better). Built from nflverse play-by-play and NFL Next Gen Stats over this season and last, older games fading game by game. Each metric is shrunk by how reliable that player's sample is, so a small sample sits near 50 instead of at an extreme; a metric with no data shows a faint 50. Rookies qualify on pace and are never marked down for having no last season.</p>
       <nav class="ljump">${['QB', 'RB', 'WR', 'TE'].map((p) => `<a href="#/nfl/ratings?pos=${p}" class="${p === pos ? 'on' : ''}">${p}</a>`).join('')}</nav></div>
-    <p class="faint">Player Rating = Madden overall + our Production Monitor (each game's actual vs expected for that opponent and game), mixed per position by what best predicted real production in a 2024 test${d.playerRatingWeights ? ` (${esc(d.pos)}: Madden ${Math.round(d.playerRatingWeights.madden * 100)}%, production efficiency ${Math.round(d.playerRatingWeights.efficiency * 100)}%, usage ${Math.round(d.playerRatingWeights.usage * 100)}%)` : ''}. ${d.combined ? 'Madden numbers appear only in this local app.' : ''}</p>
+    <p class="faint">Skill ratings include current-week games as provider data arrives. Combined rating last computed ${etStamp(d.playerRatingFreshness?.computedAt)}${d.playerRatingFreshness?.staleFromWeek ? ` (older export, source week ${d.playerRatingFreshness.sourceWeek})` : ''}. Player Rating = Madden overall + our Production Monitor (each game's actual vs expected for that opponent and game), mixed per position by what best predicted real production in a 2024 test${d.playerRatingWeights ? ` (${esc(d.pos)}: Madden ${Math.round(d.playerRatingWeights.madden * 100)}%, production efficiency ${Math.round(d.playerRatingWeights.efficiency * 100)}%, usage ${Math.round(d.playerRatingWeights.usage * 100)}%)` : ''}. ${d.combined ? 'Madden numbers appear only in this local app.' : ''}</p>
     <div class="scroll"><table class="rtable"><thead><tr><th>#</th><th>Player</th>${d.combined ? '<th class="num">Madden</th>' : ''}<th class="num" title="Our overall: every production skill below, weighted — shown on a Madden-style scale (position average and spread of Madden OVR), but built with no Madden data">Overall</th><th class="num" title="Madden + Production Monitor, mixed per position by what best predicted real production">Player Rating</th>${d.skills.map((k) => `<th class="num" title="${esc(k.label)} · weight ${Math.round(k.weight * 100)}%${k.higherIsBetter ? '' : ' · lower raw value is better'}">${esc(k.label.split(' (')[0])}</th>`).join('')}</tr></thead>
     <tbody>${d.players.map((x, i) => `<tr><td class="faint">${i + 1}</td><td>${esc(x.name)} <span class="faint">${esc(x.team || '')}</span>${x.rookie ? ' <span class="faint" title="no games last season">R</span>' : ''}</td>${d.combined ? `<td class="num faint">${x.madden ?? '—'}</td>` : ''}${cell(x.overall)}${cell(x.playerRating)}${d.skills.map((k) => (x.skills[k.key]?.noData ? '<td class="faint num" title="no data — position average">50</td>' : cell(x.skills[k.key]?.rating))).join('')}</tr>`).join('')}</tbody></table></div>
   </section>`;

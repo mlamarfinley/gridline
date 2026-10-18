@@ -76,7 +76,8 @@ export async function fetchCached(url, opts = {}) {
       url: redact(url), source: sourceName(url), label: label || null,
       fetchedAt: new Date(entry.fetchedAt).toISOString(), fromCache: true, stale: false, error: null, ...extra,
     });
-    if (cached && (cached.permanent || now - cached.fetchedAt < ttl * 1000)) {
+    const cacheTTL = typeof ttl === 'function' ? ttl(cached?.body, now) : ttl;
+    if (cached && (!opts.acceptCached || opts.acceptCached(cached.body)) && ((!opts.ignorePermanent && cached.permanent) || now - cached.fetchedAt < cacheTTL * 1000)) {
       return { data: cached.body, meta: meta(cached) };
     }
     if (offline) {

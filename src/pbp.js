@@ -1,3 +1,4 @@
+import { ExpiringMap } from './expiringMap.js';
 // nflverse play-by-play (+ FTN/NGS participation charting) loader for the matchup engine (src/profiles.js).
 // Files are downloaded once to data/cache/nflverse/, stream-parsed, and reduced to the few columns we use,
 // cached as compact JSON in data/cache/derived/. Past seasons are permanent; the current season refreshes.
@@ -11,7 +12,7 @@ import { CACHE_DIR } from './config.js';
 const NV = 'https://github.com/nflverse/nflverse-data/releases/download';
 const RAW = path.join(CACHE_DIR, 'nflverse');
 const DERIVED = path.join(CACHE_DIR, 'derived');
-const CURRENT_TTL_MS = 6 * 3600e3;
+const CURRENT_TTL_MS = 30 * 60e3;
 
 async function download(url, file, ttlMs) {
   try { const st = fs.statSync(file); if (ttlMs == null || Date.now() - st.mtimeMs < ttlMs) return file; } catch { /* fetch */ }
@@ -49,7 +50,7 @@ async function streamRows(file, gz, cols, onRow) {
 
 const num = (x) => (x === '' || x == null || x === 'NA' ? null : Number(x));
 const isCurrent = (season) => season >= new Date().getUTCFullYear() - (new Date().getUTCMonth() < 2 ? 1 : 0);
-const mem = new Map();
+const mem = new ExpiringMap();
 
 /** Compact play list for a season: pass & run plays only (regular season + post). */
 export async function loadPlays(season) {
@@ -84,7 +85,7 @@ export async function loadParticipation(season) {
   const key = `part${season}`;
   if (mem.has(key)) return mem.get(key);
   const derived = path.join(DERIVED, `participation_${season}.json`);
-  try { const d = new Map(JSON.parse(fs.readFileSync(derived, 'utf8'))); mem.set(key, d); return d; } catch { /* build */ }
+  try { if (isCurrent(season) && Date.now() - fs.statSync(derived).mtimeMs >= CURRENT_TTL_MS) throw new Error('refresh current participation'); const d = new Map(JSON.parse(fs.readFileSync(derived, 'utf8'))); mem.set(key, d); return d; } catch { /* build */ }
   let file;
   try { file = await download(`${NV}/pbp_participation/pbp_participation_${season}.csv`, path.join(RAW, `pbp_participation_${season}.csv`), isCurrent(season) ? CURRENT_TTL_MS : null); }
   catch (e) { if (e.status === 404) { mem.set(key, null); return null; } throw e; }

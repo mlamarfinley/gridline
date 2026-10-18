@@ -1,3 +1,4 @@
+import { ExpiringMap } from './expiringMap.js';
 // PLAYER SKILL RATINGS v2 (QB / RB / WR / TE), 0–100 per skill, as of the start of a given week.
 //
 // Every skill is a rate (numerator / sample) built game by game from nflverse play-by-play and NFL Next Gen Stats:
@@ -260,7 +261,7 @@ export function ratingsFrom({ R, posOf }, season, week, opts = {}) {
   return { season, week, players, byPos };
 }
 
-const cache = new Map();
+const cache = new ExpiringMap();
 /** Live entry point: ratings before `week` of `season`, from this season and last. */
 export async function buildRatings(season, week) {
   const key = `${season}|${week}`;
@@ -282,7 +283,7 @@ export async function ratingsBoard(season, week, pos, { includeMadden = false } 
   const PR = await playerRatingsFor(season, week).catch(() => null);
   for (const x of list) { const p = PR?.players?.[x.gsis]; x.playerRating = p ? p.rating : null; }
   list.sort((a, b) => (b.playerRating ?? -1) - (a.playerRating ?? -1) || (b.overall ?? 0) - (a.overall ?? 0));
-  return { season, week, pos, method: R.method, combined, playerRatingWeights: PR?.weights?.[pos] || null, skills: SKILLS[pos].map(([key, label, , up, weight]) => ({ key, label, higherIsBetter: up, weight: overallWeight(pos, key, weight), lambda: fitFor(pos, key).lambda, adjusted: fitFor(pos, key).adjust })), players: list };
+  return { season, week, pos, playerRatingFreshness: PR ? { computedAt: PR.computedAt, sourceWeek: PR.week, staleFromWeek: PR.staleFromWeek || null } : null, method: R.method, combined, playerRatingWeights: PR?.weights?.[pos] || null, skills: SKILLS[pos].map(([key, label, , up, weight]) => ({ key, label, higherIsBetter: up, weight: overallWeight(pos, key, weight), lambda: fitFor(pos, key).lambda, adjusted: fitFor(pos, key).adjust })), players: list };
 }
 
 /** Per-play noise variance for a skill, pooled from each qualified player's game-to-game spread around his own mean. */

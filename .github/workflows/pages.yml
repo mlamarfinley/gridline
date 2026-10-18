@@ -7,7 +7,7 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: '17 */6 * * *'   # about every 6 hours
+    - cron: '7,22,37,52 * * * *'   # poll/rebuild every 15 minutes; GitHub scheduling may be delayed
   workflow_dispatch:
 permissions:
   contents: read
@@ -15,7 +15,7 @@ permissions:
   id-token: write
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,7 +25,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Restore HTTP cache (final-game summaries are immutable)
+      - name: Restore HTTP cache (finals revalidated for corrections)
         uses: actions/cache@v4
         with:
           path: data/cache
@@ -33,6 +33,11 @@ jobs:
           restore-keys: espn-cache-
       - run: npm test
       - run: npm run export:site
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pregame-script-archive-${{ github.run_id }}
+          path: site/api/script-archive.json
+          retention-days: 90
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

@@ -114,7 +114,7 @@ export function situationInput(st, { key, playerId, opp, spread, impliedPts, hom
 const csvRows = (t) => { const L = t.trim().split('\n'); const H = L[0].split(','); return L.slice(1).map((l) => { const v = []; let cur = '', q = false; for (const ch of l) { if (ch === '"') q = !q; else if (ch === ',' && !q) { v.push(cur); cur = ''; } else cur += ch; } v.push(cur); return Object.fromEntries(H.map((h, i) => [h, v[i]])); }); };
 /** nflverse weekly player rows (regular season) for a season. */
 export async function loadWeekly(season) {
-  const r = await fetchCached(`https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_${season}.csv`, { ttl: 6 * 3600, as: 'text', label: `nflverse ${season} weekly (situational model)` });
+  const r = await fetchCached(`https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_${season}.csv`, { ttl: 1800, as: 'text', label: `nflverse ${season} weekly (situational model)` });
   return csvRows(r.data).filter((x) => x.season_type === 'REG');
 }
 

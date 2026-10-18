@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {archiveScript,latestScript} from '../src/scriptArchive.js';
+const m={mode:'pregame',kickoff:'2026-10-18T17:00:00Z',home:{abbr:'H'},away:{abbr:'A'},gameScript:{homePoints:20,awayPoints:24,points:Array.from({length:61},()=>({}))}};
+test('public archives freeze pregame context margins and refuse post-kickoff records',()=>{const a=archiveScript(m,new Date('2026-10-18T15:00:00Z'));assert.equal(a.expectedHomeMargin,-4);assert.equal(archiveScript(m,new Date(m.kickoff)),null);const b=archiveScript(m,new Date('2026-10-18T16:00:00Z'));assert.equal(latestScript(a,b),b);assert.equal(latestScript(b,{...a,forecastTimestamp:m.kickoff}),b);});

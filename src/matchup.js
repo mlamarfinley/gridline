@@ -1,3 +1,4 @@
+import { contextualScript } from './scriptContext.js';
 import { forecastScript, quarterProfile, scoreTimeline, compareScript } from './gameScript.js';
 import { addExperimental } from './experimental.js';
 // Builds the full matchup payload: header (odds/implied score), team context, injuries,
@@ -73,7 +74,7 @@ async function findEvent(lg, eventId, dateISO, prov) {
  * In blind mode the target game's summary/box/plays/odds/props, current rosters, depth charts,
  * injuries, weather, snaps and optional APIs are never requested.
  */
-export async function buildMatchup(lg, eventId, { forceRetro = false, blind = null, noPlayerLines = false } = {}) {
+export async function buildMatchup(lg, eventId, { forceRetro = false, blind = null, noPlayerLines = false, archivedScript = null } = {}) {
   const prov = new Provenance();
   let sumR = null, sum = null, hdr, season, kickoff, ev, state, pregame, mode, home, away, odds, oddsMeta, implied, mlNoVig;
   if (blind) {
@@ -1104,8 +1105,11 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
       homeProfile: hp.weights.map((v,i)=>(v+ha.weights[i])/2), awayProfile: ap.weights.map((v,i)=>(v+aa.weights[i])/2),
       seed: `${eventId}|script-timeline-1`, generatedAt: new Date().toISOString(), history: { homeScoringGames: hp.games, awayScoringGames: ap.games, homeOpponentGames: ha.games, awayOpponentGames: aa.games } });
   }
+  const baselineScript = gameScript;
+  gameScript = contextualScript(baselineScript, teams[home.id], teams[away.id]);
   let scriptReview = null;
   try { scriptReview = JSON.parse(fsA.readFileSync(new URL(`../reports/game_scripts_${lg}.json`, import.meta.url), 'utf8')).games[String(eventId)] || null; } catch { /* no saved review yet */ }
+  if (archivedScript && !blind && (!scriptReview || Date.parse(archivedScript.forecastTimestamp) > Date.parse(scriptReview.forecastTimestamp))) scriptReview = archivedScript;
   if (scriptReview && sum && !pregame && !blind) {
     const actual = scoreTimeline(sum);
     scriptReview = { ...scriptReview, actual, review: compareScript(scriptReview, actual), source: sumR.meta, status: actual.complete ? 'reviewed' : 'incomplete' };
@@ -1157,7 +1161,8 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
     odds: odds ? { ...odds, meta: oddsMeta } : null, implied, mlNoVig,
     venue, weather, weatherEffects: wx.notes,
     props: propsMeta, oddsApi: { enabled: oddsApi.enabled, error: oddsApi.error || null },
-    gameScript, scriptReview,
+    gameScript, baselineScript, scriptReview,
+    ratingFreshness: PRAT ? { computedAt: PRAT.computedAt, week: PRAT.week, staleFromWeek: PRAT.staleFromWeek || null } : null,
     injuryNote, outlier, skeptic: skepticReport, rbUpside, lineProxy, blindAudit, lineBaseExcluded: lineBase.excludedUnverified ?? null,
     lineGrades: { away: lineGrades[away.id], home: lineGrades[home.id], baseline: { source: lineBase.source, measured: lineBase.measured, games: lineBase.games, teams: lineBase.teams, mean: lineBase.mean, sd: lineBase.sd }, method: LINE_METHOD },
     baselines: { source: B.source, measured: B.measured },

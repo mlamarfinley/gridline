@@ -9,7 +9,7 @@ export const normName = (n) => String(n || '').toLowerCase().replace(/\b(jr|sr|i
 let mem = { season: null, byKey: null, meta: null };
 export async function loadSnaps(season, prov) {
   if (mem.season === season && mem.byKey) { prov.add(mem.meta); return mem.byKey; }
-  const r = await fetchCached(`https://github.com/nflverse/nflverse-data/releases/download/snap_counts/snap_counts_${season}.csv`, { ttl: 6 * 3600, as: 'text', label: 'nflverse snap counts' });
+  const r = await fetchCached(`https://github.com/nflverse/nflverse-data/releases/download/snap_counts/snap_counts_${season}.csv`, { ttl: 1800, as: 'text', label: 'nflverse snap counts' });
   prov.add(r.meta);
   if (!r.data) return null;
   const byKey = new Map();

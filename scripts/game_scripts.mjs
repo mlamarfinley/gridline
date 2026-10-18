@@ -10,7 +10,7 @@ const runs=d.prepare(`SELECT * FROM runs WHERE id IN (SELECT max(id) FROM runs W
 const games={};
 for(const r of runs){
  const original=JSON.parse(r.game_json),home=original.teams?.find(t=>t.abbr===r.home);
- const saved={runId:r.id,forecastTimestamp:r.created_at,kickoff:r.kickoff,modelVersion:r.model_version,home:r.home,away:r.away,week:r.week,expectedHomeMargin:home?.expMargin??null,expectedScore:original.implied||null,forecast:original.gameScript||null,weights:home?.scriptWeights||null};
+ const saved={runId:r.id,forecastTimestamp:r.created_at,kickoff:r.kickoff,modelVersion:r.model_version,home:r.home,away:r.away,week:r.week,expectedHomeMargin:original.gameScript ? original.gameScript.homePoints-original.gameScript.awayPoints : home?.expMargin??null,expectedScore:original.implied||null,forecast:original.gameScript||null,weights:home?.scriptWeights||null};
  if(Date.parse(r.created_at)>=Date.parse(r.kickoff))throw Error('Invalid pregame timestamp');
  const entry={...saved,actual:null,review:null,observedStates:null,expectedEffectiveStates:saved.weights?Object.fromEntries(Object.entries(saved.weights).map(([k,v])=>[k,.6*v+(k==='close'?.4:0)])):null,status:'pending'};
  if(Date.parse(r.kickoff)<=Date.now()){

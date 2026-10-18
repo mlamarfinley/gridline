@@ -1,3 +1,4 @@
+import { archiveScript, latestScript } from '../src/scriptArchive.js';
 // Build a READ-ONLY static copy of Gridline (for GitHub Pages).
 //
 //   node scripts/export-site.js --ledger     # local only: dump ledger + blind results -> static-data/ (commit it)
@@ -57,6 +58,16 @@ let ledgerMeta = null;
 try { ledgerMeta = JSON.parse(fs.readFileSync(path.join(STATIC_DATA, 'ledger-meta.json'), 'utf8')); } catch { /* none */ }
 write(OUT, 'api/status.json', { modelVersion: MODEL_VERSION, keys: { oddsApi: false, cfbd: false }, db: 'read-only static snapshot', counts: [], now: generatedAt, autoSnapshot: false, static: true, ledgerExportedAt: ledgerMeta?.exportedAt || null });
 
+// Carry forward published pregame scripts. Per-build artifacts preserve earlier versions.
+let scriptArchive = { nfl: {}, cfb: {} };
+const archiveResponse = await fetch('https://mlamarfinley.github.io/gridline/api/script-archive.json', { signal: AbortSignal.timeout(30000), cache: 'no-store' });
+if (archiveResponse.ok) {
+  const previous = await archiveResponse.json();
+  for (const lg of ['nfl','cfb']) for (const [id,r] of Object.entries(previous[lg] || {})) {
+    const valid = latestScript(null,r); if (valid && /^\d+$/.test(id)) scriptArchive[lg][id] = valid;
+  }
+} else if (archiveResponse.status !== 404) throw new Error(`Cannot preserve published script archive: HTTP ${archiveResponse.status}`);
+
 // 3. Fresh slates (every regular-season week) and matchups (current week; NFL also completed weeks).
 async function pool(items, n, fn) { const q = [...items]; await Promise.all(Array.from({ length: n }, async () => { while (q.length) await fn(q.shift()); })); }
 const summary = { generatedAt, matchups: 0, failed: [] };
@@ -70,18 +81,22 @@ for (const lg of ['nfl', 'cfb']) {
     write(OUT, `api/slate/${lg}-w${w}.json`, s);
     if (lg === 'nfl' && w < cur.week) for (const g of s.games) if (g.status.completed) ids.add(g.id);
   }
-  if (lg === 'nfl') { try { const { ratingsBoard } = await import('../src/playerRatings.js'); for (const pos of ['QB', 'RB', 'WR', 'TE']) write(OUT, `api/ratings/${pos}.json`, await ratingsBoard(cur.season, cur.week, pos)); } catch (e) { summary.failed.push({ ratings: true, error: e.message }); } }
+  if (lg === 'nfl') { try { const { ratingsBoard } = await import('../src/playerRatings.js'); for (const pos of ['QB', 'RB', 'WR', 'TE']) write(OUT, `api/ratings/${pos}.json`, await ratingsBoard(cur.season, cur.week + 1, pos)); } catch (e) { summary.failed.push({ ratings: true, error: e.message }); } }
   try { write(OUT, `api/lineblind/${lg}.json`, JSON.parse(fs.readFileSync(path.join(ROOT, 'reports', `line_blind_check_${lg}.json`), 'utf8'))); } catch { /* check not run for this league */ }
   try { const { statLeaders } = await import('../src/leaders.js'); write(OUT, `api/leaders/${lg}.json`, await statLeaders(lg, cur.season)); } catch (e) { summary.failed.push({ lg, leaders: true, error: e.message }); }
   log(`${lg}: ${weeks.length} week slates; building ${ids.size} matchups`);
   await pool([...ids], 3, async (id) => {
     try {
-      const m = await buildMatchup(lg, id);
+      const m = await buildMatchup(lg, id, { archivedScript: scriptArchive[lg][id] || null });
+      const frozen = archiveScript(m);
+      if (frozen) { scriptArchive[lg][id] = latestScript(scriptArchive[lg][id], frozen); m.scriptReview = scriptArchive[lg][id]; }
       const { projections, ...rest } = m;
       write(OUT, `api/matchup/${lg}/${id}.json`, rest);
       summary.matchups++;
     } catch (e) { summary.failed.push({ lg, id, error: e.message }); }
   });
 }
+write(OUT, 'api/script-archive.json', scriptArchive);
 write(OUT, 'api/build.json', summary);
+if (summary.failed.length) throw new Error(`Refusing partial publication: ${summary.failed.length} data builds failed`);
 log(`site built in ${path.relative(ROOT, OUT)}/: ${summary.matchups} matchups, ${summary.failed.length} failed`);

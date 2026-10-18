@@ -93,8 +93,15 @@ export function parseOddsObject(o) {
 }
 
 // ---------- Summary ----------
+export function summaryCacheTTL(body, now = Date.now()) {
+  const c = body?.header?.competitions?.[0];
+  if (!c?.status?.type?.completed) return 120;
+  return now - Date.parse(c.date) > 7 * 86400e3 ? 86400 : 300;
+}
 export async function getSummary(lg, id, { final = false } = {}) {
-  return fetchCached(url.summary(lg, id), { ttl: final ? 3600 : 300, permanent: final, label: 'Game summary' });
+  return fetchCached(url.summary(lg, id), { ttl: summaryCacheTTL, ignorePermanent: true,
+    acceptCached: body => !final || !!body?.header?.competitions?.[0]?.status?.type?.completed,
+    label: 'Game summary' });
 }
 
 export function summaryTeams(sum) {
@@ -335,7 +342,7 @@ export function restrictionEvidence(inj) {
 
 // ---------- Roster / depth ----------
 export async function getRoster(lg, teamId) {
-  return fetchCached(url.roster(lg, teamId), { ttl: 6 * 3600, label: 'Team roster' });
+  return fetchCached(url.roster(lg, teamId), { ttl: 1800, label: 'Team roster' });
 }
 export function parseRoster(r) {
   const out = [];
@@ -359,7 +366,7 @@ export function parseRoster(r) {
 
 export async function getDepth(lg, teamId, season) {
   if (lg !== 'nfl') return { data: null, meta: { url: 'n/a', source: 'ESPN core API', fetchedAt: null, error: 'Depth charts not published for college by ESPN' } };
-  return fetchCached(url.depth(lg, teamId, season), { ttl: 6 * 3600, label: 'Depth chart' });
+  return fetchCached(url.depth(lg, teamId, season), { ttl: 1800, label: 'Depth chart' });
 }
 export function parseDepth(d) {
   const out = {};
@@ -376,7 +383,7 @@ export function parseDepth(d) {
 
 // ---------- Schedule ----------
 export async function getSchedule(lg, teamId, season) {
-  return fetchCached(url.schedule(lg, teamId, season), { ttl: 1800, label: 'Team schedule' });
+  return fetchCached(url.schedule(lg, teamId, season), { ttl: 300, label: 'Team schedule' });
 }
 export function parseSchedule(s) {
   return (s?.events || []).map((e) => {
@@ -391,7 +398,7 @@ export function parseSchedule(s) {
 
 // ---------- Player game logs (prior-season history + fields missing from box scores) ----------
 export async function getGamelog(lg, athleteId, season) {
-  return fetchCached(url.gamelog(lg, athleteId, season), { ttl: 6 * 3600, label: `Game log ${season || ''}`.trim() });
+  return fetchCached(url.gamelog(lg, athleteId, season), { ttl: 1800, label: `Game log ${season || ''}`.trim() });
 }
 
 const GAMELOG_MAP = {

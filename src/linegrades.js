@@ -1,3 +1,4 @@
+import { ExpiringMap } from './expiringMap.js';
 // ESTIMATED OL / DL UNIT GRADES — transparent proxies from play-by-play, not individual
 // blocking grades. Every input also reflects QB, RBs, scheme and opponents; that caveat is
 // shown next to the grades.
@@ -162,7 +163,7 @@ export function gradeTeam(offAgg, defAgg, base) {
 }
 
 // ---------- League baseline (NFL: measured) ----------
-const mem = new Map();
+const mem = new ExpiringMap();
 export async function leagueBaseline(lg, season, cutoffISO, currentWeek, prov, { gameIds = null } = {}) {
   if (lg !== 'nfl') return { ...CFB_PRIOR_BASELINE, source: 'Configured college priors (not a measured FBS-wide baseline)', measured: false, teams: null, games: null };
   // Keyed by the exact cutoff: a baseline must never include games that finished after kickoff.
