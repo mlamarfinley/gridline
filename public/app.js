@@ -27,6 +27,7 @@ function staticPath(p) {
     case '/api/matchup': return `api/matchup/${q.get('league')}/${q.get('id')}.json`;
     case '/api/ledger': return `api/ledger/${q.get('kind') || 'pregame'}-${q.get('model') || ''}.json`;
     case '/api/blind': return `api/blind${q.get('batch') ? `-${q.get('batch')}` : ''}.json`;
+    case '/api/nfl-minute-tracker': return 'api/nfl-minute-tracker.json';
     case '/api/leaders': return `api/leaders/${q.get('league') || 'nfl'}.json`;
     case '/api/ratings': return `api/ratings/${q.get('pos') || 'RB'}.json`;
     case '/api/lineblind': return `api/lineblind/${q.get('league') || 'nfl'}.json`;
@@ -56,6 +57,7 @@ function parseHash() {
   const [path, qs] = h.split('?');
   const parts = path.split('/').filter(Boolean);
   const q = new URLSearchParams(qs || '');
+  if (parts[0] === 'nfl' && parts[1] === 'scripts') return {view:'scripts',league:'nfl'};
   if (parts[0] === 'ledger') return { view: 'ledger' };
   if (parts[1] === 'leaders') return { view: 'leaders', league: parts[0] === 'cfb' ? 'cfb' : 'nfl' };
   if (parts[1] === 'ratings') return { view: 'ratings', league: 'nfl', pos: q.get('pos') || 'RB' };
@@ -85,13 +87,14 @@ async function route() {
   const r = parseHash();
   if (r.league) state.league = r.league;
   document.querySelectorAll('.league a').forEach((a) => a.classList.toggle('on', a.dataset.league === state.league && r.view !== 'ledger'));
-  document.querySelectorAll('.views a').forEach((a) => a.classList.toggle('on', a.dataset.view === (['ledger', 'leaders', 'ratings'].includes(r.view) ? r.view : 'slate')));
+  document.querySelectorAll('.views a').forEach((a) => a.classList.toggle('on', a.dataset.view === (['ledger', 'leaders', 'ratings', 'scripts'].includes(r.view) ? r.view : 'slate')));
   $('.views a[data-view=slate]').href = `#/${state.league}`;
   $('.views a[data-view=leaders]').href = `#/${state.league}/leaders`;
   // League tabs keep you on the leaders page when you're on it.
   document.querySelectorAll('.league a').forEach((a) => { a.href = r.view === 'leaders' ? `#/${a.dataset.league}/leaders` : `#/${a.dataset.league}`; });
   $('.week').style.visibility = r.view === 'slate' ? 'visible' : 'hidden';
   window.scrollTo(0, 0);
+  if (r.view === 'scripts') return renderMinuteTracker();
   if (r.view === 'ledger') return renderLedger();
   if (r.view === 'leaders') return renderLeaders(r.league);
   if (r.view === 'ratings') return renderRatings(r.pos);
@@ -253,8 +256,8 @@ function gameTimelineBlock(m) {
   const name=k=>k==='home'?m.home.abbr:k==='away'?m.away.abbr:k==='tie'?'Tied':'Uncertain';
   const lead=p=>`${esc(name(p.likelyLeader))}${p.likelyLeader==='uncertain'?'':` · ${pct(p[p.likelyLeader+'Probability'])}`}`;
   const points=f?.points||a?.points||[];
-  const row=p=>{const actual=a?.complete?a.points.find(x=>x.minute===p.minute):null;return `<tr><td>${esc(p.clock)}</td><td>${f?`${p.away} – ${p.home}`:'—'}</td><td>${f?lead(p):'Not saved'}</td><td>${f?`${pct(p.awayProbability)} / ${pct(p.tieProbability)} / ${pct(p.homeProbability)}`:'—'}</td><td>${actual?`${actual.away} – ${actual.home} · ${esc(name(actual.leader))}`:'—'}</td></tr>`;};
-  const table=ps=>`<div class="scroll"><table class="script-clock"><thead><tr><th>Game clock</th><th>Expected ${esc(m.away.abbr)} – ${esc(m.home.abbr)}</th><th>Most likely leader</th><th>${esc(m.away.abbr)} / tied / ${esc(m.home.abbr)}</th><th>Actual score · leader</th></tr></thead><tbody>${ps.map(row).join('')}</tbody></table></div>`;
+  const row=p=>{const actual=a?.complete?a.points.find(x=>x.minute===p.minute):null;return `<tr><td>${esc(p.clock)}</td><td>${f?`${p.away} – ${p.home}`:'—'}</td><td>${f?lead(p):'Not saved'}</td><td>${f?`${pct(p.awayProbability)} / ${pct(p.tieProbability)} / ${pct(p.homeProbability)}`:'—'}</td><td>${actual?`${actual.away} – ${actual.home} · ${esc(name(actual.leader))}`:'—'}</td><td>${!p.minute?'Kickoff excluded':actual&&f?(p.likelyLeader===actual.leader?'Correct':'Incorrect'):'Pending'}</td></tr>`;};
+  const table=ps=>`<div class="scroll"><table class="script-clock"><thead><tr><th>Game clock</th><th>Expected ${esc(m.away.abbr)} – ${esc(m.home.abbr)}</th><th>Most likely leader</th><th>${esc(m.away.abbr)} / tied / ${esc(m.home.abbr)}</th><th>Actual score · leader</th><th>Minute check</th></tr></thead><tbody>${ps.map(row).join('')}</tbody></table></div>`;
   const max=Math.max(7,...points.map(p=>Math.abs(p.home-p.away)),...(a?.complete?a.events.map(p=>Math.abs(p.home-p.away)):[]));
   const x=t=>40+t/60*620,y=v=>100-v/max*70;
   const path=f?.points.map((p,i)=>`${i?'L':'M'}${x(p.minute)},${y(p.home-p.away)}`).join(' ');
@@ -264,7 +267,7 @@ function gameTimelineBlock(m) {
   const review=r?.review;
   return `<section class="script timeline"><h2 class="sec" style="margin-top:0">Game clock · expected leader &amp; script review</h2>
     <p>${m.mode==='pregame'&&f?`Current forecast generated <b>${etStamp(f.generatedAt)}</b>. ${r?`Last archived run #${esc(r.runId)} at ${etStamp(r.forecastTimestamp)}; review uses that frozen version.`:''}`:r?`Original pregame snapshot #${esc(r.runId)} saved <b>${etStamp(r.forecastTimestamp)}</b>.`:`Forecast generated <b>${etStamp(f.generatedAt)}</b>; save a snapshot to freeze it.`} ${f?`Timeline model ${esc(f.version)} · ${f.sims.toLocaleString()} simulations.`:'No minute forecast was saved for this game; only the original final-margin expectation can be graded.'}</p>
-    ${f?.inputs?`<details><summary>Inputs driving this script · market, player production, and line matchups</summary><p>Experimental context model. On 15 reconstructed week-4 games, minute accuracy was 59.2% versus 52.8% for timing alone; this is not prospective validation. The independent scoring assumptions still omit possession and field position.</p>${['away','home'].map(side=>`<h4>${esc(m[side].abbr)} · market/context ${f1(f.inputs[side].marketPoints)} → experimental ${f1(f.inputs[side].points)} points</h4><ul>${f.inputs[side].groups.map(g=>`<li><b>${esc(g.name)}</b> (${Math.round(g.weight*100)}% log-ratio weight): ${esc(g.detail)}</li>`).join('')}</ul><p class="muted">${esc(f.inputs[side].note)}</p>`).join('')}<p>Game lines retrieved ${etStamp(m.odds?.meta?.retrievedAt)}. Player prop lines: ${etStamp(m.sources?.find(s=>s.label==='Player prop lines')?.fetchedAt)}. Madden + production rating file: ${etStamp(m.ratingFreshness?.computedAt)}${m.ratingFreshness?.staleFromWeek?' · older derived file; local Madden source unavailable on public host':''}. Other inputs refresh when their providers publish new data.</p></details>`:''}
+    ${f?.inputs?`<details><summary>Inputs driving this script · market, player production, and line matchups</summary><p>Experimental context model. On 80 reconstructed NFL games, minute accuracy was 55.6% versus 54.7% for timing alone; this is not prospective validation. The independent scoring assumptions still omit possession and field position.</p>${['away','home'].map(side=>`<h4>${esc(m[side].abbr)} · market/context ${f1(f.inputs[side].marketPoints)} → experimental ${f1(f.inputs[side].points)} points</h4><ul>${f.inputs[side].groups.map(g=>`<li><b>${esc(g.name)}</b> (${Math.round(g.weight*100)}% log-ratio weight): ${esc(g.detail)}</li>`).join('')}</ul><p class="muted">${esc(f.inputs[side].note)}</p>`).join('')}<p>Game lines retrieved ${etStamp(m.odds?.meta?.retrievedAt)}. Player prop lines: ${etStamp(m.sources?.find(s=>s.label==='Player prop lines')?.fetchedAt)}. Madden + production rating file: ${etStamp(m.ratingFreshness?.computedAt)}${m.ratingFreshness?.staleFromWeek?' · older derived file; local Madden source unavailable on public host':''}. Other inputs refresh when their providers publish new data.</p></details>`:''}
     ${review?.finalWinnerCorrect!=null?`<div class="callout"><b>Saved final winner: ${review.finalWinnerCorrect?'correct':'wrong'}.</b> Expected ${esc(m.home.abbr)} margin ${sgn(review.expectedHomeMargin)}; actual ${sgn(review.actualHomeMargin)}. Margin error ${f1(review.marginError)} points.${review.checkpointCount?` Minute leader accuracy ${pct(review.checkpointAccuracy)} across ${review.checkpointCount} checkpoints; score MAE ${f1(review.scoreMAE)} points; Brier score ${f2(review.brier)} (lower is better).`:' Minute accuracy: unavailable — no original timeline.'}</div>`:''}
     ${a?.complete?`<p>Regulation time leading: ${esc(m.away.abbr)} ${f1(a.leadSeconds.away/60)} min · tied ${f1(a.leadSeconds.tie/60)} min · ${esc(m.home.abbr)} ${f1(a.leadSeconds.home/60)} min. ${a.leadChanges} lead changes.${a.overtime?' Game went to overtime; final winner includes OT, chart ends at regulation.':''} Results retrieved ${etStamp(r.source?.fetchedAt)}.</p>`:a?`<p>${esc(a.reason)}</p>`:''}
     ${points.length?graph:''}<p class="muted">Dashed purple: expected margin. Solid: actual margin. Above zero means ${esc(m.home.abbr)} leads. Game clock is regulation playing time, not real time.</p>
@@ -838,3 +841,11 @@ window.addEventListener('resize', syncTopbar);
 syncTopbar();
 
 loadStatus().then(route);
+
+async function renderMinuteTracker(){
+ loading('Loading frozen NFL minute forecasts and results…');
+ try{const d=await api('/api/nfl-minute-tracker');if(parseHash().view!=='scripts')return;
+ const summary=d.summary;
+ app.innerHTML=`<h1>NFL Minute Tracker</h1><p>${esc(d.name)} · checked ${etStamp(d.updatedAt)}</p><div class="banner">${esc(d.note)} Public results refresh on the scheduled site build; they are not a live play-by-play feed.</div><p><b>${summary.reviewed}/${summary.games} games graded · ${summary.correct}/${summary.checks} minute checks correct · ${summary.accuracy==null?'Accuracy pending':pct(summary.accuracy)+' accuracy'}</b></p><p><a href="nfl-minute-backtest.html" target="_blank" rel="noopener">Historical NFL backtest: 80 games, 4,800 minute checks</a> — reconstructed results, separate from this forward test.</p>${['2026-10-18','2026-10-19'].map(date=>`<h2>${date==='2026-10-18'?'Sunday, October 18':'Monday, October 19'} · Eastern time</h2>${d.games.filter(g=>g.dateET===date).map(g=>`<details class="why"><summary><b>${esc(g.away)} @ ${esc(g.home)}</b> · ${etStamp(g.kickoff)} · ${g.status==='reviewed'?pct(g.review.checkpointAccuracy)+' minute accuracy':esc(g.status)}</summary>${g.error?`<p class="error">${esc(g.error)}</p>`:''}${gameTimelineBlock({home:{abbr:g.home},away:{abbr:g.away},mode:'tracked',scriptReview:g})}</details>`).join('')}`).join('')}`;
+ }catch(e){fail(e);}
+}

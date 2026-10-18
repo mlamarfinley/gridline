@@ -32,6 +32,7 @@ function startJob(label, fn) {
 async function api(req, res, url) {
   const q = url.searchParams;
   const p = url.pathname;
+  if (p === '/api/nfl-minute-tracker') { const {loadMinuteTracker} = await import('./src/minuteTracker.js'); return send(res,200,await loadMinuteTracker()); }
   if (p === '/api/status') {
     const d = openLedger();
     const counts = d.prepare('SELECT kind, COUNT(*) AS runs FROM runs GROUP BY kind').all();

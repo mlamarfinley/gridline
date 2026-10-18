@@ -96,6 +96,8 @@ for (const lg of ['nfl', 'cfb']) {
     } catch (e) { summary.failed.push({ lg, id, error: e.message }); }
   });
 }
+const { loadMinuteTracker } = await import('../src/minuteTracker.js');
+write(OUT, 'api/nfl-minute-tracker.json', await loadMinuteTracker());
 write(OUT, 'api/script-archive.json', scriptArchive);
 write(OUT, 'api/build.json', summary);
 if (summary.failed.length) throw new Error(`Refusing partial publication: ${summary.failed.length} data builds failed`);
