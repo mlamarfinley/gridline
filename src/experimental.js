@@ -1,6 +1,6 @@
 // Heuristic second opinion. No fitting, market-line input, or target-game actuals.
 // Correlated measurements are averaged within evidence groups, not counted as independent votes.
-export const EXPERIMENT_VERSION = 'context-experiment-1';
+export const EXPERIMENT_VERSION = 'context-experiment-2';
 const SUPPORTED = new Set(['pass_yds','pass_att','completions','rush_yds','carries','rec_yds','receptions','targets']);
 const finite = Number.isFinite;
 const clip = (x, lo=-1, hi=1) => Math.max(lo, Math.min(hi,x));
@@ -10,7 +10,7 @@ export function experimentalForecast(s, c={}, t={}) {
   if(!SUPPORTED.has(s.key)||!finite(s.proj)||s.proj<0) return null;
   const run=['rush_yds','carries'].includes(s.key), recv=['rec_yds','receptions','targets'].includes(s.key);
   const signals=[];
-  const group=(name,weight,parts)=>{const usable=parts.filter(x=>finite(x.score));if(usable.length)signals.push({group:name,weight,score:round(mean(usable.map(x=>clip(x.score)))*100)/100,evidence:usable.map(x=>x.text)});};
+  const group=(name,weight,parts)=>{const usable=parts.filter(x=>finite(x.score));if(usable.length)signals.push({group:name,weight,score:round(mean(usable.map(x=>x.score))*100)/100,evidence:usable.map(x=>x.text)});};
   const last=(s.last5||[]).filter(x=>finite(x.value)).slice(-3);
   group('Recent form',0.20,last.length>=2&&s.seasonAvg>0?[{score:(mean(last.map(x=>x.value))/s.seasonAvg-1)/0.4,text:`Last ${last.length} average ${round(mean(last.map(x=>x.value)))} vs season ${s.seasonAvg}.`}]:[]);
   const u=c.usageHistory,uk=run?'carries':recv?'targets':'passAtt',role=[];
@@ -39,11 +39,12 @@ export function experimentalForecast(s, c={}, t={}) {
   const support=Math.max(positive,negative),score=signals.reduce((n,x)=>n+x.weight*x.score,0);
   const sample=finite(s.seasonGames)?clip(s.seasonGames/5,0.2,1):0.2;
   const availability=/questionable|doubtful|out|injured reserve/i.test(c.injury?.status||'')?0.5:1;
-  const adjustment=clip(score*(support>=3?1.3:1)*sample*availability)*0.25;
-  const lo=finite(s.p10)?Math.min(s.proj,s.p10):0,hi=finite(s.p90)?Math.max(s.proj,s.p90):Infinity;
-  const lower=Math.max(0,lo,s.proj*.75),upper=Math.min(hi,s.proj*1.25);
-  const projection=clip(round(clip(s.proj*(1+adjustment),lower,upper)),lower,upper);
-  return {version:EXPERIMENT_VERSION,baseline:s.proj,projection,adjustmentPct:s.proj?round((projection/s.proj-1)*100):0,signals,groupsAvailable:signals.length,groupsPossible:5,sampleFactor:sample,availabilityFactor:availability,probability:null,note:'Unvalidated contextual point forecast. Injuries, weather, pace and game script also enter through the baseline; overlapping signals are grouped. Baseline ranges/probabilities do not describe this forecast.'};
+  // Sensitivity is weighted, but there is no percentage or baseline-range cap.
+  const adjustment=score*(support>=3?1.3:1)*sample*availability*0.25;
+  const rawProjection=s.proj*(1+adjustment);
+  if(!finite(rawProjection)) return null;
+  const projection=Math.max(0,round(rawProjection));
+  return {version:EXPERIMENT_VERSION,baseline:s.proj,projection,adjustmentPct:s.proj?round((projection/s.proj-1)*100):0,signals,groupsAvailable:signals.length,groupsPossible:5,sampleFactor:sample,availabilityFactor:availability,probability:null,note:'Unvalidated contextual point forecast; no fixed adjustment cap. Injuries, weather, pace and game script also enter through the baseline; overlapping signals are grouped. Baseline ranges/probabilities do not describe this forecast.'};
 }
 export function addExperimental(team){
   for(const c of team.cards||[])for(const s of Object.values(c.stats||{}))if(s.available)s.experimental=experimentalForecast(s,c,team);
@@ -52,9 +53,7 @@ export function addExperimental(team){
     const ceiling=qb?.stats?.[qbKey]?.experimental?.projection;if(!finite(ceiling))continue;
     const es=(team.cards||[]).filter(c=>c!==qb).map(c=>c.stats?.[receiverKey]?.experimental).filter(Boolean);
     const total=es.reduce((n,e)=>n+e.projection,0);if(total<=ceiling)continue;
-    const floor=es.reduce((n,e)=>n+e.baseline*.75,0),room=total-floor;
-    if(room<=0)continue;
-    const factor=clip((ceiling-floor)/room,0,1);
-    for(const e of es){e.projection=Math.max(e.baseline*.75,Math.floor((e.baseline*.75+(e.projection-e.baseline*.75)*factor)*10)/10);e.adjustmentPct=e.baseline?round((e.projection/e.baseline-1)*100):0;e.constraint='Receiving totals limited to experimental QB passing output.';}
+    const factor=ceiling/total;
+    for(const e of es){e.projection=Math.max(0,Math.floor(e.projection*factor*10)/10);e.adjustmentPct=e.baseline?round((e.projection/e.baseline-1)*100):0;e.constraint='Receiving totals reconciled with experimental QB passing output.';}
   }
 }
