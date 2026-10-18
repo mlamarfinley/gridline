@@ -17,6 +17,7 @@
     "blind": "node --no-warnings scripts/blind.js",
     "export:ledger": "node --no-warnings scripts/export-site.js --ledger",
     "export:site": "node --no-warnings scripts/export-site.js --out site",
-    "skeptic": "node --no-warnings scripts/skeptic.mjs"
+    "skeptic": "node --no-warnings scripts/skeptic.mjs",
+    "review:scripts": "node --no-warnings scripts/game_scripts.mjs"
   }
 }

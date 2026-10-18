@@ -1,3 +1,4 @@
+import { forecastScript, quarterProfile, scoreTimeline, compareScript } from './gameScript.js';
 import { addExperimental } from './experimental.js';
 // Builds the full matchup payload: header (odds/implied score), team context, injuries,
 // role selection, player projections with explanations, and provenance.
@@ -1094,6 +1095,22 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
   // Live experimental second opinion; never synthesize historical experimental picks.
   if (pregame && !blind) for (const t of Object.values(teams)) addExperimental(t);
 
+  // Clock-based second opinion: timing uses only verified/filtered prior games.
+  let gameScript = null;
+  if (pregame && !blind) {
+    const hp = quarterProfile(H.games, cutoff), ha = quarterProfile(A.games, cutoff, true);
+    const ap = quarterProfile(A.games, cutoff), aa = quarterProfile(H.games, cutoff, true);
+    gameScript = forecastScript({ homePoints: teams[home.id].impliedPts, awayPoints: teams[away.id].impliedPts,
+      homeProfile: hp.weights.map((v,i)=>(v+ha.weights[i])/2), awayProfile: ap.weights.map((v,i)=>(v+aa.weights[i])/2),
+      seed: `${eventId}|script-timeline-1`, generatedAt: new Date().toISOString(), history: { homeScoringGames: hp.games, awayScoringGames: ap.games, homeOpponentGames: ha.games, awayOpponentGames: aa.games } });
+  }
+  let scriptReview = null;
+  try { scriptReview = JSON.parse(fsA.readFileSync(new URL(`../reports/game_scripts_${lg}.json`, import.meta.url), 'utf8')).games[String(eventId)] || null; } catch { /* no saved review yet */ }
+  if (scriptReview && sum && !pregame && !blind) {
+    const actual = scoreTimeline(sum);
+    scriptReview = { ...scriptReview, actual, review: compareScript(scriptReview, actual), source: sumR.meta, status: actual.complete ? 'reviewed' : 'incomplete' };
+  }
+
   // Ledger rows: every displayed card (incl. kicker and an outlier-pick card).
   for (const t of Object.values(teams)) {
     const { opp: oppAbbr, expMargin, impliedPts } = t._ctx;
@@ -1140,6 +1157,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
     odds: odds ? { ...odds, meta: oddsMeta } : null, implied, mlNoVig,
     venue, weather, weatherEffects: wx.notes,
     props: propsMeta, oddsApi: { enabled: oddsApi.enabled, error: oddsApi.error || null },
+    gameScript, scriptReview,
     injuryNote, outlier, skeptic: skepticReport, rbUpside, lineProxy, blindAudit, lineBaseExcluded: lineBase.excludedUnverified ?? null,
     lineGrades: { away: lineGrades[away.id], home: lineGrades[home.id], baseline: { source: lineBase.source, measured: lineBase.measured, games: lineBase.games, teams: lineBase.teams, mean: lineBase.mean, sd: lineBase.sd }, method: LINE_METHOD },
     baselines: { source: B.source, measured: B.measured },

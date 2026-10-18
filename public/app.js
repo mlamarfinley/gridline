@@ -206,6 +206,7 @@ async function renderGame(lg, id) {
     </div>
     ${m.mode !== 'pregame' ? `<div class="banner">Retrospective view. Projections are rebuilt using only games completed before kickoff; injury reports, depth charts and weather are <b>not</b> applied because today's versions would leak post-kickoff information.${done ? ' Actual results are shown beside each projection.' : ''}</div>` : ''}
     ${scriptBlock(A, H)}
+    ${gameTimelineBlock(m)}
     ${outlierBlock(m)}
     ${outliersBlock(m)}
     ${skepticBlock(m)}
@@ -244,6 +245,33 @@ function scriptBlock(A, H) {
     <div class="ends"><span style="color:var(--away)">◀ ${esc(A.abbr)} leading</span><span style="color:var(--home)">${esc(H.abbr)} leading ▶</span></div>
     <div class="spectrum" role="img" aria-label="Scenario weights">${segs.map((s) => `<div style="flex:${Math.max(s.w, 0.0001)};background:color-mix(in srgb, ${s.c} ${Math.round(s.a * 100)}%, var(--bg));color:${s.a === 1 ? s.ink : 'var(--ink)'}" title="${s.label} ${pct(s.w)}">${s.w > 0.07 ? `${s.label} ${pct(s.w)}` : ''}</div>`).join('')}</div>
     <p>Weights from ${esc(H.scriptSource.toLowerCase())}: expected ${esc(H.abbr)} margin ${sgn(Math.round(H.expMargin * 10) / 10)}. Each simulated game opens close (first ~40% of plays) and then follows one script; pass rates and each player's carry/target shares change by script using that team's measured splits (shrunk toward its overall rates). Approximation — not a validated win-probability model.</p></section>`;
+}
+
+function gameTimelineBlock(m) {
+  const r=m.scriptReview, f=r?.forecast||m.gameScript, a=r?.actual;
+  if(!f&&!r)return '';
+  const name=k=>k==='home'?m.home.abbr:k==='away'?m.away.abbr:k==='tie'?'Tied':'Uncertain';
+  const lead=p=>`${esc(name(p.likelyLeader))}${p.likelyLeader==='uncertain'?'':` · ${pct(p[p.likelyLeader+'Probability'])}`}`;
+  const points=f?.points||a?.points||[];
+  const row=p=>{const actual=a?.complete?a.points.find(x=>x.minute===p.minute):null;return `<tr><td>${esc(p.clock)}</td><td>${f?`${p.away} – ${p.home}`:'—'}</td><td>${f?lead(p):'Not saved'}</td><td>${f?`${pct(p.awayProbability)} / ${pct(p.tieProbability)} / ${pct(p.homeProbability)}`:'—'}</td><td>${actual?`${actual.away} – ${actual.home} · ${esc(name(actual.leader))}`:'—'}</td></tr>`;};
+  const table=ps=>`<div class="scroll"><table class="script-clock"><thead><tr><th>Game clock</th><th>Expected ${esc(m.away.abbr)} – ${esc(m.home.abbr)}</th><th>Most likely leader</th><th>${esc(m.away.abbr)} / tied / ${esc(m.home.abbr)}</th><th>Actual score · leader</th></tr></thead><tbody>${ps.map(row).join('')}</tbody></table></div>`;
+  const max=Math.max(7,...points.map(p=>Math.abs(p.home-p.away)),...(a?.complete?a.events.map(p=>Math.abs(p.home-p.away)):[]));
+  const x=t=>40+t/60*620,y=v=>100-v/max*70;
+  const path=f?.points.map((p,i)=>`${i?'L':'M'}${x(p.minute)},${y(p.home-p.away)}`).join(' ');
+  let actualPath='M40,100';
+  if(a?.complete){for(const e of a.events.filter(e=>e.elapsed!=null))actualPath+=`H${x(e.elapsed/60)}V${y(e.home-e.away)}`;actualPath+='H660';}
+  const graph=`<svg viewBox="0 0 700 215" role="img" aria-label="Home score minus away score over regulation. Dashed line is forecast, solid line is actual."><line x1="40" x2="660" y1="100" y2="100" stroke="currentColor" opacity=".4"/>${[0,15,30,45,60].map(t=>`<line x1="${x(t)}" x2="${x(t)}" y1="30" y2="170" stroke="currentColor" opacity=".12"/><text x="${x(t)}" y="195" text-anchor="middle" fill="currentColor" font-size="12">${t}m</text>`).join('')}<text x="40" y="18" fill="currentColor" font-size="12">${esc(m.home.abbr)} ahead (+${f1(max)})</text><text x="40" y="212" fill="currentColor" font-size="12">${esc(m.away.abbr)} ahead (−${f1(max)})</text>${path?`<path d="${path}" fill="none" stroke="#b29aff" stroke-width="3" stroke-dasharray="7 4"/>`:''}${a?.complete?`<path d="${actualPath}" fill="none" stroke="currentColor" stroke-width="2.5"/>`:''}</svg>`;
+  const review=r?.review;
+  return `<section class="script timeline"><h2 class="sec" style="margin-top:0">Game clock · expected leader &amp; script review</h2>
+    <p>${r?`Original pregame snapshot #${r.runId} saved <b>${etStamp(r.forecastTimestamp)}</b>.`:`Forecast generated <b>${etStamp(f.generatedAt)}</b>; save a snapshot to freeze it.`} ${f?`Timeline model ${esc(f.version)} · ${f.sims.toLocaleString()} simulations.`:'No minute forecast was saved for this game; only the original final-margin expectation can be graded.'}</p>
+    ${review?.finalWinnerCorrect!=null?`<div class="callout"><b>Saved final winner: ${review.finalWinnerCorrect?'correct':'wrong'}.</b> Expected ${esc(m.home.abbr)} margin ${sgn(review.expectedHomeMargin)}; actual ${sgn(review.actualHomeMargin)}. Margin error ${f1(review.marginError)} points.${review.checkpointCount?` Minute leader accuracy ${pct(review.checkpointAccuracy)} across ${review.checkpointCount} checkpoints; score MAE ${f1(review.scoreMAE)} points; Brier score ${f2(review.brier)} (lower is better).`:' Minute accuracy: unavailable — no original timeline.'}</div>`:''}
+    ${a?.complete?`<p>Regulation time leading: ${esc(m.away.abbr)} ${f1(a.leadSeconds.away/60)} min · tied ${f1(a.leadSeconds.tie/60)} min · ${esc(m.home.abbr)} ${f1(a.leadSeconds.home/60)} min. ${a.leadChanges} lead changes.${a.overtime?' Game went to overtime; final winner includes OT, chart ends at regulation.':''} Results retrieved ${etStamp(r.source?.fetchedAt)}.</p>`:a?`<p>${esc(a.reason)}</p>`:''}
+    ${points.length?graph:''}<p class="muted">Dashed purple: expected margin. Solid: actual margin. Above zero means ${esc(m.home.abbr)} leads. Game clock is regulation playing time, not real time.</p>
+    ${points.length?table(points.filter(p=>[15,30,45,60].includes(p.minute)))+`<details><summary>Every minute · kickoff through end of regulation</summary>${table(points)}</details>`:''}
+    ${r?.observedStates&&r?.expectedEffectiveStates?`<details><summary>Why the broad script matched or missed · saved expectation vs actual play states</summary><p>From ${esc(m.home.abbr)}'s perspective. The model mixes a close opening with its saved scenario weights; actual shares count offensive plays in each score state. This describes the mismatch, not its cause.</p><div class="scroll"><table class="script-clock"><thead><tr><th>Score state</th><th>Expected share of plays</th><th>Actual share of plays</th><th>Difference</th></tr></thead><tbody>${SCRIPT.map(([k,label])=>`<tr><td>${esc(label)}</td><td>${pct(r.expectedEffectiveStates[k])}</td><td>${pct(r.observedStates[k])}</td><td>${sgn(Math.round((r.observedStates[k]-r.expectedEffectiveStates[k])*100))} percentage points</td></tr>`).join('')}</tbody></table></div></details>`:''}
+    ${a?.events?.length?`<details><summary>Actual scoring events · exact game clock and available timestamps</summary><div class="scroll"><table class="script-clock"><thead><tr><th>Clock</th><th>Score (${esc(m.away.abbr)} – ${esc(m.home.abbr)})</th><th>Timestamp</th><th>Play</th></tr></thead><tbody>${a.events.map(e=>`<tr><td>${e.period>4?'OT':'Q'+e.period} ${esc(e.clock)}</td><td>${e.away} – ${e.home}</td><td>${e.wallclock?etStamp(e.wallclock):'Not supplied'}</td><td>${esc(e.text)}</td></tr>`).join('')}</tbody></table></div></details>`:''}
+    ${f?`<p class="muted">${esc(f.note)} “Most likely leader” includes a tie and can differ from the leader implied by the average score. Minute checks in one game are correlated; they are not independent bets.</p>`:''}
+    </section>`;
 }
 
 function injuryBlock(m) {

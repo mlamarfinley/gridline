@@ -414,3 +414,5 @@ details.ratings td.num { text-align: right; font-variant-numeric: tabular-nums; 
 .experimental-forecast ul { padding-left: 18px; }
 .forecast-legend { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
 .forecast-legend .exp { color: var(--experiment); }
+
+.timeline svg{width:100%;max-height:300px;margin:10px 0}.script-clock{width:100%;border-collapse:collapse;font-size:12px}.script-clock th,.script-clock td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}.script-clock td:last-child{white-space:normal;min-width:150px}.timeline details{margin-top:14px}.timeline summary{cursor:pointer;font-weight:600;padding:8px 0}

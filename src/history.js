@@ -1,3 +1,4 @@
+import { scoringEvents } from './gameScript.js';
 // Collects a team's completed games BEFORE a cutoff and derives team + player context.
 // The cutoff is the single guard against future-data leakage: every game used must have
 // kicked off before `cutoff` and be final.
@@ -83,7 +84,7 @@ export async function loadTeamGames(lg, teamId, season, cutoffISO, prov, { maxGa
       eventId: g.id, date: g.date, week: g.week, seasonType: g.seasonType, isHome,
       teamId: String(teamId), teamAbbr: me.abbr, oppId: opp.id, oppAbbr: opp.abbr,
       pointsFor: me.score, pointsAgainst: opp.score,
-      box: espn.parseBoxscore(s.data), plays: espn.extractPlays(s.data), summary: null, endTime,
+      scoringEvents: scoringEvents(s.data), box: espn.parseBoxscore(s.data), plays: espn.extractPlays(s.data), summary: null, endTime,
     });
   }));
   games.sort((a, b) => Date.parse(a.date) - Date.parse(b.date));

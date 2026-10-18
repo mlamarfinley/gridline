@@ -108,3 +108,12 @@ test('experimental forecasts and their reasoning are archived independently of b
   assert.equal(d.prepare('SELECT projection FROM snapshots WHERE run_id=? AND player_id=?').get(a.runId,'p1').projection,60);
   closeLedger();
 });
+
+test('minute scripts are frozen and timestamp-only refreshes do not append duplicates',()=>{
+ const d=openLedger(':memory:');const m=matchup({gameScript:{version:'script-timeline-1',generatedAt:'2026-10-01T12:00:00Z',points:[{minute:60,home:24,away:20}]}});
+ const a=recordSnapshot(m,{},d);assert(a.ok);
+ m.gameScript.generatedAt='2026-10-01T13:00:00Z';assert.equal(recordSnapshot(m,{},d).duplicate,true);
+ m.gameScript.points[0].home=28;const b=recordSnapshot(m,{},d);assert(b.ok&&!b.duplicate&&b.runId!==a.runId);
+ const old=JSON.parse(d.prepare('SELECT game_json FROM runs WHERE id=?').get(a.runId).game_json);
+ assert.equal(old.gameScript.points[0].home,24);assert.equal(old.gameScript.generatedAt,'2026-10-01T12:00:00Z');closeLedger();
+});
