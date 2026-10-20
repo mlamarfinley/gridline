@@ -1,4 +1,3 @@
-import {attachPlayerForecast} from './playerForecastArchive.js';
 import { deepContext } from './deepContext.js';
 import { trackedPlayerStat } from '../public/trackingPolicy.js';
 import { contextualScript } from './scriptContext.js';
@@ -77,7 +76,7 @@ async function findEvent(lg, eventId, dateISO, prov) {
  * In blind mode the target game's summary/box/plays/odds/props, current rosters, depth charts,
  * injuries, weather, snaps and optional APIs are never requested.
  */
-export async function buildMatchup(lg, eventId, { forceRetro = false, blind = null, noPlayerLines = false, archivedScript = null, archivedPlayers = null } = {}) {
+export async function buildMatchup(lg, eventId, { forceRetro = false, blind = null, noPlayerLines = false, archivedScript = null } = {}) {
   const prov = new Provenance();
   let sumR = null, sum = null, hdr, season, kickoff, ev, state, pregame, mode, home, away, odds, oddsMeta, implied, mlNoVig;
   if (blind) {
@@ -1114,11 +1113,6 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
 
   // Live experimental second opinion; never synthesize historical experimental picks.
   if (pregame && !blind) for (const t of Object.values(teams)) addExperimental(t);
-
-  if(!pregame&&!blind&&lg==='nfl'){
-    if(!archivedPlayers){try{archivedPlayers=JSON.parse(fsA.readFileSync(new URL('../static-data/api/player-forecast-archive.json',import.meta.url),'utf8'))[String(eventId)];}catch{}}
-    attachPlayerForecast(Object.values(teams),archivedPlayers,eventId,kickoff);
-  }
 
   // Clock-based second opinion: timing uses only verified/filtered prior games.
   let gameScript = null;

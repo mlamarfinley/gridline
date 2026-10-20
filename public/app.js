@@ -425,7 +425,7 @@ function cardBody(m, c, key) {
   const bk = s.book;
   return `<div class="core">
     <div class="proj">
-      <div class="faint">${m.mode==='retro'?'Rebuilt baseline projection':'Baseline projection'}</div>
+      <div class="faint">Baseline projection</div>
       <div class="big">${f1(s.proj)}</div>
       <div class="rng">range ${f1(s.p10)}–${f1(s.p90)} · median ${f1(s.p50)}</div>
       <dl>
@@ -439,7 +439,7 @@ function cardBody(m, c, key) {
     </div>
     <div class="chart">${last5Chart(s)}${h2hBlock(s)}${vsPosBlock(s)}</div>
   </div>
-  ${s.experimental ? `<section class="experimental-forecast"><div><span>${s.experimental.savedAt ? 'Saved experimental forecast' : 'Experimental forecast'}</span><strong>${f1(s.experimental.projection)}</strong><span>${s.experimental.adjustmentPct > 0 ? '+' : ''}${s.experimental.adjustmentPct}% vs ${s.experimental.savedAt ? 'saved baseline' : 'baseline'}</span></div>${s.experimental.savedAt ? `<p>Saved ${etStamp(s.experimental.savedAt)} · original baseline ${f1(s.experimental.savedBaseline)} · original book line ${f1(s.experimental.savedLine)}. The BASE graph marker is the rebuilt baseline shown above.</p>` : ''}<p>Context experiment · unvalidated · ${s.experimental.groupsAvailable}/5 evidence groups</p><details><summary>Why the experimental number changed</summary><ul>${s.experimental.signals.map(g => `<li><b>${esc(g.group)}</b> · ${g.score > 0 ? 'upward' : g.score < 0 ? 'downward' : 'neutral'} signal<ul>${g.evidence.map(e => `<li>${esc(e)}</li>`).join('')}</ul></li>`).join('')}</ul>${s.experimental.constraint ? `<p>${esc(s.experimental.constraint)}</p>` : ''}<p>${esc(s.experimental.note)}</p></details></section>` : m.mode==='retro' ? '<p class="muted">No saved pregame experimental forecast for this player/stat.</p>' : ''}
+  ${s.experimental ? `<section class="experimental-forecast"><div><span>Experimental forecast</span><strong>${f1(s.experimental.projection)}</strong><span>${s.experimental.adjustmentPct > 0 ? '+' : ''}${s.experimental.adjustmentPct}% vs baseline</span></div><p>Context experiment · unvalidated · ${s.experimental.groupsAvailable}/5 evidence groups</p><details><summary>Why the experimental number changed</summary><ul>${s.experimental.signals.map(g => `<li><b>${esc(g.group)}</b> · ${g.score > 0 ? 'upward' : g.score < 0 ? 'downward' : 'neutral'} signal<ul>${g.evidence.map(e => `<li>${esc(e)}</li>`).join('')}</ul></li>`).join('')}</ul>${s.experimental.constraint ? `<p>${esc(s.experimental.constraint)}</p>` : ''}<p>${esc(s.experimental.note)}</p></details></section>` : ''}
   ${s.explain ? `<details class="why"><summary>Why this projection</summary><div class="expl">${esc(s.explain)}</div></details>` : ''}
   ${c.playerRating ? `<div class="prating">Player Rating <b>${c.playerRating.rating}</b> <span class="faint">(Madden + production; ${c.playerRating.effPerTouch >= 0 ? '+' : ''}${c.playerRating.effPerTouch} yds/touch vs expected, recent)</span></div>` : ''}
   ${c.monitor?.length ? monitorBlock(c) : ''}

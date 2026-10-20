@@ -1,4 +1,3 @@
-import {archivePlayerForecast,latestPlayerForecast} from '../src/playerForecastArchive.js';
 import { mergeTrackedRecords } from '../src/minuteTracker.js';
 import { archiveScript, latestScript } from '../src/scriptArchive.js';
 // Build a READ-ONLY static copy of Gridline (for GitHub Pages).
@@ -25,14 +24,6 @@ if (arg('ledger')) {
   const versions = d.prepare("SELECT DISTINCT model_version FROM runs WHERE league='nfl'").all().map((r) => r.model_version);
   if (!versions.includes(MODEL_VERSION)) versions.push(MODEL_VERSION);
   for (const kind of ['pregame', 'backtest']) for (const v of versions) write(STATIC_DATA, `api/ledger/${kind}-${v}.json`, ledgerOverview({ league: 'nfl', kind, modelVersion: v }));
-  const playerArchive={};
-  for(const run of d.prepare("SELECT * FROM runs WHERE league='nfl' AND kind='pregame' ORDER BY id").all()){
-    const exp=JSON.parse(run.game_json||'{}').experimental||[];
-    const rows=exp.map(e=>{const base=d.prepare('SELECT projection,position FROM snapshots WHERE run_id=? AND player_id=? AND stat=?').get(run.id,String(e.playerId),e.stat);return {...e,baseline:base?.projection};});
-    const r={gameId:String(run.game_id),kickoff:run.kickoff,savedAt:run.created_at,runId:run.id,modelVersion:run.model_version,rows};
-    const selected=latestPlayerForecast(playerArchive[r.gameId],r);if(selected)playerArchive[r.gameId]=selected;
-  }
-  write(STATIC_DATA,'api/player-forecast-archive.json',playerArchive);
   const bd = openBlind(d);
   const batches = bd.prepare(`SELECT b.id, b.created_at, b.model_version, b.params_hash, b.leagues,
     (SELECT COUNT(*) FROM blind_manifests m WHERE m.batch_id=b.id AND m.status='predicted') AS predicted,
@@ -78,11 +69,6 @@ if (archiveResponse.ok) {
   }
 } else if (archiveResponse.status !== 404) throw new Error(`Cannot preserve published script archive: HTTP ${archiveResponse.status}`);
 
-let playerArchive={};
-try{playerArchive=JSON.parse(fs.readFileSync(path.join(STATIC_DATA,'api/player-forecast-archive.json'),'utf8'));}catch{}
-const playerResponse=await fetch('https://mlamarfinley.github.io/gridline/api/player-forecast-archive.json',{signal:AbortSignal.timeout(30000),cache:'no-store'});
-if(playerResponse.ok){for(const [id,r] of Object.entries(await playerResponse.json())){const selected=latestPlayerForecast(playerArchive[id],r);if(selected)playerArchive[id]=selected;}}
-else if(playerResponse.status!==404)throw Error('Cannot preserve experimental player forecasts');
 let trackedRecords=[];
 const trackerResponse=await fetch('https://mlamarfinley.github.io/gridline/api/nfl-minute-tracker.json',{signal:AbortSignal.timeout(30000),cache:'no-store'});
 if(trackerResponse.ok)trackedRecords=(await trackerResponse.json()).games;
@@ -107,9 +93,7 @@ for (const lg of ['nfl']) {
   log(`${lg}: ${weeks.length} week slates; building ${ids.size} matchups`);
   await pool([...ids], 3, async (id) => {
     try {
-      const m = await buildMatchup(lg, id, { archivedScript: scriptArchive[lg][id] || null, archivedPlayers: playerArchive[id] || null });
-      const playerForecast=archivePlayerForecast(m);
-      if(playerForecast)playerArchive[id]=latestPlayerForecast(playerArchive[id],playerForecast);
+      const m = await buildMatchup(lg, id, { archivedScript: scriptArchive[lg][id] || null });
       const frozen = archiveScript(m);
       if(lg==='nfl'&&frozen){const dateET=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(m.kickoff));trackedRecords=mergeTrackedRecords(trackedRecords,[{...frozen,id,season:m.season,dateET}]);}
       if (frozen) { scriptArchive[lg][id] = latestScript(scriptArchive[lg][id], frozen); m.scriptReview = scriptArchive[lg][id]; }
@@ -122,7 +106,6 @@ for (const lg of ['nfl']) {
 const { loadMinuteTracker } = await import('../src/minuteTracker.js');
 write(OUT, 'api/nfl-minute-tracker.json', await loadMinuteTracker({records:trackedRecords}));
 write(OUT, 'api/script-archive.json', scriptArchive);
-write(OUT,'api/player-forecast-archive.json',playerArchive);
 write(OUT, 'api/build.json', summary);
 if (summary.failed.length) throw new Error(`Refusing partial publication: ${summary.failed.length} data builds failed`);
 log(`site built in ${path.relative(ROOT, OUT)}/: ${summary.matchups} matchups, ${summary.failed.length} failed`);
