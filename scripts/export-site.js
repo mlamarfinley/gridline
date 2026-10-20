@@ -1,3 +1,4 @@
+import { mergeTrackedRecords } from '../src/minuteTracker.js';
 import { archiveScript, latestScript } from '../src/scriptArchive.js';
 // Build a READ-ONLY static copy of Gridline (for GitHub Pages).
 //
@@ -68,6 +69,10 @@ if (archiveResponse.ok) {
   }
 } else if (archiveResponse.status !== 404) throw new Error(`Cannot preserve published script archive: HTTP ${archiveResponse.status}`);
 
+let trackedRecords=[];
+const trackerResponse=await fetch('https://mlamarfinley.github.io/gridline/api/nfl-minute-tracker.json',{signal:AbortSignal.timeout(30000),cache:'no-store'});
+if(trackerResponse.ok)trackedRecords=(await trackerResponse.json()).games;
+else if(trackerResponse.status!==404)throw Error('Cannot preserve NFL forward tests');
 // 3. Fresh slates (every regular-season week) and matchups (current week; NFL also completed weeks).
 async function pool(items, n, fn) { const q = [...items]; await Promise.all(Array.from({ length: n }, async () => { while (q.length) await fn(q.shift()); })); }
 const summary = { generatedAt, matchups: 0, failed: [] };
@@ -80,6 +85,7 @@ for (const lg of ['nfl', 'cfb']) {
     const s = w === cur.week ? cur : await getSlate(lg, { week: w });
     write(OUT, `api/slate/${lg}-w${w}.json`, s);
     if (lg === 'nfl' && w < cur.week) for (const g of s.games) if (g.status.completed) ids.add(g.id);
+    if(lg==='nfl' && w===cur.week+1) for(const g of s.games) ids.add(g.id);
   }
   if (lg === 'nfl') { try { const { ratingsBoard } = await import('../src/playerRatings.js'); for (const pos of ['QB', 'RB', 'WR', 'TE']) write(OUT, `api/ratings/${pos}.json`, await ratingsBoard(cur.season, cur.week + 1, pos)); } catch (e) { summary.failed.push({ ratings: true, error: e.message }); } }
   try { write(OUT, `api/lineblind/${lg}.json`, JSON.parse(fs.readFileSync(path.join(ROOT, 'reports', `line_blind_check_${lg}.json`), 'utf8'))); } catch { /* check not run for this league */ }
@@ -89,6 +95,7 @@ for (const lg of ['nfl', 'cfb']) {
     try {
       const m = await buildMatchup(lg, id, { archivedScript: scriptArchive[lg][id] || null });
       const frozen = archiveScript(m);
+      if(lg==='nfl'&&frozen){const dateET=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(m.kickoff));trackedRecords=mergeTrackedRecords(trackedRecords,[{...frozen,id,season:m.season,dateET}]);}
       if (frozen) { scriptArchive[lg][id] = latestScript(scriptArchive[lg][id], frozen); m.scriptReview = scriptArchive[lg][id]; }
       const { projections, ...rest } = m;
       write(OUT, `api/matchup/${lg}/${id}.json`, rest);
@@ -97,7 +104,7 @@ for (const lg of ['nfl', 'cfb']) {
   });
 }
 const { loadMinuteTracker } = await import('../src/minuteTracker.js');
-write(OUT, 'api/nfl-minute-tracker.json', await loadMinuteTracker());
+write(OUT, 'api/nfl-minute-tracker.json', await loadMinuteTracker({records:trackedRecords}));
 write(OUT, 'api/script-archive.json', scriptArchive);
 write(OUT, 'api/build.json', summary);
 if (summary.failed.length) throw new Error(`Refusing partial publication: ${summary.failed.length} data builds failed`);

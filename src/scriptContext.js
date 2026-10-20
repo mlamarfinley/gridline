@@ -1,4 +1,5 @@
 // Auditable experimental context layer. Coefficients are fixed heuristics, not fitted accuracy claims.
+import { analyticalScript } from './scriptProbability.js';
 import { forecastScript } from './gameScript.js';
 const finite=Number.isFinite;
 const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
@@ -28,5 +29,6 @@ export function contextualScript(base,home,away){
   if(!base)return null;
   const h=scriptContextTeam(home),a=scriptContextTeam(away);if(!h||!a)return null;
   const f=forecastScript({homePoints:h.points,awayPoints:a.points,homeProfile:base.homeProfile,awayProfile:base.awayProfile,seed:base.seed||'context-script',generatedAt:base.generatedAt,history:base.history});
-  return {...f,version:'script-context-1',inputs:{home:h,away:a},note:'Experimental context script; not validated as an improvement. '+f.note};
+  const main={...f,version:'script-context-1',inputs:{home:h,away:a},note:'Experimental context script; not validated as an improvement. '+f.note};
+  try{return {...main,challenger:analyticalScript(main)};}catch(e){return {...main,challengerUnavailable:e.message};}
 }

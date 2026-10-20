@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {scoringProbabilities} from '../src/scriptProbability.js';
+test('zero scoring is tied and symmetric teams have identical winning probabilities',()=>{assert.deepEqual(scoringProbabilities(0,0),{homeProbability:0,awayProbability:0,tieProbability:1});const p=scoringProbabilities(21,21);assert(Math.abs(p.homeProbability-p.awayProbability)<1e-10);assert(Math.abs(Object.values(p).reduce((a,b)=>a+b,0)-1)<1e-10)});
+test('one-sided scoring has exact no-score tie probability',()=>{const p=scoringProbabilities(29,0);assert(Math.abs(p.tieProbability-Math.exp(-5))<1e-12);assert.equal(p.awayProbability,0);assert(Math.abs(p.homeProbability-(1-Math.exp(-5)))<1e-12)});
