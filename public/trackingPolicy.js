@@ -1,4 +1,5 @@
-// Active pick scope. Historical ledger rows remain immutable.
+// Player-pick visibility/evaluation only. Keep all simulator stats and game-script inputs.
+// Historical ledger rows remain immutable.
 const CORE = {
  QB: ['pass_yds', 'completions', 'pass_att', 'pass_td'],
  RB: ['rush_yds', 'carries', 'rush_td', 'ypc', 'rec_yds', 'targets', 'receptions', 'rec_td', 'ypr', 'tds'],
