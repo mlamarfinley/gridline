@@ -13,3 +13,8 @@ test('overtime affects final winner but not regulation clock accuracy or lead du
  s.scoringPlays.push({id:'c',period:{number:4},clock:{displayValue:'0:00'},homeScore:7,awayScore:7},{id:'d',period:{number:5},clock:{displayValue:'6:00'},homeScore:10,awayScore:7});
  const a=scoreTimeline(s);assert(a.complete);assert(a.overtime);assert.equal(a.points[60].leader,'tie');assert.equal(a.finalLeader,'home');assert.equal(Object.values(a.leadSeconds).reduce((x,y)=>x+y),3600);assert.equal(a.events[0].wallclock,null);
 });
+
+test('regulation-only challenger grading excludes overtime winner and margin',()=>{
+ const actual={complete:true,finalHome:27,finalAway:24,finalLeader:'home',points:[{minute:60,home:24,away:24,leader:'tie'}]};
+ const r=compareScript({expectedHomeMargin:0},actual,{regulationOnly:true});assert.equal(r.finalWinnerCorrect,true);assert.equal(r.actualHomeMargin,0);assert.equal(r.marginError,0);
+});

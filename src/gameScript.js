@@ -59,7 +59,8 @@ export function forecastScript({homePoints,awayPoints,homeProfile=[.25,.25,.25,.
   const points=counts.map((c,minute)=>{const home=round(homePoints*fraction(hp,minute)),away=round(awayPoints*fraction(ap,minute));const order=Object.keys(c).sort((a,b)=>c[b]-c[a]);return {minute,clock:clockLabel(minute*60),home,away,expectedLeader:winner(home,away),likelyLeader:c[order[0]]===c[order[1]]?'uncertain':order[0],homeProbability:c.home/sims,awayProbability:c.away/sims,tieProbability:c.tie/sims};});
   return {version:SCRIPT_VERSION,seed,generatedAt,sims,homePoints,awayPoints,homeProfile:hp,awayProfile:ap,history,points,note:'Experimental pregame estimate, not a live win-probability model. Scores are expectations, not a predicted exact scoring sequence. Scoring timing blends own scoring and opponent concession profiles; totals come from the existing game-context model. Independent Poisson scoring events: 70% seven points, 30% three points, constant rate within each quarter. No possession, drive or overtime simulation; probabilities are uncalibrated.'};
 }
-export function compareScript(saved,actual){
+export function compareScript(saved,actual,{regulationOnly=false}={}){
+  if(regulationOnly){const end=actual?.points?.find(p=>p.minute===60);actual={...actual,complete:!!actual?.complete&&!!end,finalHome:end?.home,finalAway:end?.away,finalLeader:end?.leader};}
   const valid=actual?.complete,margin=saved.expectedHomeMargin;
   const out={finalWinnerCorrect:valid&&finite(margin)?winner(margin,0)===actual.finalLeader:null,expectedHomeMargin:margin??null,actualHomeMargin:valid?actual.finalHome-actual.finalAway:null,marginError:valid&&finite(margin)?Math.abs(margin-(actual.finalHome-actual.finalAway)):null,checkpointAccuracy:null,checkpointCount:0,scoreMAE:null,brier:null};
   if(!valid||!saved.forecast?.points?.length)return out;

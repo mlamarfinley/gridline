@@ -1,7 +1,7 @@
 // Immutable ledger: append-only, pregame-only snapshots, evaluation + miss explanations.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { openLedger, recordSnapshot, recordResult, evaluationRows, summarizeEvaluation, explainMiss, closeLedger } from '../src/ledger.js';
+import { openLedger, recordSnapshot, recordResult, evaluationRows, summarizeEvaluation, explainMiss, ledgerOverview, closeLedger } from '../src/ledger.js';
 
 const future = new Date(Date.now() + 3 * 86400e3).toISOString();
 function matchup(overrides = {}, proj = 60) {
@@ -128,4 +128,15 @@ test('new snapshots omit NFL QB rushing while retaining passing and RB rushing',
  assert.equal(d.prepare("SELECT COUNT(*) AS n FROM snapshots WHERE position='QB' AND stat='rush_yds'").get().n,0);
  assert.equal(m.projections.length,4,'caller data remains unchanged');
  closeLedger();
+});
+
+test('league overview metadata cannot leak college runs into NFL view',()=>{
+ const d=openLedger(':memory:');recordSnapshot(matchup(),{},d);recordSnapshot(matchup({league:'cfb',eventId:'c1',modelVersion:'college-test'}),{},d);
+ const out=ledgerOverview({league:'nfl'},d);assert.equal(out.counts[0].games,1);assert.equal(out.pending,1);assert(out.versions.every(v=>v.model_version!=='college-test'));closeLedger();
+});
+
+test('nested challenger generation timestamps do not duplicate identical forecasts',()=>{
+ const d=openLedger(':memory:');const script={version:'test',generatedAt:'2026-01-01',driveChallenger:{version:'drive-test',generatedAt:'2026-01-01',homePoints:20}};
+ const first=recordSnapshot(matchup({gameScript:script}),{},d);const second=recordSnapshot(matchup({gameScript:{...script,driveChallenger:{...script.driveChallenger,generatedAt:'2026-01-02'}}}),{},d);
+ assert(first.ok);assert.equal(second.duplicate,true);closeLedger();
 });

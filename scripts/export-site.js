@@ -18,18 +18,18 @@ const log = (...a) => console.log(`[${new Date().toISOString().slice(11, 19)}]`,
 
 if (arg('ledger')) {
   const { ledgerOverview, openLedger } = await import('../src/ledger.js');
-  const { openBlind, blindReport, latestBatch } = await import('../src/blind.js');
+  const { openBlind, blindReport } = await import('../src/blind.js');
   const d = openLedger();
   fs.rmSync(path.join(STATIC_DATA, 'api'), { recursive: true, force: true });
-  const versions = d.prepare('SELECT DISTINCT model_version FROM runs').all().map((r) => r.model_version);
+  const versions = d.prepare("SELECT DISTINCT model_version FROM runs WHERE league='nfl'").all().map((r) => r.model_version);
   if (!versions.includes(MODEL_VERSION)) versions.push(MODEL_VERSION);
-  for (const kind of ['pregame', 'backtest']) for (const v of versions) write(STATIC_DATA, `api/ledger/${kind}-${v}.json`, ledgerOverview({ kind, modelVersion: v }));
+  for (const kind of ['pregame', 'backtest']) for (const v of versions) write(STATIC_DATA, `api/ledger/${kind}-${v}.json`, ledgerOverview({ league: 'nfl', kind, modelVersion: v }));
   const bd = openBlind(d);
   const batches = bd.prepare(`SELECT b.id, b.created_at, b.model_version, b.params_hash, b.leagues,
     (SELECT COUNT(*) FROM blind_manifests m WHERE m.batch_id=b.id AND m.status='predicted') AS predicted,
     (SELECT COUNT(*) FROM blind_manifests m WHERE m.batch_id=b.id) AS games,
-    (SELECT group_concat(event, ' → ') FROM blind_events e WHERE e.batch_id=b.id) AS events FROM blind_batches b ORDER BY b.id DESC`).all();
-  const latest = latestBatch(bd);
+    (SELECT group_concat(event, ' → ') FROM blind_events e WHERE e.batch_id=b.id) AS events FROM blind_batches b WHERE b.leagues = 'nfl' OR b.leagues LIKE 'nfl %' ORDER BY b.id DESC`).all();
+  const latest = batches[0]?.id;
   write(STATIC_DATA, 'api/blind.json', { batches, report: latest ? blindReport(latest, bd) : null });
   for (const b of batches) if (/scored/.test(b.events || '')) write(STATIC_DATA, `api/blind-${b.id}.json`, { batches, report: blindReport(b.id, bd) });
   write(STATIC_DATA, 'ledger-meta.json', { exportedAt: new Date().toISOString(), versions });
@@ -57,14 +57,14 @@ if (fs.existsSync(path.join(STATIC_DATA, 'api'))) fs.cpSync(path.join(STATIC_DAT
 else log('no static-data/api — ledger pages will show as not included');
 let ledgerMeta = null;
 try { ledgerMeta = JSON.parse(fs.readFileSync(path.join(STATIC_DATA, 'ledger-meta.json'), 'utf8')); } catch { /* none */ }
-write(OUT, 'api/status.json', { modelVersion: MODEL_VERSION, keys: { oddsApi: false, cfbd: false }, db: 'read-only static snapshot', counts: [], now: generatedAt, autoSnapshot: false, static: true, ledgerExportedAt: ledgerMeta?.exportedAt || null });
+write(OUT, 'api/status.json', { modelVersion: MODEL_VERSION, keys: { oddsApi: false }, db: 'read-only static snapshot', counts: [], now: generatedAt, autoSnapshot: false, static: true, ledgerExportedAt: ledgerMeta?.exportedAt || null });
 
 // Carry forward published pregame scripts. Per-build artifacts preserve earlier versions.
-let scriptArchive = { nfl: {}, cfb: {} };
+let scriptArchive = { nfl: {} };
 const archiveResponse = await fetch('https://mlamarfinley.github.io/gridline/api/script-archive.json', { signal: AbortSignal.timeout(30000), cache: 'no-store' });
 if (archiveResponse.ok) {
   const previous = await archiveResponse.json();
-  for (const lg of ['nfl','cfb']) for (const [id,r] of Object.entries(previous[lg] || {})) {
+  for (const lg of ['nfl']) for (const [id,r] of Object.entries(previous[lg] || {})) {
     const valid = latestScript(null,r); if (valid && /^\d+$/.test(id)) scriptArchive[lg][id] = valid;
   }
 } else if (archiveResponse.status !== 404) throw new Error(`Cannot preserve published script archive: HTTP ${archiveResponse.status}`);
@@ -76,7 +76,7 @@ else if(trackerResponse.status!==404)throw Error('Cannot preserve NFL forward te
 // 3. Fresh slates (every regular-season week) and matchups (current week; NFL also completed weeks).
 async function pool(items, n, fn) { const q = [...items]; await Promise.all(Array.from({ length: n }, async () => { while (q.length) await fn(q.shift()); })); }
 const summary = { generatedAt, matchups: 0, failed: [] };
-for (const lg of ['nfl', 'cfb']) {
+for (const lg of ['nfl']) {
   const cur = await getSlate(lg);
   write(OUT, `api/slate/${lg}.json`, cur);
   const weeks = cur.calendar.filter((c) => c.seasontype === 2).map((c) => c.week);

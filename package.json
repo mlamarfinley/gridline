@@ -2,7 +2,7 @@
   "name": "football-dashboard",
   "version": "1.0.0",
   "private": true,
-  "description": "Local NFL + college football analytics dashboard with an immutable SQLite prediction ledger.",
+  "description": "Local NFL analytics dashboard with an immutable SQLite prediction ledger.",
   "type": "module",
   "engines": {
     "node": ">=22.13"

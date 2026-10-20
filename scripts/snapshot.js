@@ -5,6 +5,7 @@ import { refreshPlayerRatings } from '../src/playerRating.js';
 
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
 const lg = arg('league', 'nfl');
+if(lg !== 'nfl') throw new Error('Only NFL is active');
 const week = arg('week') ? Number(arg('week')) : undefined;
 // NFL: refresh the derived Player Ratings (Madden + Production Monitor) for this week first, so the projections and the
 // public site use the same ratings. Needs the local Madden file; without it the committed file is kept.

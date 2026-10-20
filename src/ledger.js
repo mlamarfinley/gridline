@@ -85,7 +85,7 @@ export function closeLedger() { if (db) { db.close(); db = null; } }
 
 function hashProjections(m) {
   const core = m.projections.map((p) => [p.playerId, p.stat, p.projection, p.p10, p.p90, p.bookLine, p.experimental || null]).sort();
-  return crypto.createHash('sha1').update(JSON.stringify({ core, script: m.gameScript ? { ...m.gameScript, generatedAt: null } : null })).digest('hex');
+  return crypto.createHash('sha1').update(JSON.stringify({ core, script: m.gameScript || null }, (key,value) => key === 'generatedAt' ? null : value)).digest('hex');
 }
 
 /**
@@ -108,7 +108,7 @@ export function recordSnapshot(m0, { kind = 'pregame', now = new Date() } = {}, 
   if (prev && (prev.content_hash === hash || kind === 'backtest')) return { ok: true, runId: prev.id, duplicate: true };
   const game = {
     odds: m.odds, implied: m.implied, status: m.status, mode: m.mode,
-    teams: [m.away, m.home].map((t) => ({ abbr: t.abbr, impliedPts: t.impliedPts, expMargin: t.expMargin, scriptWeights: t.scriptWeights, params: t.params })),
+    teams: [m.away, m.home].map((t) => ({ abbr: t.abbr, impliedPts: t.impliedPts, expMargin: t.expMargin, scriptWeights: t.scriptWeights, params: t.params, deepAnalytics: t.deepAnalytics || null })),
     weather: m.weather, disclosures: m.disclosures,
     gameScript: m.gameScript || null,
     experimental: m.projections.filter(p => p.experimental).map(p => ({ playerId: p.playerId, playerName: p.playerName, team: p.team, stat: p.stat, line: p.bookLine ?? null, forecast: p.experimental })),
@@ -300,19 +300,19 @@ const pct = (x, signed = true) => (x == null || !Number.isFinite(x) ? '—' : `$
 export function ledgerOverview({ league, kind, modelVersion } = {}, d = openLedger()) {
   const runs = d.prepare(`SELECT id, created_at, kind, league, season, week, game_id, kickoff, home, away, model_version, input_cutoff, latest_input,
     (SELECT COUNT(*) FROM snapshots s WHERE s.run_id = runs.id) AS rows FROM runs ${league ? 'WHERE league = ?' : ''} ORDER BY id DESC LIMIT 200`).all(...(league ? [league] : []));
-  const versions = d.prepare('SELECT model_version, kind, COUNT(*) AS runs FROM runs GROUP BY model_version, kind ORDER BY model_version DESC').all();
+  const versions = d.prepare(`SELECT model_version, kind, COUNT(*) AS runs FROM runs ${league ? 'WHERE league = ?' : ''} GROUP BY model_version, kind ORDER BY model_version DESC`).all(...(league ? [league] : []));
   const rows = evaluationRows({ league, kind, modelVersion }, d);
   const summary = summarizeEvaluation(rows);
   const misses = rows.map((r) => ({ r, why: explainMiss(r) })).filter((x) => x.why)
     .sort((a, b) => Math.abs(b.r.actual - b.r.projection) / Math.max(1, b.r.p90 - b.r.p10) - Math.abs(a.r.actual - a.r.projection) / Math.max(1, a.r.p90 - a.r.p10))
     .slice(0, 60)
     .map(({ r, why }) => ({ week: r.week, league: r.league, game: `${r.opponent} / ${r.team}`, player: r.player_name, team: r.team, position: r.position, stat: r.stat, projection: r.projection, p10: r.p10, p90: r.p90, actual: r.actual, why }));
-  const counts = d.prepare('SELECT kind, COUNT(*) AS runs, COUNT(DISTINCT game_id) AS games FROM runs GROUP BY kind').all();
-  const pending = pendingGames(d).length;
+  const counts = d.prepare(`SELECT kind, COUNT(*) AS runs, COUNT(DISTINCT game_id) AS games FROM runs ${league ? 'WHERE league = ?' : ''} GROUP BY kind`).all(...(league ? [league] : []));
+  const pending = pendingGames(d).filter(g => !league || g.league === league).length;
   const dev = DEV_WEEKS[modelVersion] || {};
   for (const g of summary.groups) g.inSample = (dev[g.league] || []).includes(g.week);
   const held = rows.filter((r) => r.actual != null && r.projection != null && !(dev[r.league] || []).includes(r.week));
   summary.heldOut = { ...metrics(held), calibration: calibration(held) };
-  const devWeeks = Object.entries(dev).map(([lg, w]) => `${lg.toUpperCase()} week ${w.join(', ')}`);
+  const devWeeks = Object.entries(dev).filter(([lg]) => !league || lg === league).map(([lg, w]) => `${lg.toUpperCase()} week ${w.join(', ')}`);
   return { runs, summary, misses, counts, pending, versions, modelVersion: modelVersion || null, kind, devWeeks };
 }

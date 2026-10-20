@@ -108,12 +108,12 @@ export function actualLinesFromSummary(sum) {
   return lines;
 }
 
-export async function settle(log = () => {}, { all = false } = {}) {
+export async function settle(log = () => {}, { all = false, league = null } = {}) {
   const d = openLedger();
   const out = [];
   // `all` re-fetches already-settled games too; any change is logged in actual_revisions.
   const games = all ? d.prepare('SELECT DISTINCT game_id, league, season, week FROM runs').all() : pendingGames();
-  for (const g of games) {
+  for (const g of games.filter(g => !league || g.league === league)) {
     const s = await espn.getSummary(g.league, g.game_id);
     const t = s.data ? espn.summaryTeams(s.data) : null;
     if (!t || !t.completed) { out.push({ game: g.game_id, settled: false, reason: t ? 'not final' : s.meta.error }); continue; }

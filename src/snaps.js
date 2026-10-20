@@ -8,7 +8,7 @@ export const normName = (n) => String(n || '').toLowerCase().replace(/\b(jr|sr|i
 
 let mem = { season: null, byKey: null, meta: null };
 export async function loadSnaps(season, prov) {
-  if (mem.season === season && mem.byKey) { prov.add(mem.meta); return mem.byKey; }
+  if (mem.season === season && mem.byKey && Date.now() - (mem.loadedAt || 0) < 1800000) { prov.add(mem.meta); return mem.byKey; }
   const r = await fetchCached(`https://github.com/nflverse/nflverse-data/releases/download/snap_counts/snap_counts_${season}.csv`, { ttl: 1800, as: 'text', label: 'nflverse snap counts' });
   prov.add(r.meta);
   if (!r.data) return null;
@@ -19,7 +19,7 @@ export async function loadSnaps(season, prov) {
     if (!byKey.has(k)) byKey.set(k, []);
     byKey.get(k).push({ week: Number(row.week), opp: row.opponent, snaps: Number(row.offense_snaps || 0), pct: Number(row.offense_pct || 0) });
   }
-  mem = { season, byKey, meta: r.meta };
+  mem = { season, byKey, meta: r.meta, loadedAt: Date.now() };
   return byKey;
 }
 export function snapsFor(byKey, espnTeamAbbr, name) {

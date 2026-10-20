@@ -14,7 +14,7 @@ const RAW = path.join(CACHE_DIR, 'nflverse');
 const DERIVED = path.join(CACHE_DIR, 'derived');
 const CURRENT_TTL_MS = 30 * 60e3;
 
-async function download(url, file, ttlMs) {
+export async function download(url, file, ttlMs) {
   try { const st = fs.statSync(file); if (ttlMs == null || Date.now() - st.mtimeMs < ttlMs) return file; } catch { /* fetch */ }
   const res = await fetch(url, { redirect: 'follow', headers: { 'user-agent': 'football-dashboard/1.0 (local research tool)' } });
   if (!res.ok) { const e = new Error(`HTTP ${res.status} for ${url}`); e.status = res.status; throw e; }
@@ -36,7 +36,7 @@ function splitLine(line) {
   return out;
 }
 
-async function streamRows(file, gz, cols, onRow) {
+export async function streamRows(file, gz, cols, onRow) {
   const input = fs.createReadStream(file);
   const rl = readline.createInterface({ input: gz ? input.pipe(zlib.createGunzip()) : input, crlfDelay: Infinity });
   let idx = null;

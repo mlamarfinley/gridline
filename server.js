@@ -2,13 +2,13 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import { PORT, ROOT, MODEL_VERSION, ODDS_API_KEY, CFBD_API_KEY, DB_PATH, LEAGUES } from './src/config.js';
+import { PORT, ROOT, MODEL_VERSION, ODDS_API_KEY, DB_PATH } from './src/config.js';
 import { getSlate, getMatchup, snapshotGame, snapshotSlate, backtestWeek, settle, ledger } from './src/services.js';
 import { openLedger } from './src/ledger.js';
 import { requestAllowed } from './src/security.js';
 import { statLeaders } from './src/leaders.js';
 import { ratingsBoard } from './src/playerRatings.js';
-import { blindReport, latestBatch, runBlindPredictions, scoreBlind, saveReport, openBlind } from './src/blind.js';
+import { blindReport, runBlindPredictions, scoreBlind, saveReport, openBlind } from './src/blind.js';
 
 const PUBLIC = path.join(ROOT, 'public');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json', '.png': 'image/png', '.ico': 'image/x-icon' };
@@ -19,7 +19,7 @@ function send(res, code, body, type = 'application/json; charset=utf-8') {
   res.writeHead(code, { 'content-type': type, 'cache-control': 'no-store' });
   res.end(typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body));
 }
-const league = (q) => { const l = q.get('league') || 'nfl'; if (!LEAGUES[l]) throw Object.assign(new Error('league must be nfl or cfb'), { status: 400 }); return l; };
+const league = (q) => { const l = q.get('league') || 'nfl'; if (l !== 'nfl') throw Object.assign(new Error('Only NFL is active'), { status: 400 }); return l; };
 
 function startJob(label, fn) {
   const id = String(++jobSeq);
@@ -32,11 +32,12 @@ function startJob(label, fn) {
 async function api(req, res, url) {
   const q = url.searchParams;
   const p = url.pathname;
+  league(q); // Reject disabled leagues before any route can fetch or mutate data.
   if (p === '/api/nfl-minute-tracker') { const {loadMinuteTracker} = await import('./src/minuteTracker.js'); return send(res,200,await loadMinuteTracker()); }
   if (p === '/api/status') {
     const d = openLedger();
-    const counts = d.prepare('SELECT kind, COUNT(*) AS runs FROM runs GROUP BY kind').all();
-    return send(res, 200, { modelVersion: MODEL_VERSION, keys: { oddsApi: !!ODDS_API_KEY, cfbd: !!CFBD_API_KEY }, db: path.relative(ROOT, DB_PATH), counts, now: new Date().toISOString(), autoSnapshot: process.env.AUTO_SNAPSHOT !== '0' });
+    const counts = d.prepare("SELECT kind, COUNT(*) AS runs FROM runs WHERE league='nfl' GROUP BY kind").all();
+    return send(res, 200, { modelVersion: MODEL_VERSION, keys: { oddsApi: !!ODDS_API_KEY }, db: path.relative(ROOT, DB_PATH), counts, now: new Date().toISOString(), autoSnapshot: process.env.AUTO_SNAPSHOT !== '0' });
   }
   if (p === '/api/slate') {
     const week = q.get('week') ? Number(q.get('week')) : undefined;
@@ -63,14 +64,15 @@ async function api(req, res, url) {
     const { projections, ...rest } = m; // flat projection list is for the ledger only
     return send(res, 200, rest);
   }
-  if (p === '/api/ledger') return send(res, 200, ledger({ league: q.get('league') || undefined, kind: q.get('kind') || 'pregame', modelVersion: q.get('model') || MODEL_VERSION }));
+  if (p === '/api/ledger') return send(res, 200, ledger({ league: league(q), kind: q.get('kind') || 'pregame', modelVersion: q.get('model') || MODEL_VERSION }));
   if (p === '/api/blind') {
     const d = openBlind();
     const batches = d.prepare(`SELECT b.id, b.created_at, b.model_version, b.params_hash, b.leagues,
       (SELECT COUNT(*) FROM blind_manifests m WHERE m.batch_id=b.id AND m.status='predicted') AS predicted,
       (SELECT COUNT(*) FROM blind_manifests m WHERE m.batch_id=b.id) AS games,
-      (SELECT group_concat(event, ' → ') FROM blind_events e WHERE e.batch_id=b.id) AS events FROM blind_batches b ORDER BY b.id DESC`).all();
-    const id = q.get('batch') ? Number(q.get('batch')) : latestBatch(d);
+      (SELECT group_concat(event, ' → ') FROM blind_events e WHERE e.batch_id=b.id) AS events FROM blind_batches b WHERE b.leagues = 'nfl' OR b.leagues LIKE 'nfl %' ORDER BY b.id DESC`).all();
+    const id = q.get('batch') ? Number(q.get('batch')) : batches[0]?.id;
+    if (id && !batches.some(b => b.id === id)) return send(res, 404, { error: 'NFL evaluation batch not found' });
     return send(res, 200, { batches, report: id ? blindReport(id, d) : null });
   }
   if (p === '/api/jobs') return send(res, 200, [...jobs.values()].slice(-20).reverse());
@@ -79,8 +81,8 @@ async function api(req, res, url) {
     if (p === '/api/snapshot') return send(res, 200, await snapshotGame(league(q), q.get('id')));
     if (p === '/api/snapshot-slate') { const lg = league(q); const w = q.get('week') ? Number(q.get('week')) : undefined; return send(res, 202, startJob(`Snapshot ${lg} week ${w ?? 'current'}`, (log) => snapshotSlate(lg, w, log))); }
     if (p === '/api/backtest') { const lg = league(q); const w = Number(q.get('week')); const lim = q.get('limit') ? Number(q.get('limit')) : 999; return send(res, 202, startJob(`Backtest ${lg} week ${w}`, (log) => backtestWeek(lg, w, log, { limit: lim }))); }
-    if (p === '/api/blind-run') return send(res, 202, startJob('Blind historical evaluation (all completed games)', async (log) => { const b = await runBlindPredictions({ log }); await scoreBlind(b, { log }); return saveReport(b).file; }));
-    if (p === '/api/settle') return send(res, 202, startJob('Settle finished games', (log) => settle(log)));
+    if (p === '/api/blind-run') return send(res, 202, startJob('Blind historical evaluation (all completed games)', async (log) => { const b = await runBlindPredictions({ leagues: ['nfl'], log }); await scoreBlind(b, { log }); return saveReport(b).file; }));
+    if (p === '/api/settle') return send(res, 202, startJob('Settle finished games', (log) => settle(log, { league: 'nfl' })));
   }
   return send(res, 404, { error: 'not found' });
 }

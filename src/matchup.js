@@ -1,3 +1,4 @@
+import { deepContext } from './deepContext.js';
 import { trackedPlayerStat } from '../public/trackingPolicy.js';
 import { contextualScript } from './scriptContext.js';
 import { forecastScript, quarterProfile, scoreTimeline, compareScript } from './gameScript.js';
@@ -1094,6 +1095,22 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
     }
   }
 
+  let snapContext = null;
+  if(lg==='nfl' && !blind && ev?.week != null){
+    try {
+      snapContext=await deepContext(season,ev.week,cutoff);
+      prov.add({url:snapContext.source.url,label:'nflverse snap archive',fetchedAt:snapContext.source.retrievedAt});
+      if(snapContext.source.charting.available)prov.add({url:snapContext.source.charting.source,label:'FTN charting via nflverse',fetchedAt:snapContext.source.charting.retrievedAt});
+      for(const t of Object.values(teams)){
+        t.deepAnalytics={...snapContext.team(t.abbr),source:snapContext.source};
+        for(const c of [...t.cards,...t._support]){
+          const gsis=snapContext.ids.byEspn.get(String(c.id))?.gsis;
+          c.deepUsage=gsis?{season:t.deepAnalytics.season.players[gsis]||null,last3:t.deepAnalytics.last3.players[gsis]||null}:null;
+        }
+      }
+    } catch(e) {for(const t of Object.values(teams))t.deepAnalytics={error:e.message};}
+  }
+
   // Live experimental second opinion; never synthesize historical experimental picks.
   if (pregame && !blind) for (const t of Object.values(teams)) addExperimental(t);
 
@@ -1108,12 +1125,13 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
   }
   const baselineScript = gameScript;
   gameScript = contextualScript(baselineScript, teams[home.id], teams[away.id]);
+  if(gameScript && snapContext && pregame) gameScript.driveChallenger=snapContext.forecast(home.abbr,away.abbr,`${eventId}|empirical-drive-1`);
   let scriptReview = null;
   try { scriptReview = JSON.parse(fsA.readFileSync(new URL(`../reports/game_scripts_${lg}.json`, import.meta.url), 'utf8')).games[String(eventId)] || null; } catch { /* no saved review yet */ }
   if (archivedScript && !blind && (!scriptReview || Date.parse(archivedScript.forecastTimestamp) > Date.parse(scriptReview.forecastTimestamp))) scriptReview = archivedScript;
   if (scriptReview && sum && !pregame && !blind) {
     const actual = scoreTimeline(sum);
-    scriptReview = { ...scriptReview, actual, review: compareScript(scriptReview, actual), source: sumR.meta, status: actual.complete ? 'reviewed' : 'incomplete' };
+    scriptReview = { ...scriptReview, actual, review: compareScript(scriptReview, actual), driveReview:scriptReview.forecast?.driveChallenger?.available ? compareScript({...scriptReview,forecast:scriptReview.forecast.driveChallenger,expectedHomeMargin:scriptReview.forecast.driveChallenger.homePoints-scriptReview.forecast.driveChallenger.awayPoints},actual,{regulationOnly:true}):null, source: sumR.meta, status: actual.complete ? 'reviewed' : 'incomplete' };
   }
 
   // Ledger rows: every displayed card (incl. kicker and an outlier-pick card).

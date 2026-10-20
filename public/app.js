@@ -1,3 +1,4 @@
+import { deepAnalyticsBlock } from './deepAnalytics.js';
 import { applyTrackingScope } from './trackingPolicy.js';
 // Gridline front end — vanilla ES modules, hash routing, hand-built SVG charts.
 import { matchupTheme } from './theme.js';
@@ -59,6 +60,7 @@ function parseHash() {
   const [path, qs] = h.split('?');
   const parts = path.split('/').filter(Boolean);
   const q = new URLSearchParams(qs || '');
+  if(parts[0]==='cfb') return {view:'slate',league:'nfl',week:null};
   if (parts[0] === 'nfl' && parts[1] === 'scripts') return {view:'scripts',league:'nfl'};
   if (parts[0] === 'ledger') return { view: 'ledger' };
   if (parts[1] === 'leaders') return { view: 'leaders', league: parts[0] === 'cfb' ? 'cfb' : 'nfl' };
@@ -212,6 +214,7 @@ async function renderGame(lg, id) {
     ${m.mode !== 'pregame' ? `<div class="banner">Retrospective view. Projections are rebuilt using only games completed before kickoff; injury reports, depth charts and weather are <b>not</b> applied because today's versions would leak post-kickoff information.${done ? ' Actual results are shown beside each projection.' : ''}</div>` : ''}
     ${scriptBlock(A, H)}
     ${gameTimelineBlock(m)}
+    ${deepAnalyticsBlock(m,{esc,pct,f1,f2,etStamp})}
     ${outlierBlock(m)}
     ${outliersBlock(m)}
     ${skepticBlock(m)}
@@ -732,9 +735,8 @@ async function renderLedger() {
       <select id="lm">${versions.map((v) => `<option ${v === model ? 'selected' : ''}>${esc(v)}</option>`).join('')}</select>
       <span class="muted">·</span>
       <button class="btn primary" id="snapnfl">Snapshot NFL week</button>
-      <button class="btn" id="snapcfb">Snapshot college week</button>
       <button class="btn" id="settle">Settle finished games (${L.pending} pending)</button>
-      <span class="muted">Backtest</span><select id="btl"><option value="nfl">NFL</option><option value="cfb">College</option></select><input id="btw" type="number" min="1" max="18" placeholder="wk"><button class="btn" id="btgo">Run</button>
+      <span class="muted">Backtest</span><select id="btl"><option value="nfl">NFL</option></select><input id="btw" type="number" min="1" max="18" placeholder="wk"><button class="btn" id="btgo">Run</button>
     </div>
     <div id="job"></div>
     ${state.ledgerKind === 'backtest' ? `<div class="banner">Backtests are rebuilt after the games using only data from before each kickoff, but lines are closing lines and injuries/depth charts are not reconstructed. They are stored separately from pregame snapshots and are never mixed into pregame accuracy.${L.devWeeks?.length ? ` <b>In-sample for ${esc(model)}: ${esc(L.devWeeks.join('; '))}</b> — these weeks were inspected while tuning this model version, so they are development results, not independent validation.` : ''}</div>` : ''}
@@ -764,7 +766,6 @@ async function renderLedger() {
   $('#lk').onchange = (e) => { state.ledgerKind = e.target.value; renderLedger(); };
   $('#lm').onchange = (e) => { state.ledgerModel = e.target.value; renderLedger(); };
   $('#snapnfl').onclick = () => job('/api/snapshot-slate?league=nfl');
-  $('#snapcfb').onclick = () => job('/api/snapshot-slate?league=cfb');
   $('#settle').onclick = () => job('/api/settle');
   $('#btgo').onclick = () => { const w = $('#btw').value; if (w) job(`/api/backtest?league=${$('#btl').value}&week=${w}`); };
 }

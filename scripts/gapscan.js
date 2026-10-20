@@ -6,6 +6,7 @@ import { buildMatchup } from '../src/matchup.js';
 
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
 const lg = arg('league', 'nfl');
+if(lg !== 'nfl') throw new Error('Only NFL is active');
 const sl = await getSlate(lg, { week: arg('week') ? Number(arg('week')) : undefined });
 const rows = [];
 const absZ = [], absPct = []; let nOver = 0, nUnder = 0, conflicts = [];

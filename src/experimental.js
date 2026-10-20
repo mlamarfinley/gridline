@@ -1,6 +1,6 @@
 // Heuristic second opinion. No fitting, market-line input, or target-game actuals.
 // Correlated measurements are averaged within evidence groups, not counted as independent votes.
-export const EXPERIMENT_VERSION = 'context-experiment-2';
+export const EXPERIMENT_VERSION = 'context-experiment-3';
 const SUPPORTED = new Set(['pass_yds','pass_att','completions','rush_yds','carries','rec_yds','receptions','targets']);
 const finite = Number.isFinite;
 const clip = (x, lo=-1, hi=1) => Math.max(lo, Math.min(hi,x));
@@ -15,8 +15,11 @@ export function experimentalForecast(s, c={}, t={}) {
   group('Recent form',0.20,last.length>=2&&s.seasonAvg>0?[{score:(mean(last.map(x=>x.value))/s.seasonAvg-1)/0.4,text:`Last ${last.length} average ${round(mean(last.map(x=>x.value)))} vs season ${s.seasonAvg}.`}]:[]);
   const u=c.usageHistory,uk=run?'carries':recv?'targets':'passAtt',role=[];
   if(u?.games>=2&&u[uk]>0&&finite(u.last?.[uk]))role.push({score:(u.last[uk]/u[uk]-1)/0.5,text:`Latest ${uk} ${u.last[uk]} vs recent average ${round(u[uk])}.`});
+  const deep=c.deepUsage,shareKey=run?'carryShare':'targetShare';
+  const measuredShare=(run||recv)&&deep?.season?.[shareKey]>0&&finite(deep?.last3?.[shareKey])&&(deep.last3[run?'carries':'targets']||0)>=10;
+  if(measuredShare)role.push({score:(deep.last3[shareKey]/deep.season[shareKey]-1)/0.3,text:`Last-three snap-derived ${run?'carry':'target'} share ${round(deep.last3[shareKey]*100)}% vs season ${round(deep.season[shareKey]*100)}%; same team denominator.`});
   const shares=(c.shareTrend||[]).map(x=>run?x.carry:recv?x.target:null).filter(finite);
-  if(shares.length>=3&&mean(shares)>0)role.push({score:(mean(shares.slice(-2))/mean(shares)-1)/0.3,text:`Recent ${run?'carry':'target'} share ${round(mean(shares.slice(-2))*100)}% vs ${round(mean(shares)*100)}% average.`});
+  if(!measuredShare&&shares.length>=3&&mean(shares)>0)role.push({score:(mean(shares.slice(-2))/mean(shares)-1)/0.3,text:`Recent ${run?'carry':'target'} share ${round(mean(shares.slice(-2))*100)}% vs ${round(mean(shares)*100)}% average.`});
   const snaps=(c.snapTrend||[]).map(x=>x.pct).filter(finite);
   if(snaps.length>=3&&mean(snaps)>0)role.push({score:(mean(snaps.slice(-2))/mean(snaps)-1)/0.3,text:`Recent snap share ${round(mean(snaps.slice(-2))*100)}% vs ${round(mean(snaps)*100)}% average.`});
   group('Workload trend',0.30,role);
