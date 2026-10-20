@@ -1,3 +1,4 @@
+import { trackedPlayerStat } from '../public/trackingPolicy.js';
 import { contextualScript } from './scriptContext.js';
 import { forecastScript, quarterProfile, scoreTimeline, compareScript } from './gameScript.js';
 import { addExperimental } from './experimental.js';
@@ -1033,7 +1034,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
   for (const t of Object.values(teams)) {
     for (const c of [...t.cards, ...t._support]) {
       for (const s of Object.values(c.stats)) {
-        if (!s.available || !s.book || s.book.line == null) continue;
+        if (!s.available || !s.book || s.book.line == null || !trackedPlayerStat(lg, c.pos, s.key)) continue;
         candidates.push({
           playerId: c.id, name: c.name, team: t.abbr, opponent: t.opponent, pos: c.pos, role: c.role, stat: s.key, label: s.label, short: s.short,
           proj: s.proj, p10: s.p10, p50: s.p50, p90: s.p90, line: s.book.line, probOver: s.probOver, fairOdds: s.fairOdds,
@@ -1119,7 +1120,7 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
   for (const t of Object.values(teams)) {
     const { opp: oppAbbr, expMargin, impliedPts } = t._ctx;
     for (const c of [...t.cards, ...(t.kicker ? [t.kicker] : [])]) for (const s of Object.values(c.stats)) {
-      if (!s.available) continue;
+      if (!s.available || !trackedPlayerStat(lg, c.pos, s.key)) continue;
       flat.push({ playerId: c.id, playerName: c.name, team: t.abbr, opponent: oppAbbr, position: c.pos, role: c.role, stat: s.key, experimental: s.experimental || null, projection: s.proj, p10: s.p10, p50: s.p50, p90: s.p90, threshold: s.threshold, thresholdSource: s.thresholdSource, probOver: s.probOver, fairOver: s.fairOdds?.over ?? null, bookLine: s.book?.line ?? null, bookOver: s.book?.overPrice ?? null, bookUnder: s.book?.underPrice ?? null, bookSource: s.book?.source ?? null, bookUpdated: s.book?.updated ?? null, opportunity: c.opportunity, efficiency: c.efficiency ? { ypc: c.efficiency.ypc.final, catchRate: c.efficiency.catchRate.final, ypCatch: c.efficiency.ypCatch.final } : null, expMargin, impliedPts });
     }
     delete t._support; delete t._ctx; delete t._hist;

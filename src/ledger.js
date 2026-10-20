@@ -1,3 +1,4 @@
+import { trackedPlayerStat } from '../public/trackingPolicy.js';
 // Durable, append-only prediction ledger (SQLite via node:sqlite).
 //
 // Guarantees (enforced by the database, not just the app):
@@ -101,6 +102,7 @@ export function recordSnapshot(m0, { kind = 'pregame', now = new Date() } = {}, 
   if (kind === 'pregame' && m.mode !== 'pregame') return { ok: false, reason: 'Matchup was built in retrospective mode; not a valid pregame snapshot.' };
   if (m.cutoff > m.kickoff) return { ok: false, reason: 'Input cutoff after kickoff — refusing (future-data leakage).' };
   if (kind === 'pregame' && m.latestInput && m.latestInput >= m.kickoff) return { ok: false, reason: 'An input was retrieved after kickoff — refusing pregame snapshot.' };
+  m.projections = m.projections.filter(p => trackedPlayerStat(m.league, p.position, p.stat));
   const hash = hashProjections(m);
   const prev = d.prepare('SELECT id, content_hash FROM runs WHERE game_id=? AND model_version=? AND kind=? ORDER BY id DESC LIMIT 1').get(m.eventId, m.modelVersion, kind);
   if (prev && (prev.content_hash === hash || kind === 'backtest')) return { ok: true, runId: prev.id, duplicate: true };
@@ -186,7 +188,7 @@ export function actualValue(stats, stat) {
 }
 
 /** Latest run per game/model/kind (for pregame: the last one before kickoff by construction). */
-export function evaluationRows({ league, kind = 'pregame', modelVersion } = {}, d = openLedger()) {
+export function evaluationRows({ league, kind = 'pregame', modelVersion, includeExcluded = false } = {}, d = openLedger()) {
   const where = ['s.kind = ?'];
   const args = [kind];
   if (league) { where.push('s.league = ?'); args.push(league); }
@@ -199,7 +201,7 @@ export function evaluationRows({ league, kind = 'pregame', modelVersion } = {}, 
     JOIN game_results g ON g.game_id = s.game_id
     LEFT JOIN actual_lines a ON a.game_id = s.game_id AND a.player_id = s.player_id
     WHERE ${where.join(' AND ')}`).all(...args);
-  return rows.map((r) => {
+  return rows.filter(r => includeExcluded || trackedPlayerStat(r.league, r.position, r.stat)).map((r) => {
     const stats = r.stats_json ? JSON.parse(r.stats_json) : null;
     const actual = r.dnp ? null : actualValue(stats, r.stat);
     const teamIsHome = r.team === r.home;

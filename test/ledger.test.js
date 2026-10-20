@@ -117,3 +117,15 @@ test('minute scripts are frozen and timestamp-only refreshes do not append dupli
  const old=JSON.parse(d.prepare('SELECT game_json FROM runs WHERE id=?').get(a.runId).game_json);
  assert.equal(old.gameScript.points[0].home,24);assert.equal(old.gameScript.generatedAt,'2026-10-01T12:00:00Z');closeLedger();
 });
+
+test('new snapshots omit NFL QB rushing while retaining passing and RB rushing', () => {
+ const d = openLedger(':memory:');
+ const m = matchup();
+ m.projections.push({...m.projections[0],playerId:'qb',position:'QB',stat:'rush_yds'});
+ m.projections.push({...m.projections[0],playerId:'qb',position:'QB',stat:'pass_yds'});
+ const result = recordSnapshot(m,{},d);
+ assert.equal(result.rows,3);
+ assert.equal(d.prepare("SELECT COUNT(*) AS n FROM snapshots WHERE position='QB' AND stat='rush_yds'").get().n,0);
+ assert.equal(m.projections.length,4,'caller data remains unchanged');
+ closeLedger();
+});

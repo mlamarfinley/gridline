@@ -1,3 +1,4 @@
+import { applyTrackingScope } from './trackingPolicy.js';
 // Gridline front end — vanilla ES modules, hash routing, hand-built SVG charts.
 import { matchupTheme } from './theme.js';
 import { initNav, recordNavigation, setTitle, goBack, goForward, canBack, canForward, labelFor } from './nav.js';
@@ -41,12 +42,13 @@ async function api(path, opts) {
     if (!sp) throw new Error('Not available in the read-only snapshot.');
     const r = await fetch(sp);
     if (!r.ok) throw new Error(r.status === 404 ? 'Not included in this read-only snapshot (only the current week and completed NFL weeks are pre-built).' : `HTTP ${r.status}`);
-    return r.json();
+    const j = await r.json();
+    return path.startsWith('/api/matchup') ? applyTrackingScope(j) : j;
   }
   const r = await fetch(path, opts);
   const j = await r.json().catch(() => ({ error: `HTTP ${r.status}` }));
   if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
-  return j;
+  return path.startsWith('/api/matchup') ? applyTrackingScope(j) : j;
 }
 function loading(msg) { app.innerHTML = `<div class="loading">${esc(msg)}<div class="bar"></div></div>`; }
 function fail(e) { app.innerHTML = `<div class="error">Could not load: ${esc(e.message.replace(/\.$/, ''))}.${window.GRIDLINE_STATIC ? '' : ' Cached data is used automatically when available; try again shortly.'}</div>`; }
@@ -400,7 +402,7 @@ function outlierBlock(m) {
 }
 
 function card(m, c, highlight) {
-  const key = state.sel[c.id] || c.primary;
+  const key = c.compact.includes(state.sel[c.id]) ? state.sel[c.id] : c.primary;
   const s = c.stats[key];
   const inj = c.injury ? `<span class="tag ${/out|doubt/i.test(c.injury.status) ? 'bad' : 'warn'}">${esc(c.injury.status)}${c.injury.type ? ` · ${esc(c.injury.type)}` : ''}</span>` : '';
   return `<article class="card ${highlight ? 'hl' : ''}" data-id="${esc(c.id)}" data-team="${esc(c.team)}">
@@ -749,7 +751,7 @@ async function renderLedger() {
     <h2 class="sec">Probability reliability · experimental</h2>
     <p class="muted" style="font-size:12px;margin-top:-4px">Predicted P(over threshold) bucket vs realized frequency. Small buckets are noise; this is not a calibration claim.</p>
     <div class="scroll"><table class="ctx"><thead><tr><th>Bucket</th><th>n</th><th>Mean predicted</th><th>Realized</th></tr></thead><tbody>${s.calibration.map((c) => `<tr><td>${pct(c.lo)}–${pct(c.hi)}</td><td>${c.n}</td><td>${pct(c.meanPred)}</td><td>${pct(c.realized)}${c.n < 50 ? '<small>small n</small>' : ''}</td></tr>`).join('')}</tbody></table></div>
-    <h2 class="sec">Accuracy by week · position · stat</h2>
+    <p class="muted">Active NFL pick scope excludes QB rushing stats from evaluation. Historical snapshots remain preserved. This scope change is not a model accuracy improvement.</p><h2 class="sec">Accuracy by week · position · stat</h2>
     <div class="scroll"><table class="ctx"><thead><tr><th>Week</th><th>Pos</th><th>Stat</th><th>n</th><th>MAE</th><th>Bias</th><th>Coverage</th><th>Brier</th></tr></thead><tbody>
       ${s.groups.map((g) => `<tr><td>${esc(g.league.toUpperCase())} ${g.week}${g.inSample ? ' <small>in-sample</small>' : ''}</td><td>${esc(g.position)}</td><td>${esc(g.stat)}</td><td>${g.n}</td><td>${f2(g.mae)}</td><td>${f2(g.bias)}</td><td>${pct(g.coverage)}</td><td>${f2(g.brier)}</td></tr>`).join('') || '<tr><td colspan="8" class="muted">No settled snapshots yet. Record snapshots before kickoff, then settle after the games.</td></tr>'}
     </tbody></table></div>
