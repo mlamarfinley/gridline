@@ -1,3 +1,4 @@
+import { positionStatReport } from './statReport.js';
 import { trackedPlayerStat } from '../public/trackingPolicy.js';
 // Durable, append-only prediction ledger (SQLite via node:sqlite).
 //
@@ -314,5 +315,5 @@ export function ledgerOverview({ league, kind, modelVersion } = {}, d = openLedg
   const held = rows.filter((r) => r.actual != null && r.projection != null && !(dev[r.league] || []).includes(r.week));
   summary.heldOut = { ...metrics(held), calibration: calibration(held) };
   const devWeeks = Object.entries(dev).map(([lg, w]) => `${lg.toUpperCase()} week ${w.join(', ')}`);
-  return { runs, summary, misses, counts, pending, versions, modelVersion: modelVersion || null, kind, devWeeks };
+  return { positionStats: { ...positionStatReport(rows, { kind }), byWeek: Object.fromEntries([...new Set(rows.filter(r=>r.league==='nfl').map(r=>`${r.season} week ${r.week}`))].map(w=>[w,positionStatReport(rows.filter(r=>`${r.season} week ${r.week}`===w), { kind })])) }, runs, summary, misses, counts, pending, versions, modelVersion: modelVersion || null, kind, devWeeks };
 }

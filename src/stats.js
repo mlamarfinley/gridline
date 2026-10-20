@@ -29,8 +29,8 @@ export const STAT_LISTS = {
   nfl: {
     QB: ['pass_yds', 'rush_yds', 'completions', 'pass_att', 'pass_td', 'rush_td', 'ints', 'long_cmp', 'fumbles', 'fumbles_lost'],
     RB: ['rush_yds', 'rec_yds', 'carries', 'targets', 'receptions', 'long_rush', 'rush_td', 'rec_td', 'fumbles_lost', 'ypc', 'ypr'],
-    WR: ['rec_yds', 'targets', 'receptions', 'long_rec', 'rec_td', 'ypr'],
-    TE: ['rec_yds', 'targets', 'receptions', 'long_rec', 'rec_td', 'ypr'],
+    WR: ['rec_yds', 'targets', 'receptions', 'long_rec', 'rec_td', 'ypr', 'rush_yds', 'carries', 'long_rush', 'rush_td', 'ypc'],
+    TE: ['rec_yds', 'targets', 'receptions', 'long_rec', 'rec_td', 'ypr', 'rush_yds', 'carries', 'long_rush', 'rush_td', 'ypc'],
     K: ['k_pts', 'xp_made', 'fg_made'],
   },
   cfb: {
@@ -45,7 +45,7 @@ export const STAT_LISTS = {
 export const COMPACT = {
   QB: ['pass_yds', 'rush_yds', 'pass_td', 'ints', 'completions', 'pass_att'],
   RB: ['rush_yds', 'rec_yds', 'carries', 'receptions', 'targets', 'tds'],
-  WR: ['rec_yds', 'receptions', 'targets', 'rec_td'],
-  TE: ['rec_yds', 'receptions', 'targets', 'rec_td'],
+  WR: ['rec_yds', 'receptions', 'targets', 'rec_td', 'rush_yds'],
+  TE: ['rec_yds', 'receptions', 'targets', 'rec_td', 'rush_yds'],
   K: ['k_pts', 'fg_made', 'xp_made'],
 };
