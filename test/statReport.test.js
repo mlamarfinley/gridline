@@ -4,7 +4,7 @@ const row=(position,stat,projection,actual,book_line=10)=>({league:'nfl',positio
 test('separates positions, pushes, missing lines/results and retired QB rushing',()=>{
  const report=positionStatReport([row('RB','rec_yds',12,15),row('RB','rec_yds',8,10),row('RB','rec_yds',8,null),row('WR','rec_yds',12,5),row('RB','rec_yds',8,5,null),row('QB','rush_yds',12,5)]);
  const rb=report.groups.find(g=>g.position==='RB'&&g.stat==='rec_yds');
- assert.equal(rb.wins,1);assert.equal(rb.losses,0);assert.equal(rb.pushes,1);assert.equal(rb.missingActual,1);assert.equal(rb.noLine,1);assert.equal(rb.accuracy,1);
+ assert.equal(rb.wins,1);assert.equal(rb.losses,0);assert.equal(rb.pushes,1);assert.equal(rb.missingActual,1);assert.equal(rb.noLine,1);assert.equal(rb.accuracy,1);assert.equal(rb.lossRate,0);
  assert.equal(report.groups.find(g=>g.position==='WR'&&g.stat==='rec_yds').losses,1);
  assert.equal(report.groups.find(g=>g.position==='WR'&&g.stat==='rush_yds').n,0);
  assert(!report.groups.some(g=>g.position==='QB'&&g.stat==='rush_yds'));

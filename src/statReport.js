@@ -5,7 +5,7 @@ const avg = xs => xs.length ? xs.reduce((a,b)=>a+b,0)/xs.length : null;
 function record(rows, project=r=>r.projection) {
  let wins=0,losses=0,pushes=0,noSide=0;
  for(const r of rows){const p=project(r);if(!finite(r.book_line)||!finite(r.actual)||!finite(p))continue;if(p===r.book_line){noSide++;continue;}if(r.actual===r.book_line){pushes++;continue;}(p>r.book_line)===(r.actual>r.book_line)?wins++:losses++;}
- return {wins,losses,pushes,noSide,decisions:wins+losses,accuracy:wins+losses?wins/(wins+losses):null};
+ return {wins,losses,pushes,noSide,decisions:wins+losses,accuracy:wins+losses?wins/(wins+losses):null,lossRate:wins+losses?losses/(wins+losses):null};
 }
 export function positionStatReport(input, { kind = 'pregame' } = {}) {
  const rows=input.filter(r=>r.league==='nfl'&&trackedPlayerStat('nfl',r.position,r.stat));
