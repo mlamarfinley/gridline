@@ -1,6 +1,12 @@
 // Active pick scope. Historical ledger rows remain immutable.
-const QB_RUSH = new Set(['carries', 'rush_yds', 'rush_td', 'long_rush', 'ypc']);
-export const trackedPlayerStat = (league, position, stat) => !(league === 'nfl' && position === 'QB' && QB_RUSH.has(stat));
+const CORE = {
+ QB: ['pass_yds', 'completions', 'pass_att', 'pass_td'],
+ RB: ['rush_yds', 'carries', 'rush_td', 'ypc', 'rec_yds', 'targets', 'receptions', 'rec_td', 'ypr', 'tds'],
+ WR: ['rec_yds', 'targets', 'receptions', 'rec_td', 'ypr', 'tds'],
+ TE: ['rec_yds', 'targets', 'receptions', 'rec_td', 'ypr', 'tds'],
+ K: ['k_pts', 'xp_made', 'fg_made'],
+};
+export const trackedPlayerStat = (league, position, stat) => league !== 'nfl' || !!CORE[position]?.includes(stat);
 export function applyTrackingScope(m) {
  if (m.league !== 'nfl') return m;
  for (const t of [m.home, m.away]) for (const c of t?.cards || []) {

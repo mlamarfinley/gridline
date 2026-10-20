@@ -1,0 +1,4 @@
+import test from'node:test';import assert from'node:assert/strict';import{pickRecord,primaryRole,correlation,clusterInterval}from'../src/reportAnalysis.js';
+const r=(g,p,a,line=10)=>({game_id:g,position:'RB',stat:'rush_yds',projection:p,actual:a,book_line:line});
+test('report decisions exclude missing values, pushes and no-side rows',()=>{const a=[r('1',12,15),r('2',12,5),r('3',10,15),r('4',12,10),r('5',12,null)];assert.deepEqual(pickRecord(a),{wins:1,losses:1,n:2,rate:.5,games:2});assert(primaryRole(a[0]));assert(!primaryRole({...a[0],stat:'rec_yds'}));});
+test('correlation and game-cluster intervals have expected edge behavior',()=>{assert.equal(correlation([r('1',1,2),r('2',2,4),r('3',3,6)]),1);assert.equal(clusterInterval([r('1',12,15)]),null);assert.deepEqual(clusterInterval([r('1',12,15),r('2',12,15)],null,100),[1,1]);});
