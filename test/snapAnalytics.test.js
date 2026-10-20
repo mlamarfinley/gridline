@@ -95,3 +95,48 @@ test('canonical play_deleted events cannot contribute competitive snaps',()=>{
  assert.equal(data.season.offense.snaps,1);assert.equal(data.season.players.w,undefined);
  assert.equal(data.season.players.r.targetShare,1);
 });
+
+test('joint situations overlap and use called plays rather than scramble carries as run denominators',()=>{
+ const rows=[
+ play(101,{down:1,ydstogo:10,play_type:'run',qb_dropback:0,pass_attempt:0,rush_attempt:1,yardline_100:15}),
+ play(102,{down:1,ydstogo:10,play_type:'run',qb_dropback:0,pass_attempt:0,rush_attempt:1,yardline_100:85}),
+ play(103,{down:1,ydstogo:5,play_type:'run',qb_dropback:0,pass_attempt:0,rush_attempt:1,yardline_100:5}),
+ play(104,{down:1,ydstogo:10,qb_scramble:1,rush_attempt:1,pass_attempt:0,yardline_100:60}),
+ play(105,{down:3,ydstogo:8,yardline_100:80,qtr:2,quarter_seconds_remaining:120}),
+ play(106,{down:3,ydstogo:8,yardline_100:40,qtr:4,quarter_seconds_remaining:121}),
+ play(107,{down:3,ydstogo:3,yardline_100:20}),play(108,{down:3,ydstogo:6,yardline_100:50}),
+ play(109,{down:2,ydstogo:7,yardline_100:null,qtr:4,quarter_seconds_remaining:null}),
+ play(110,{down:4,ydstogo:1,yardline_100:null,qtr:1,quarter_seconds_remaining:30}),
+ ];
+ const s=summarizeSnaps(rows,options).season.offense.situations;
+ assert.equal(s.firstDown.runRate,.75);assert.equal(s.firstDown.playCallPlays,4);
+ assert.equal(s.firstAnd10.runRate,2/3);assert.equal(s.firstDownRedZone.snaps,2);
+ assert.equal(s.thirdAndLong.snaps,2);assert.equal(s.thirdAndLong.runRate,0);
+ assert.equal(s.thirdLongOwnHalf.snaps,1);assert.equal(s.thirdAndShort.snaps,1);assert.equal(s.thirdAndMedium.snaps,1);
+ assert.equal(s.backedUp.snaps,2);assert.equal(s.opponentTerritory.snaps,4);
+ assert.equal(s.redZone.snaps,3);assert.equal(s.goalLine.snaps,1);assert.equal(s.twoMinute.snaps,1);
+ assert.equal(s.secondAndLong.snaps,1);assert.equal(s.fourthDown.snaps,1);
+ const defense=summarizeSnaps(rows.map(p=>({...p,posteam:'NYJ',defteam:'BUF'})),options).season.defense.situations;
+ assert.equal(defense.firstDown.runRate,.75);
+});
+
+test('situational play families exclude unknown charting and classify observed run gaps and air yards',()=>{
+ const run=(id,x)=>play(id,{play_type:'run',qb_dropback:0,pass_attempt:0,rush_attempt:1,...x});
+ const s=summarizeSnaps([
+ run(201,{run_location:'middle',shotgun:0,no_huddle:1}),run(202,{run_location:'left',run_gap:'guard'}),
+ run(203,{run_location:'right',run_gap:'tackle'}),run(204,{run_location:'left',run_gap:'end'}),run(205,{run_location:'left',run_gap:null}),
+ play(206,{receiver_player_id:'w',air_yards:20,shotgun:1,no_huddle:0,charting:{is_play_action:1,is_screen_pass:0,is_rpo:1}}),
+ play(207,{receiver_player_id:'w',air_yards:-2,charting:{is_play_action:0,is_screen_pass:1,is_rpo:0}}),
+ play(208,{sack:1,air_yards:null}),play(209,{qb_scramble:1,rush_attempt:1,air_yards:null,run_location:'middle'}),
+ ],options).season.offense.situations;
+ assert.deepEqual(s.firstDown.playFamilies.insideRun,{count:3,plays:4,rate:.75});
+ assert.deepEqual(s.firstDown.playFamilies.outsideRun,{count:1,plays:4,rate:.25});
+ assert.deepEqual(s.firstDown.playFamilies.deepPass,{count:1,plays:2,rate:.5});
+ assert.deepEqual(s.firstDown.playFamilies.shortPass,{count:1,plays:2,rate:.5});
+ assert.deepEqual(s.firstDown.playFamilies.shotgun,{count:1,plays:2,rate:.5});
+ assert.deepEqual(s.firstDown.playFamilies.noHuddle,{count:1,plays:2,rate:.5});
+ assert.deepEqual(s.firstDown.playFamilies.playAction,{count:1,plays:2,rate:.5});
+ assert.deepEqual(s.firstDown.playFamilies.screen,{count:1,plays:2,rate:.5});
+ assert.deepEqual(s.firstDown.playFamilies.rpo,{count:1,plays:2,rate:.5});
+ assert.equal(s.thirdAndLong.runRate,null);assert.deepEqual(s.thirdAndLong.playFamilies.deepPass,{count:0,plays:0,rate:null});
+});

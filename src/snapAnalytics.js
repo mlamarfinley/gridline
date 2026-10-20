@@ -38,6 +38,20 @@ function chartingMetrics(rows) {
   pressureRate:null,
  };
 }
+const designedRun = p => carry(p) && !dropback(p) && !yes(p.qb_scramble);
+const runFamily = p => p.run_location === 'middle' || ['guard','tackle'].includes(p.run_gap) ? 'inside' : p.run_gap === 'end' ? 'outside' : null;
+function playFamilies(rows,charting) {
+ const fraction = (covered, predicate) => {const n=count(covered,predicate);return {count:n,plays:covered.length,rate:rate(n,covered.length)};};
+ const runs=rows.filter(p=>designedRun(p)&&runFamily(p));
+ const passes=rows.filter(p=>dropback(p)&&number(p.air_yards));
+ return {
+  insideRun:fraction(runs,p=>runFamily(p)==='inside'),outsideRun:fraction(runs,p=>runFamily(p)==='outside'),
+  shortPass:fraction(passes,p=>p.air_yards<20),deepPass:fraction(passes,p=>p.air_yards>=20),
+  shotgun:fraction(rows.filter(p=>number(p.shotgun)),p=>yes(p.shotgun)),
+  noHuddle:fraction(rows.filter(p=>number(p.no_huddle)),p=>yes(p.no_huddle)),
+  playAction:charting.playAction,screen:charting.screen,rpo:charting.rpo,
+ };
+}
 function metrics(rows) {
  const epa = measured(rows,'epa');
  const successes = count(rows,p => number(p.epa) && p.epa > 0);
@@ -45,14 +59,15 @@ function metrics(rows) {
  const expectedPasses = expected.length ? expected.reduce((a,p)=>a+p.xpass,0) : null;
  const actualPasses = count(expected,dropback);
  const dropbacks = count(rows,dropback), carries = count(rows,carry);
- const designedRushes = count(rows,p => carry(p) && !dropback(p) && !yes(p.qb_scramble));
+ const designedRushes = count(rows,designedRun);
  const conversionPlays=rows.filter(p=>(p.down===3||p.down===4)&&number(p.first_down)&&number(p.touchdown));
  const conversions=count(conversionPlays,p=>yes(p.first_down)||(yes(p.touchdown)&&p.td_team===p.posteam));
  const explosivePlays=rows.filter(p=>number(p.yards_gained));
  const explosives=count(explosivePlays,p=>p.yards_gained >= (carry(p)?10:20));
  const hitCovered = rows.filter(p=>dropback(p) && number(p.qb_hit) && number(p.sack));
+ const charting=chartingMetrics(rows);
  return {
-  charting:chartingMetrics(rows),
+  charting,playFamilies:playFamilies(rows,charting),
   snaps:rows.length,games:new Set(rows.map(p=>p.game_id)).size,dropbacks,
   passAttempts:count(rows,p=>yes(p.pass_attempt) && !yes(p.sack)),carries,designedRushes,
   targets:count(rows,target),sacks:count(rows,p=>yes(p.sack)),qbHits:count(rows,p=>yes(p.qb_hit)),
@@ -60,6 +75,7 @@ function metrics(rows) {
   epa,success:{count:successes,plays:epa.plays,rate:rate(successes,epa.plays)},
   conversions:{count:conversions,plays:conversionPlays.length,rate:rate(conversions,conversionPlays.length)},
   explosive:{count:explosives,plays:explosivePlays.length,rate:rate(explosives,explosivePlays.length)},
+  playCallPlays:dropbacks+designedRushes,runRate:rate(designedRushes,dropbacks+designedRushes),
   passRate:rate(dropbacks,dropbacks+designedRushes),
   proe:{actualPasses,expectedPasses,plays:expected.length,value:expected.length ? (actualPasses-expectedPasses)/expected.length : null},
   sackHitProxy:{count:count(hitCovered,p=>yes(p.sack)||yes(p.qb_hit)),plays:hitCovered.length,rate:rate(count(hitCovered,p=>yes(p.sack)||yes(p.qb_hit)),hitCovered.length)},
@@ -70,6 +86,20 @@ function metrics(rows) {
 function teamMetrics(rows) {
  const result=metrics(rows);
  const bucket = selectors => Object.fromEntries(Object.entries(selectors).map(([key,predicate])=>[key,metrics(rows.filter(predicate))]));
+ const field=p=>number(p.yardline_100)&&p.yardline_100>=0&&p.yardline_100<=100;
+ const long=p=>number(p.ydstogo)&&p.ydstogo>=7;
+ result.situations=bucket({
+  firstDown:p=>p.down===1,firstAnd10:p=>p.down===1&&p.ydstogo===10,
+  secondAndLong:p=>p.down===2&&long(p),
+  thirdAndShort:p=>p.down===3&&number(p.ydstogo)&&p.ydstogo>=0&&p.ydstogo<=3,
+  thirdAndMedium:p=>p.down===3&&number(p.ydstogo)&&p.ydstogo>=4&&p.ydstogo<=6,
+  thirdAndLong:p=>p.down===3&&long(p),fourthDown:p=>p.down===4,
+  backedUp:p=>field(p)&&p.yardline_100>=80,opponentTerritory:p=>field(p)&&p.yardline_100<50,
+  redZone,goalLine:p=>field(p)&&p.yardline_100<=5,
+  twoMinute:p=>(p.qtr===2||p.qtr===4)&&number(p.quarter_seconds_remaining)&&p.quarter_seconds_remaining>=0&&p.quarter_seconds_remaining<=120,
+  firstDownRedZone:p=>p.down===1&&redZone(p),
+  thirdLongOwnHalf:p=>p.down===3&&long(p)&&field(p)&&p.yardline_100>=50,
+ });
  result.splits={
   down:bucket({'1':p=>p.down===1,'2':p=>p.down===2,'3':p=>p.down===3,'4':p=>p.down===4}),
   distance:bucket({short:p=>number(p.ydstogo)&&p.ydstogo<=3,medium:p=>p.ydstogo>=4&&p.ydstogo<=6,long:p=>p.ydstogo>=7}),
@@ -128,6 +158,6 @@ export function summarizeSnaps(rows,{team,week,cutoff,positions={},names={}}={})
  };
  return {team,week:week??null,cutoff:cutoffDate,season:{gameIds:games.map(g=>g.id),...period(snaps)},last3:{gameIds:[...recent],...period(snaps.filter(p=>recent.has(p.game_id)))},
   coverage:{eligibleEvents:eligible.length,competitiveSnaps:snaps.length,excludedEvents:eligible.length-snaps.length,games:games.length},
-  definitions:{conversions:'Third/fourth down first down or offensive touchdown (td_team equals posteam) among plays with both outcome flags observed.',explosive:'At least 10 yards on a carry or 20 yards on other offensive plays, among observed yards_gained.',charting:'FTN Data via nflverse, CC-BY-SA 4.0. Rates exclude uncharted fields; motion/RPO use competitive snaps, play action/screens/blitz use dropbacks. Blitz means n_blitzers > 0, not pressure. Drops use catchable targets with observed drop status.',rates:'Fractions; null denotes an unavailable denominator.',success:'EPA > 0 among plays with observed EPA.',dropbacks:'qb_dropback, including sacks and scrambles; excludes kneels, spikes and two-point attempts.',targets:'Competitive plays with receiver_player_id; target shares use identified team targets.',carries:'rush_attempt including quarterback scrambles; shares use team carries.',proe:'Mean qb_dropback minus xpass on covered dropback or rush plays.',defense:'Opponent production allowed; positive EPA is favorable to the opposing offense.',neutralEarlyDowns:'First or second down with pre-play score differential within seven points.',redZone:'Pre-play yardline_100 from 0 through 20.',endZoneTargets:'Air yards reach or exceed the distance to the goal line; requires both fields.',deepTargets:'Air yards >= 20.',sackHitProxy:'Union of sacks and QB hits where both fields are observed; not charted pressures.',routes:'Routes run and yards per route run require external charting and are unavailable.'},
+  definitions:{situations:'Situations overlap; each rate uses only plays matching all named conditions. Long means at least 7 yards, short at most 3, medium 4–6. Own half includes midfield; opponent territory excludes midfield. Two-minute means Q2/Q4 with 0–120 seconds remaining.',runRate:'Designed rushes / (dropbacks + designed rushes), with playCallPlays as denominator. Scrambles remain dropbacks.',playFamilies:'Inside/outside are recorded run directions, not blocking concepts: middle, guard or tackle = inside; end = outside (same grouping as existing run profiles). Shares use designed runs with known direction. Short pass means air_yards <20, deep >=20, among dropbacks with observed air yards. Shotgun/no-huddle use observed flags. Play-action/screens use charted dropbacks; RPO uses charted competitive snaps. Families overlap and do not identify exact plays.',conversions:'Third/fourth down first down or offensive touchdown (td_team equals posteam) among plays with both outcome flags observed.',explosive:'At least 10 yards on a carry or 20 yards on other offensive plays, among observed yards_gained.',charting:'FTN Data via nflverse, CC-BY-SA 4.0. Rates exclude uncharted fields; motion/RPO use competitive snaps, play action/screens/blitz use dropbacks. Blitz means n_blitzers > 0, not pressure. Drops use catchable targets with observed drop status.',rates:'Fractions; null denotes an unavailable denominator.',success:'EPA > 0 among plays with observed EPA.',dropbacks:'qb_dropback, including sacks and scrambles; excludes kneels, spikes and two-point attempts.',targets:'Competitive plays with receiver_player_id; target shares use identified team targets.',carries:'rush_attempt including quarterback scrambles; shares use team carries.',proe:'Mean qb_dropback minus xpass on covered dropback or rush plays.',defense:'Opponent production allowed; positive EPA is favorable to the opposing offense.',neutralEarlyDowns:'First or second down with pre-play score differential within seven points.',redZone:'Pre-play yardline_100 from 0 through 20.',endZoneTargets:'Air yards reach or exceed the distance to the goal line; requires both fields.',deepTargets:'Air yards >= 20.',sackHitProxy:'Union of sacks and QB hits where both fields are observed; not charted pressures.',routes:'Routes run and yards per route run require external charting and are unavailable.'},
  };
 }
