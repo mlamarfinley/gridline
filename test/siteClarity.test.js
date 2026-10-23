@@ -13,3 +13,8 @@ test('ratings categories and forecast cards expose forecasts before result detai
  assert.match(teamRatingsBlock([]),/Team ratings unavailable/);
  assert.match(teamRatingsBlock([{abbr:'A',scores:{qb:0}}]),/data-unit-group="offense"/);
 });
+test('minute detail pairs saved predictions with matching actual clocks',async()=>{
+ const {minuteTrackTable}=await import('../public/siteClarity.js');
+ const html=minuteTrackTable({away:'A',home:'H',forecast:{points:[{minute:0,clock:'Kickoff'},{minute:1,clock:'Q1 14:00',away:3,home:0,awayProbability:.6,homeProbability:.1,tieProbability:.3,likelyLeader:'away'}]},actual:{complete:true,points:[{minute:1,away:0,home:7,leader:'home'}]}});
+ assert.match(html,/Q1 14:00/);assert.match(html,/60.0%/);assert.match(html,/Incorrect/);assert.doesNotMatch(html,/Kickoff/);
+});

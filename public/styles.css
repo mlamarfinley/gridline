@@ -605,3 +605,7 @@ button:focus-visible, input:focus-visible, summary:focus-visible, .card:focus-vi
 .team-ratings[data-category="lines"] [data-unit-group]:not([data-unit-group="lines"]) { display: none; }
 #unit-category { padding: 8px; border: 1px solid var(--rule-2); border-radius: 6px; background: var(--panel); color: var(--ink); }
 .team-ratings h2 { text-transform: none; letter-spacing: 0; color: var(--ink); border: 0; }
+.minute-detail { width: 100%; white-space: nowrap; }
+.minute-detail th { text-transform: none; font-size: 12px; }
+.minute-detail td { padding: 9px 10px; }
+.forecast-game:has(details[open]) { grid-column: 1 / -1; }
