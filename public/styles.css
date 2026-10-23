@@ -564,3 +564,44 @@ button:focus-visible, input:focus-visible, summary:focus-visible, .card:focus-vi
 .target-confidence { color: var(--muted); margin: 12px 0; }
 .target-explorer details p { line-height: 1.6; }
 .target-explorer input:focus-visible { outline: 2px solid var(--experiment); outline-offset: 3px; }
+
+/* Read the matchup first; inspect detail on demand. */
+.forecast-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; margin-bottom: 30px; }
+.forecast-game, .team-ratings, .tendency-team { padding: 20px; border: 1px solid var(--rule-2); border-radius: 14px; background: var(--panel); min-width: 0; }
+.forecast-game header { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+.forecast-game h3 { font-size: 19px; margin: 0 0 6px; }
+.forecast-game header a { text-decoration: none; }
+.forecast-game header span, .forecast-game small { color: var(--muted); font-size: 12px; }
+.winner-outlook { display: grid; gap: 4px; text-align: right; }
+.winner-outlook strong { font-size: 24px; color: var(--model); }
+.lead-stops { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
+.lead-stop { display: grid; gap: 7px; padding: 12px 8px; border-top: 3px solid var(--experiment); background: var(--panel-2); border-radius: 4px; }
+.lead-stop strong { font-size: 18px; }
+.lead-stop span, .result-note { font-size: 12px; color: var(--muted); }
+.forecast-game details { margin-top: 16px; }
+.forecast-game .script { padding: 10px 0; }
+.tracker-results { margin: 20px 0; padding: 14px; border: 1px solid var(--rule); border-radius: 8px; }
+.team-ratings { margin-top: 32px; }
+.unit-table { width: 100%; white-space: nowrap; }
+.unit-table th { font-size: 12px; text-transform: none; }
+.unit-score { display: inline-block; padding: 6px 9px; min-width: 40px; border-radius: 5px; background: var(--panel-2); font-family: var(--mono); }
+.unit-score.strong { color: var(--good); background: color-mix(in srgb,var(--good) 10%,var(--panel)); }
+.unit-score.weak { color: var(--warn); }
+.unit-score.missing { color: var(--muted); }
+.tendency-team h3 { margin: 0; font-size: 24px; }
+.tendency-team table { width: 100%; }
+.tendency-team th { text-transform: none; white-space: normal; }
+.tendency-team td { padding: 10px 8px; }
+.tendency-team details { margin: 20px 0 0; }
+.tendency-split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+.tendency-split > div { display: grid; gap: 4px; background: var(--panel-2); border-radius: 9px; padding: 14px; }
+.tendency-split strong { font-size: 25px; color: var(--model); }
+.tendency-split small, .target-history { font-size: 12px; color: var(--muted); }
+.deep-teams { align-items: start; }
+@media(max-width: 1000px) { .forecast-grid, .deep-teams { grid-template-columns: minmax(0,1fr); } }
+@media(max-width: 600px) { .forecast-game, .tendency-team, .team-ratings { padding: 14px; } .lead-stops { grid-template-columns: repeat(2,minmax(0,1fr)); } .forecast-game header { flex-wrap: wrap; } .winner-outlook { text-align: left; } }
+.team-ratings[data-category="offense"] [data-unit-group]:not([data-unit-group="offense"]),
+.team-ratings[data-category="defense"] [data-unit-group]:not([data-unit-group="defense"]),
+.team-ratings[data-category="lines"] [data-unit-group]:not([data-unit-group="lines"]) { display: none; }
+#unit-category { padding: 8px; border: 1px solid var(--rule-2); border-radius: 6px; background: var(--panel); color: var(--ink); }
+.team-ratings h2 { text-transform: none; letter-spacing: 0; color: var(--ink); border: 0; }

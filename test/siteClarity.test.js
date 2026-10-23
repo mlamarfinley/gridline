@@ -1,0 +1,15 @@
+import test from 'node:test'; import assert from 'node:assert/strict';
+import { leaderOutlook, countRate, collectTeamRatings } from '../public/siteClarity.js';
+import { MATCHUP_TABS } from '../public/matchupLayout.js';
+test('player cards are the default and sources tab is removed',()=>{assert.equal(MATCHUP_TABS[0][0],'players');assert.ok(!MATCHUP_TABS.some(t=>t[0]==='sources'));});
+test('leader outlook uses forecast probabilities, distinguishes ties and missing data',()=>{assert.equal(leaderOutlook({homeProbability:.2,awayProbability:.6,tieProbability:.2},'A','H').team,'A');assert.equal(leaderOutlook({homeProbability:.3,awayProbability:.3,tieProbability:.4},'A','H').team,'Tied');assert.equal(leaderOutlook(null,'A','H'),null);assert.equal(leaderOutlook({homeProbability:.4,awayProbability:.4,tieProbability:.2},'A','H').team,'Even');});
+test('count percentages use specified denominators and do not invent missing rates',()=>{assert.equal(countRate(75,100),'75 · 75.0%');assert.equal(countRate(0,100),'0 · 0.0%');assert.equal(countRate(0,0),'0 · —');assert.equal(countRate(null,100),'—');});
+test('team ratings preserve existing units, choose newest snapshot, do not fill missing ratings',()=>{const team={abbr:'A',name:'Alpha',units:{ratings:{off:{passing:70},def:{runD:60,passRush:50,coverage:40}}}}; const m={kickoff:'2026-10-20',week:6,home:team,away:{abbr:'B'},lineGrades:{home:{olRun:{score:75}}}};const rows=collectTeamRatings([m,{...m,kickoff:'2026-10-10',home:{...team,units:null}}]);assert.equal(rows.find(r=>r.abbr==='A').scores.qb,70);assert.equal(rows.find(r=>r.abbr==='A').scores.defense,50);assert.equal(rows.find(r=>r.abbr==='A').scores.olRun,75);assert.equal(rows.find(r=>r.abbr==='B').scores.qb,null);});
+test('ratings categories and forecast cards expose forecasts before result details',async()=>{
+ const {forecastCard,teamRatingsBlock}=await import('../public/siteClarity.js');
+ const p={minute:60,clock:'End Q4',away:20,home:10,awayProbability:.7,homeProbability:.2,tieProbability:.1};
+ const html=forecastCard({id:'123',away:'A',home:'B',kickoff:'2026-10-25T17:00Z',forecast:{points:[p]},status:'pending'},'Minute details');
+ assert.match(html,/Most likely regulation result/);assert.match(html,/70.0%/);assert.ok(html.indexOf('70.0%')<html.indexOf('Every minute'));
+ assert.match(teamRatingsBlock([]),/Team ratings unavailable/);
+ assert.match(teamRatingsBlock([{abbr:'A',scores:{qb:0}}]),/data-unit-group="offense"/);
+});

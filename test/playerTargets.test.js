@@ -42,5 +42,5 @@ test('controls use model defaults and explain reach semantics without modifying 
  assert.match(html,/not over 40/);
  assert.match(html,/not been validated/);
  assert.doesNotMatch(html,/99.5/);
- assert.doesNotMatch(playerTargetBlock({status:{state:'post'}},{},stat),/type="range"/);
+ assert.match(playerTargetBlock({status:{state:'post'}},{},stat),/Rebuilt estimate/);
 });

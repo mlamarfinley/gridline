@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Gridline — NFL Projections Ledger</title>
+  <title>Gridline — NFL Insights</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,300..800;1,100,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
@@ -16,7 +16,7 @@
       <button type="button" id="navBack" aria-label="Back" disabled><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" /></svg></button>
       <button type="button" id="navFwd" aria-label="Forward" disabled><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5" /></svg></button>
     </nav>
-    <a class="brand" href="#/nfl">GRIDLINE<span>projections ledger</span></a>
+    <a class="brand" href="#/nfl">GRIDLINE<span>NFL insights</span></a>
     <nav class="league" role="tablist" aria-label="League">
       <a data-league="nfl" href="#/nfl">NFL</a>
     </nav>
@@ -26,13 +26,12 @@
       <a data-view="leaders" href="#/nfl/leaders">Leaders</a>
       <a data-view="ratings" href="#/nfl/ratings">Ratings</a>
       <a data-view="scripts" href="#/nfl/scripts">NFL Minute Tracker</a>
-      <a data-view="ledger" href="#/ledger">Ledger</a>
     </nav>
     <div class="status" id="status" title="Data status"></div>
   </header>
   <main id="app" tabindex="-1"></main>
   <footer class="foot">
-    Data: ESPN public endpoints · nflverse · Open-Meteo. Projections are model outputs, not advice. Model probabilities are uncalibrated unless the Ledger shows otherwise.
+    Data: ESPN public endpoints · nflverse · Open-Meteo. Projections are model outputs, not advice. Model probabilities are uncalibrated.
   </footer>
   <script type="module" src="app.js"></script>
 </body>

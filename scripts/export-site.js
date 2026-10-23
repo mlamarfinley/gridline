@@ -1,3 +1,4 @@
+import { collectTeamRatings } from '../public/siteClarity.js';
 import { mergeTrackedRecords } from '../src/minuteTracker.js';
 import { archiveScript, latestScript } from '../src/scriptArchive.js';
 // Build a READ-ONLY static copy of Gridline (for GitHub Pages).
@@ -76,6 +77,7 @@ else if(trackerResponse.status!==404)throw Error('Cannot preserve NFL forward te
 // 3. Fresh slates (every regular-season week) and matchups (current week; NFL also completed weeks).
 async function pool(items, n, fn) { const q = [...items]; await Promise.all(Array.from({ length: n }, async () => { while (q.length) await fn(q.shift()); })); }
 const summary = { generatedAt, matchups: 0, failed: [] };
+const ratingMatchups = [];
 for (const lg of ['nfl']) {
   const cur = await getSlate(lg);
   write(OUT, `api/slate/${lg}.json`, cur);
@@ -94,6 +96,7 @@ for (const lg of ['nfl']) {
   await pool([...ids], 3, async (id) => {
     try {
       const m = await buildMatchup(lg, id, { archivedScript: scriptArchive[lg][id] || null });
+      ratingMatchups.push({kickoff:m.kickoff,generatedAt:m.generatedAt,week:m.week,home:{abbr:m.home.abbr,name:m.home.name,units:m.home.units},away:{abbr:m.away.abbr,name:m.away.name,units:m.away.units},lineGrades:m.lineGrades});
       const frozen = archiveScript(m);
       if(lg==='nfl'&&frozen){const dateET=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(m.kickoff));trackedRecords=mergeTrackedRecords(trackedRecords,[{...frozen,id,season:m.season,dateET}]);}
       if (frozen) { scriptArchive[lg][id] = latestScript(scriptArchive[lg][id], frozen); m.scriptReview = scriptArchive[lg][id]; }
@@ -106,6 +109,7 @@ for (const lg of ['nfl']) {
 const { loadMinuteTracker } = await import('../src/minuteTracker.js');
 write(OUT, 'api/nfl-minute-tracker.json', await loadMinuteTracker({records:trackedRecords}));
 write(OUT, 'api/script-archive.json', scriptArchive);
+write(OUT, 'api/team-ratings.json', {generatedAt,teams:collectTeamRatings(ratingMatchups)});
 write(OUT, 'api/build.json', summary);
 if (summary.failed.length) throw new Error(`Refusing partial publication: ${summary.failed.length} data builds failed`);
 log(`site built in ${path.relative(ROOT, OUT)}/: ${summary.matchups} matchups, ${summary.failed.length} failed`);

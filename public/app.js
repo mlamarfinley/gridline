@@ -1,3 +1,4 @@
+import { forecastCard, teamRatingsBlock } from './siteClarity.js';
 import { playerTargetBlock, wirePlayerTargets } from './playerTargets.js';
 import {matchupNav,overviewBlock,wireMatchupLayout} from './matchupLayout.js';
 import { deepAnalyticsBlock } from './deepAnalytics.js';
@@ -31,6 +32,7 @@ function staticPath(p) {
     case '/api/matchup': return `api/matchup/${q.get('league')}/${q.get('id')}.json`;
     case '/api/ledger': return `api/ledger/${q.get('kind') || 'pregame'}-${q.get('model') || ''}.json`;
     case '/api/blind': return `api/blind${q.get('batch') ? `-${q.get('batch')}` : ''}.json`;
+    case '/api/team-ratings': return 'api/team-ratings.json';
     case '/api/nfl-minute-tracker': return 'api/nfl-minute-tracker.json';
     case '/api/leaders': return `api/leaders/${q.get('league') || 'nfl'}.json`;
     case '/api/ratings': return `api/ratings/${q.get('pos') || 'RB'}.json`;
@@ -101,7 +103,7 @@ async function route() {
   $('.week').style.visibility = r.view === 'slate' ? 'visible' : 'hidden';
   window.scrollTo(0, 0);
   if (r.view === 'scripts') return renderMinuteTracker();
-  if (r.view === 'ledger') return renderLedger();
+  if (r.view === 'ledger') { if (STATIC) { location.hash='#/nfl'; return; } return renderLedger(); }
   if (r.view === 'leaders') return renderLeaders(r.league);
   if (r.view === 'ratings') return renderRatings(r.pos);
   if (r.view === 'game') return renderGame(r.league, r.id);
@@ -114,7 +116,7 @@ if (STATIC) {
   new MutationObserver(strip).observe(document.getElementById('app'), { childList: true, subtree: true });
   const b = document.createElement('div');
   b.className = 'staticbar';
-  b.innerHTML = `Read-only public snapshot · data built ${new Date(STATIC.generatedAt).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} ET · scheduled refresh every 15 minutes (provider/GitHub delays possible) · projections are experimental, not betting advice`;
+  b.innerHTML = `Updated ${new Date(STATIC.generatedAt).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} ET · experimental projections`;
   document.body.insertBefore(b, document.querySelector('main'));
 }
 $('#week').addEventListener('change', (e) => { location.hash = `#/${state.league}?week=${e.target.value}`; });
@@ -209,14 +211,14 @@ async function renderGame(lg, id) {
     </section>
     ${m.mode !== 'pregame' ? `<details class="banner"><summary>Retrospective view · rebuilt forecasts${done ? ' and actual results' : ''}</summary><p>Projections are rebuilt using only games completed before kickoff; injury reports, depth charts and weather are <b>not</b> applied because today's versions would leak post-kickoff information.${done ? ' Actual results are shown beside each projection.' : ''}</p></details>` : ''}
     ${matchupNav()}
-    <section id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" data-matchup-panel="overview">
+    <section id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" data-matchup-panel="overview" hidden>
       ${overviewBlock(m,{esc,f1})}
       <details class="section-disclosure"><summary>Model signals &amp; line differences</summary>${outlierBlock(m)}${outliersBlock(m)}</details>
       <details class="section-disclosure"><summary>Injuries &amp; availability</summary>${injuryBlock(m)}</details>
       ${m.skeptic?.counts?.high ? skepticBlock(m) : ''}
     </section>
-    <section id="panel-players" role="tabpanel" aria-labelledby="tab-players" data-matchup-panel="players" hidden>
-      <div class="section-heading"><div><h2>Player forecasts</h2><p>Choose a stat to compare baseline, experimental forecast and recent games.</p></div></div>
+    <section id="panel-players" role="tabpanel" aria-labelledby="tab-players" data-matchup-panel="players">
+      <div class="section-heading"><div><h2>Player forecasts</h2><p>Every player has a target explorer. Choose a stat, then move the slider to see the chance of reaching it.</p></div></div>
       ${pairedPlayers(m)}
     </section>
     <section id="panel-flow" role="tabpanel" aria-labelledby="tab-flow" data-matchup-panel="flow" hidden>
@@ -225,23 +227,10 @@ async function renderGame(lg, id) {
     </section>
     <section id="panel-tendencies" role="tabpanel" aria-labelledby="tab-tendencies" data-matchup-panel="tendencies" hidden>
       ${deepAnalyticsBlock(m,{esc,pct,f1,f2,etStamp})}
-      <details class="section-disclosure"><summary>Offensive &amp; defensive line estimates</summary>${gradesBlock(m)}</details>
+      <section class="section-disclosure"><h2>Offensive &amp; defensive lines</h2>${gradesBlock(m)}</section>
       <details class="section-disclosure"><summary>Full team context</summary>${contextBlock(m)}</details>
     </section>
-    <section id="panel-sources" role="tabpanel" aria-labelledby="tab-sources" data-matchup-panel="sources" hidden>
-    <div class="modelonly"><label><input type="checkbox" id="moToggle" ${modelOnly() ? 'checked' : ''}> Model only — hide every sportsbook player line</label> <span class="faint" id="moProof">Baseline player forecasts use game context and player history; experimental scripts also use posted player lines.</span></div>
-    <div class="provline">
-      <span>Model ${esc(m.modelVersion)} · ${esc(m.sims)} simulations · ${esc(m.mode)}</span>
-      <span>Lines: ${esc(o?.meta?.source || 'no line')} · retrieved ${etStamp(o?.meta?.retrievedAt)} — ${esc(o?.meta?.note || '')}</span>
-      <span>Data cutoff: ${etStamp(m.cutoff)} (kickoff) · latest input ${etStamp(m.latestInput)}</span>
-      ${snap ? `<span>${snap.ok ? `Ledger: pregame snapshot run #${snap.runId}${snap.existing ? ' (recorded earlier)' : snap.duplicate ? ' (unchanged)' : ' recorded'} ${etStamp(snap.createdAt)}` : `Ledger: ${esc(snap.reason)}`}</span>` : ''}
-      ${m.mode === 'pregame' ? `<button class="btn" id="snapbtn">Record new snapshot</button>` : ''}
-    </div>
-    ${skepticBlock(m)}
-    <h2 class="sec">Disclosures &amp; unavailable inputs</h2>
-    <ul class="disc">${m.disclosures.map((d) => `<li>${esc(d)}</li>`).join('')}<li>League baselines: ${esc(m.baselines.source)}.</li>${m.weatherEffects?.length ? `<li>Weather adjustments applied: ${esc(m.weatherEffects.join('; '))}</li>` : ''}</ul>
-    <h2 class="sec">Sources (${m.sources.length})</h2>
-    <div class="scroll"><table class="src"><tbody>${m.sources.map((s) => `<tr><td>${esc(s.label || '')}</td><td>${esc(s.source)}</td><td>${etStamp(s.fetchedAt)}</td><td>${s.error ? `<span class="tag ${s.stale ? 'warn' : 'bad'}">${s.stale ? 'stale cache' : 'error'}: ${esc(s.error)}</span>` : s.fromCache ? 'cache' : 'fresh'}</td><td class="u">${esc(s.url)}</td></tr>`).join('')}</tbody></table></div></section></div>`;
+    </div>`;
   wireMatchupLayout(app);
   wireCards();
   wirePlayerTargets(app, m);
@@ -698,19 +687,22 @@ function wireCards() {
 async function renderRatings(pos) {
   const my = state.routeSeq;
   loading('Loading player ratings…');
-  let d;
-  try { d = await api(`/api/ratings?pos=${pos}`); } catch (e) { if (my === state.routeSeq) fail(e); return; }
+  let d, teamRatings;
+  try { [d,teamRatings] = await Promise.all([api(`/api/ratings?pos=${pos}`),api('/api/team-ratings').catch(()=>({teams:[]}))]); } catch (e) { if (my === state.routeSeq) fail(e); return; }
   if (my !== state.routeSeq) return;
-  setTitle(`${pos} skill ratings`);
+  setTitle(`NFL ratings`);
   const cell = (v) => (v == null ? '<td class="faint num">—</td>' : `<td class="num rt" style="--r:${v}">${v}</td>`);
   app.innerHTML = `<section class="leaders ratingspage">
-    <div class="lhead"><h1>NFL ${esc(pos)} skill ratings · through available week ${d.week - 1} data</h1>
-      <p class="faint">Overall and Player Rating use a Madden-style scale (the position's average Madden OVR ± its spread), so they read like the Madden column; Overall uses no Madden data. Skill columns are 1–99 against qualifying ${esc(pos)}s (50 = average, 84 ≈ one standard deviation of true talent better). Built from nflverse play-by-play and NFL Next Gen Stats over this season and last, older games fading game by game. Each metric is shrunk by how reliable that player's sample is, so a small sample sits near 50 instead of at an extreme; a metric with no data shows a faint 50. Rookies qualify on pace and are never marked down for having no last season.</p>
-      <nav class="ljump">${['QB', 'RB', 'WR', 'TE'].map((p) => `<a href="#/nfl/ratings?pos=${p}" class="${p === pos ? 'on' : ''}">${p}</a>`).join('')}</nav></div>
-    <p class="faint">Skill ratings include current-week games as provider data arrives. Combined rating last computed ${etStamp(d.playerRatingFreshness?.computedAt)}${d.playerRatingFreshness?.staleFromWeek ? ` (older export, source week ${d.playerRatingFreshness.sourceWeek})` : ''}. Player Rating = Madden overall + our Production Monitor (each game's actual vs expected for that opponent and game), mixed per position by what best predicted real production in a 2024 test${d.playerRatingWeights ? ` (${esc(d.pos)}: Madden ${Math.round(d.playerRatingWeights.madden * 100)}%, production efficiency ${Math.round(d.playerRatingWeights.efficiency * 100)}%, usage ${Math.round(d.playerRatingWeights.usage * 100)}%)` : ''}. ${d.combined ? 'Madden numbers appear only in this local app.' : ''}</p>
-    <div class="scroll"><table class="rtable"><thead><tr><th>#</th><th>Player</th>${d.combined ? '<th class="num">Madden</th>' : ''}<th class="num" title="Our overall: every production skill below, weighted — shown on a Madden-style scale (position average and spread of Madden OVR), but built with no Madden data">Overall</th><th class="num" title="Madden + Production Monitor, mixed per position by what best predicted real production">Player Rating</th>${d.skills.map((k) => `<th class="num" title="${esc(k.label)} · weight ${Math.round(k.weight * 100)}%${k.higherIsBetter ? '' : ' · lower raw value is better'}">${esc(k.label.split(' (')[0])}</th>`).join('')}</tr></thead>
-    <tbody>${d.players.map((x, i) => `<tr><td class="faint">${i + 1}</td><td>${esc(x.name)} <span class="faint">${esc(x.team || '')}</span>${x.rookie ? ' <span class="faint" title="no games last season">R</span>' : ''}</td>${d.combined ? `<td class="num faint">${x.madden ?? '—'}</td>` : ''}${cell(x.overall)}${cell(x.playerRating)}${d.skills.map((k) => (x.skills[k.key]?.noData ? '<td class="faint num" title="no data — position average">50</td>' : cell(x.skills[k.key]?.rating))).join('')}</tr>`).join('')}</tbody></table></div>
+    <div class="lhead"><h1>NFL ratings</h1>
+      <p class="faint">Choose a player position or compare team units. Skill scores: 50 = position average; higher is better.</p>
+      <nav class="ljump" aria-label="Rating category"><button class="btn" id="show-team-ratings">Team units</button>${['QB', 'RB', 'WR', 'TE'].map((p) => `<a href="#/nfl/ratings?pos=${p}" class="${p === pos ? 'on' : ''}">${p}</a>`).join('')}</nav></div>
+    <p class="faint">Player ratings updated ${etStamp(d.playerRatingFreshness?.computedAt)}. Smaller samples are pulled toward average; — means unavailable.</p>
+    <div id="player-rating-table" class="scroll"><table class="rtable"><thead><tr><th>#</th><th>Player</th>${d.combined ? '<th class="num">Madden</th>' : ''}<th class="num" title="Our overall: every production skill below, weighted — shown on a Madden-style scale (position average and spread of Madden OVR), but built with no Madden data">Overall</th><th class="num" title="Madden + Production Monitor, mixed per position by what best predicted real production">Player Rating</th>${d.skills.map((k) => `<th class="num" title="${esc(k.label)} · weight ${Math.round(k.weight * 100)}%${k.higherIsBetter ? '' : ' · lower raw value is better'}">${esc(k.label.split(' (')[0])}</th>`).join('')}</tr></thead>
+    <tbody>${d.players.map((x, i) => `<tr><td class="faint">${i + 1}</td><td>${esc(x.name)} <span class="faint">${esc(x.team || '')}</span>${x.rookie ? ' <span class="faint" title="no games last season">R</span>' : ''}</td>${d.combined ? `<td class="num faint">${x.madden ?? '—'}</td>` : ''}${cell(x.overall)}${cell(x.playerRating)}${d.skills.map((k) => (x.skills[k.key]?.noData ? '<td class="faint num" title="No measured data">—</td>' : cell(x.skills[k.key]?.rating))).join('')}</tr>`).join('')}</tbody></table></div>
+  <div id="team-rating-panel" hidden>${teamRatingsBlock(teamRatings.teams)}</div>
   </section>`;
+  $('#show-team-ratings').onclick = () => { const panel=$('#team-rating-panel'), show=panel.hidden; panel.hidden=!show; $('#player-rating-table').hidden=show; $('#show-team-ratings').textContent=show?'Show player ratings':'Team units'; };
+  const category=$('#unit-category'); if(category)category.onchange=()=>{category.closest('.team-ratings').dataset.category=category.value;};
 }
 
 // ---------------- Stat leaders ----------------
@@ -871,7 +863,7 @@ async function renderMinuteTracker(){
  const summary=d.summary;
  const metric=s=>`${s.reviewed}/${s.games} graded · ${s.correct}/${s.checks} minute checks correct · ${s.accuracy==null?'Accuracy pending':pct(s.accuracy)+' accuracy'}`;
  const weeks=[...new Set(d.games.map(g=>String(g.kickoff).slice(0,4)+' · Week '+g.week))].sort((a,b)=>Number(b.split('Week ')[1])-Number(a.split('Week ')[1]));
- app.innerHTML=`<h1>NFL Minute Tracker</h1><p>Frozen pregame forecasts · checked ${etStamp(d.updatedAt)} · <button id="refreshTracker">Refresh results</button></p><div class="banner">Original forecasts stay fixed. New NFL games are enrolled before kickoff on scheduled builds. All 60 regulation minutes are graded only after a complete final scoring feed arrives. Kickoff and overtime are excluded; updates may be delayed by providers or hosting.</div><p><b>${metric(summary)}</b></p><p>Score error: ${summary.scoreMAE==null?'Pending':f2(summary.scoreMAE)+' points per team per minute'} · Probability error (Brier): ${summary.brier==null?'Pending':f2(summary.brier)} · Final winner: ${summary.finalWinnerCorrect}/${summary.reviewed}. Missing/error feeds: ${summary.errors||0}; incomplete: ${summary.incomplete||0}; pending games: ${summary.pending}.</p><div class="scroll"><table><thead><tr><th>Quarter</th><th>Correct minute checks</th><th>Accuracy</th></tr></thead><tbody>${(summary.quarters||[]).map(q=>`<tr><td>Q${q.quarter}</td><td>${q.correct}/${q.checks}</td><td>${q.accuracy==null?'Pending':pct(q.accuracy)}</td></tr>`).join('')}</tbody></table></div><p>Probability challenger: ${summary.challenger?.games||0} finished games with a version saved before kickoff${summary.challenger?.accuracy!=null?' · '+pct(summary.challenger.accuracy)+' minute accuracy':''}. The main forecast remains unchanged. The challenger calculates the same scoring assumptions directly, removing simulation noise; its 13-game after-the-fact replay was slightly worse, so it is being tested separately.</p><p><a href="nfl-minute-backtest.html" target="_blank" rel="noopener">Historical NFL backtest</a> — reconstructed results, separate from the frozen forward tests below.</p>${weeks.map(week=>{const gs=d.games.filter(g=>String(g.kickoff).slice(0,4)+' · Week '+g.week===week).sort((a,b)=>Date.parse(a.kickoff)-Date.parse(b.kickoff));const graded=gs.filter(g=>g.status==='reviewed');const hits=graded.reduce((s,g)=>s+Math.round(g.review.checkpointAccuracy*60),0);return `<h2>${esc(week)}</h2><p>${graded.length}/${gs.length} games graded · ${hits}/${graded.length*60} checks correct${graded.length?' · '+pct(hits/(graded.length*60)):''}</p>${gs.map(g=>`<details class="why"><summary><b>${esc(g.away)} @ ${esc(g.home)}</b> · ${etStamp(g.kickoff)} · ${g.status==='reviewed'?pct(g.review.checkpointAccuracy)+' minute accuracy':esc(g.status)}</summary>${g.error?`<p class="error">${esc(g.error)}</p>`:''}${g.source?.stale?'<p class="error">Provider unavailable: showing cached results. Corrections may be outstanding.</p>':''}${g.source?`<p>Results retrieved ${etStamp(g.source.fetchedAt)}</p>`:''}${g.challengerReview?.checkpointCount?`<p>Saved challenger: ${pct(g.challengerReview.checkpointAccuracy)} accuracy, Brier ${f2(g.challengerReview.brier)}. Main: ${pct(g.review.checkpointAccuracy)}, Brier ${f2(g.review.brier)}.</p>`:g.forecast.challenger?'<p>A separate probability challenger was also saved before kickoff; results pending.</p>':''}${gameTimelineBlock({home:{abbr:g.home},away:{abbr:g.away},mode:'tracked',scriptReview:g})}</details>`).join('')}`;}).join('')}`;
+ app.innerHTML=`<div class="section-heading"><div><h1>Game outlooks · minute tracker</h1><p>Who is most likely to lead each quarter—and finish regulation ahead.</p></div><button class="btn" id="refreshTracker">Refresh</button></div><p class="faint">Saved before kickoff · ${etStamp(d.updatedAt)} · estimates, not exact game scripts.</p><details class="tracker-results"><summary>Prediction results · ${metric(summary)}</summary><p>Winner correct: ${summary.finalWinnerCorrect}/${summary.reviewed} · score error: ${summary.scoreMAE==null?'Pending':f2(summary.scoreMAE)} points. Games are graded after the final scoring feed arrives. Overtime excluded.</p><a href="nfl-minute-backtest.html" target="_blank" rel="noopener">Historical backtest</a></details>${weeks.map(week=>`<h2>${esc(week)}</h2><div class="forecast-grid">${d.games.filter(g=>String(g.kickoff).slice(0,4)+' · Week '+g.week===week).sort((a,b)=>Date.parse(a.kickoff)-Date.parse(b.kickoff)).map(g=>forecastCard(g,gameTimelineBlock({home:{abbr:g.home},away:{abbr:g.away},mode:'tracked',scriptReview:g}))).join('')}</div>`).join('')}`;
  $('#refreshTracker').addEventListener('click',renderMinuteTracker);
  }catch(e){fail(e);}
 }

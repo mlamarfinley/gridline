@@ -1,5 +1,5 @@
 // Presentation only: keep every forecast supplied by the matchup unchanged.
-export const MATCHUP_TABS=[['overview','Overview'],['players','Players'],['flow','Game flow'],['tendencies','Team tendencies'],['sources','Sources & method']];
+export const MATCHUP_TABS=[['players','Players'],['overview','Overview'],['flow','Game flow'],['tendencies','Team tendencies']];
 export function summaryRows(m){
  const seen=new Set(),rows=[];
  for(const t of [m.away,m.home])for(const c of t?.cards||[]){const s=c.stats?.[c.primary],id=`${t.abbr}:${c.id}`;if(!s?.available||seen.has(id))continue;seen.add(id);rows.push({id:String(c.id),name:c.name,position:c.pos,team:t.abbr,label:s.label||s.short||c.primary,baseline:s.proj,experimental:s.experimental?.projection??null,line:s.book?.line??null,actual:c.actual&&!c.actual.dnp?(c.actual[c.primary]??null):null});}

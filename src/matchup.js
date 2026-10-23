@@ -1115,8 +1115,8 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
   // Live experimental second opinion; never synthesize historical experimental picks.
   if (pregame && !blind) for (const t of Object.values(teams)) addExperimental(t);
 
-  // Export final reconciled samples only for prospective target exploration.
-  if (pregame) for (const t of Object.values(teams)) for (const c of [...t.cards, ...(t.kicker ? [t.kicker] : [])]) {
+  // Export reconciled samples. Historical UI explicitly labels these as rebuilt.
+  for (const t of Object.values(teams)) for (const c of [...t.cards, ...(t.kicker ? [t.kicker] : [])]) {
     for (const [key, stat] of Object.entries(c.stats || {})) {
       const samples = SIMS_FINAL.get(`${c.id}|${key}`);
       if (stat.available && samples) stat.targetDistribution = targetDistributions(samples, stat);

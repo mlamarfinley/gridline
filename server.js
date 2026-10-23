@@ -1,3 +1,4 @@
+import { collectTeamRatings } from './public/siteClarity.js';
 // Local HTTP server: static UI + JSON API. Zero dependencies (Node >= 22.13).
 import http from 'node:http';
 import fs from 'node:fs';
@@ -42,6 +43,13 @@ async function api(req, res, url) {
   if (p === '/api/slate') {
     const week = q.get('week') ? Number(q.get('week')) : undefined;
     return send(res, 200, await getSlate(league(q), { week, seasontype: q.get('seasontype') ? Number(q.get('seasontype')) : undefined }));
+  }
+  if (p === '/api/team-ratings') {
+    const cur = await getSlate('nfl');
+    const slates = await Promise.all([getSlate('nfl', {week:Math.max(1,cur.week-1)}),getSlate('nfl',{week:Math.min(18,cur.week+1)})]);
+    const ids=[...new Set([...cur.games,...slates.flatMap(s=>s.games)].map(g=>g.id))], matchups=[];
+    await Promise.all(Array.from({length:3},async()=>{while(ids.length){const id=ids.shift();matchups.push(await getMatchup('nfl',id,{autoSnapshot:false}));}}));
+    return send(res,200,{generatedAt:new Date().toISOString(),teams:collectTeamRatings(matchups)});
   }
   if (p === '/api/ratings') {
     const pos = ['QB', 'RB', 'WR', 'TE'].includes(q.get('pos')) ? q.get('pos') : 'RB';
