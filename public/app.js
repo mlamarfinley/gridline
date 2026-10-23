@@ -131,8 +131,6 @@ async function renderSlate(lg, week) {
   loading(`Loading ${lg === 'nfl' ? 'NFL' : 'college'} slate…`);
   let s;
   try { s = await api(`/api/slate?league=${lg}${week ? `&week=${week}` : ''}`); } catch (e) { if (my === state.routeSeq) fail(e); return; }
-  let originalReview=null;
-  if(m.status.completed){try{const tracker=await api('/api/nfl-minute-tracker');originalReview=tracker.games.find(g=>String(g.id)===String(id))||null;}catch{/* fall back to the saved matchup review */}}
   if (my !== state.routeSeq) return; // user navigated away while loading
   setTitle(`${lg === 'nfl' ? 'NFL' : 'College'} slate · week ${s.week ?? '—'}`);
   state.slate = s;
