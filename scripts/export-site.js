@@ -1,3 +1,4 @@
+import { versionModuleImports, versionHtmlAssets } from '../src/staticAssets.js';
 import { collectTeamRatings } from '../public/siteClarity.js';
 import { mergeTrackedRecords } from '../src/minuteTracker.js';
 import { archiveScript, latestScript } from '../src/scriptArchive.js';
@@ -47,7 +48,11 @@ fs.mkdirSync(OUT, { recursive: true });
 // 1. UI assets, flagged as static.
 for (const f of fs.readdirSync(path.join(ROOT, 'public'))) fs.copyFileSync(path.join(ROOT, 'public', f), path.join(OUT, f));
 const generatedAt = new Date().toISOString();
-const html = fs.readFileSync(path.join(OUT, 'index.html'), 'utf8')
+const assetVersion = Date.parse(generatedAt).toString(36);
+for (const f of fs.readdirSync(OUT).filter(f=>f.endsWith('.js'))) {
+  const file=path.join(OUT,f);fs.writeFileSync(file,versionModuleImports(fs.readFileSync(file,'utf8'),assetVersion));
+}
+const html = versionHtmlAssets(fs.readFileSync(path.join(OUT, 'index.html'), 'utf8'),assetVersion)
   .replace('<script type="module"', `<script>window.GRIDLINE_STATIC = { generatedAt: ${JSON.stringify(generatedAt)} };</script>\n  <script type="module"`);
 fs.writeFileSync(path.join(OUT, 'index.html'), html);
 fs.writeFileSync(path.join(OUT, '404.html'), html);
