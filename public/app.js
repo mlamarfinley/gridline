@@ -1,3 +1,4 @@
+import { playerTargetBlock, wirePlayerTargets } from './playerTargets.js';
 import {matchupNav,overviewBlock,wireMatchupLayout} from './matchupLayout.js';
 import { deepAnalyticsBlock } from './deepAnalytics.js';
 import { applyTrackingScope } from './trackingPolicy.js';
@@ -243,6 +244,7 @@ async function renderGame(lg, id) {
     <div class="scroll"><table class="src"><tbody>${m.sources.map((s) => `<tr><td>${esc(s.label || '')}</td><td>${esc(s.source)}</td><td>${etStamp(s.fetchedAt)}</td><td>${s.error ? `<span class="tag ${s.stale ? 'warn' : 'bad'}">${s.stale ? 'stale cache' : 'error'}: ${esc(s.error)}</span>` : s.fromCache ? 'cache' : 'fresh'}</td><td class="u">${esc(s.url)}</td></tr>`).join('')}</tbody></table></div></section></div>`;
   wireMatchupLayout(app);
   wireCards();
+  wirePlayerTargets(app, m);
   wireSideToggle();
   wireModelOnly(lg);
   const sb = $('#snapbtn');
@@ -454,6 +456,7 @@ function cardBody(m, c, key) {
     </div>
     <div class="chart">${last5Chart(s)}<details class="reference-details"><summary>Opponent history &amp; position matchup</summary>${h2hBlock(s)}${vsPosBlock(s)}</details></div>
   </div>
+  ${playerTargetBlock(m, c, s)}
   ${s.experimental ? `<section class="experimental-forecast"><div><span>Experimental forecast</span><strong>${f1(s.experimental.projection)}</strong><span>${s.experimental.adjustmentPct > 0 ? '+' : ''}${s.experimental.adjustmentPct}% vs baseline</span></div><p>Context experiment · unvalidated · ${s.experimental.groupsAvailable}/5 evidence groups</p><details><summary>Why the experimental number changed</summary><ul>${s.experimental.signals.map(g => `<li><b>${esc(g.group)}</b> · ${g.score > 0 ? 'upward' : g.score < 0 ? 'downward' : 'neutral'} signal<ul>${g.evidence.map(e => `<li>${esc(e)}</li>`).join('')}</ul></li>`).join('')}</ul>${s.experimental.constraint ? `<p>${esc(s.experimental.constraint)}</p>` : ''}<p>${esc(s.experimental.note)}</p></details></section>` : ''}
   ${s.explain ? `<details class="why"><summary>Why this projection</summary><div class="expl">${esc(s.explain)}</div></details>` : ''}
   <details class="reference-details"><summary>Player ratings, usage &amp; model notes</summary>
@@ -597,9 +600,9 @@ const sp = (x) => (x.n ? `${x.n} · ${f1(x.primary)} · ${pct(x.carryShare)} · 
 function kicker(m, c) {
   const s = c.stats;
   const a = c.actual && !c.actual.dnp ? c.actual : null;
-  return `<div class="kick"><span class="name">${esc(c.name)}</span><span class="muted">K</span>
+  return `<div class="kick" data-id="${esc(c.id)}"><span class="name">${esc(c.name)}</span><span class="muted">K</span>
     ${['k_pts', 'fg_made', 'xp_made'].map((k) => `<span>${esc(s[k].short)} <span class="v">${f1(s[k].proj)}</span> <span class="faint">${f1(s[k].p10)}–${f1(s[k].p90)} · avg ${f1(s[k].seasonAvg)}${a ? ` · actual ${f1(a[k] ?? 0)}` : ''}</span></span>`).join('')}
-    ${c.injury ? `<span class="tag warn">${esc(c.injury.status)}</span>` : ''}</div>`;
+    ${c.injury ? `<span class="tag warn">${esc(c.injury.status)}</span>` : ''}<details><summary>Explore kicker targets</summary>${['k_pts', 'fg_made', 'xp_made'].map(k => playerTargetBlock(m, c, s[k])).join('')}</details></div>`;
 }
 
 function gradesBlock(m) {

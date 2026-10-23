@@ -550,3 +550,17 @@ button:focus-visible, input:focus-visible, summary:focus-visible, .card:focus-vi
  .score-outlook { min-width: 0; }
  .score-outlook small { overflow-wrap: anywhere; }
 }
+
+/* Target exploration shares the experimental forecast's purple accent. */
+.target-explorer { margin: 18px 0; padding: 16px; border: 1px solid var(--line, #364456); border-radius: 12px; background: var(--panel); }
+.target-explorer h4 { margin: 0 0 14px; font-size: 15px; }
+.target-controls { display: grid; grid-template-columns: 1fr 90px; gap: 10px; align-items: center; }
+.target-number { width: 100%; min-width: 0; padding: 8px; color: var(--ink); background: var(--bg); border: 1px solid var(--muted); border-radius: 6px; font: inherit; }
+.target-slider { grid-column: 1 / -1; width: 100%; margin: 8px 0; min-height: 28px; accent-color: var(--experiment); cursor: pointer; }
+.target-chance { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 8px; }
+.target-chance > div:first-child { display: grid; gap: 4px; }
+.target-chance strong { font-size: 32px; color: var(--experiment); font-variant-numeric: tabular-nums; }
+.target-chance span, .target-baseline, .target-confidence, .target-explorer details { font-size: 12px; }
+.target-confidence { color: var(--muted); margin: 12px 0; }
+.target-explorer details p { line-height: 1.6; }
+.target-explorer input:focus-visible { outline: 2px solid var(--experiment); outline-offset: 3px; }

@@ -1,3 +1,4 @@
+import { targetDistributions } from '../public/playerTargets.js';
 import { deepContext } from './deepContext.js';
 import { trackedPlayerStat } from '../public/trackingPolicy.js';
 import { contextualScript } from './scriptContext.js';
@@ -1113,6 +1114,14 @@ export async function buildMatchup(lg, eventId, { forceRetro = false, blind = nu
 
   // Live experimental second opinion; never synthesize historical experimental picks.
   if (pregame && !blind) for (const t of Object.values(teams)) addExperimental(t);
+
+  // Export final reconciled samples only for prospective target exploration.
+  if (pregame) for (const t of Object.values(teams)) for (const c of [...t.cards, ...(t.kicker ? [t.kicker] : [])]) {
+    for (const [key, stat] of Object.entries(c.stats || {})) {
+      const samples = SIMS_FINAL.get(`${c.id}|${key}`);
+      if (stat.available && samples) stat.targetDistribution = targetDistributions(samples, stat);
+    }
+  }
 
   // Clock-based second opinion: timing uses only verified/filtered prior games.
   let gameScript = null;
