@@ -18,3 +18,10 @@ test('minute detail pairs saved predictions with matching actual clocks',async()
  const html=minuteTrackTable({away:'A',home:'H',forecast:{points:[{minute:0,clock:'Kickoff'},{minute:1,clock:'Q1 14:00',away:3,home:0,awayProbability:.6,homeProbability:.1,tieProbability:.3,likelyLeader:'away'}]},actual:{complete:true,points:[{minute:1,away:0,home:7,leader:'home'}]}});
  assert.match(html,/Q1 14:00/);assert.match(html,/60.0%/);assert.match(html,/Incorrect/);assert.doesNotMatch(html,/Kickoff/);
 });
+test('performance summary identifies original snapshot and denominators',async()=>{
+ const {performanceBlock}=await import('../public/siteClarity.js');
+ const m={home:{abbr:'CHI'},away:{abbr:'NE'},status:{completed:true}};
+ const r={forecastTimestamp:'2026-10-20T17:22:07Z',forecast:{points:[{minute:60,home:24.9,away:23.5}]},review:{finalWinnerCorrect:true,checkpointAccuracy:47/60,checkpointCount:60,scoreMAE:3.518333}};
+ const html=performanceBlock(m,r);assert.match(html,/47 \/ 60/);assert.match(html,/78.3%/);assert.match(html,/3.52/);assert.match(html,/First saved forecast/);assert.equal(performanceBlock({...m,status:{completed:false}},r),'');
+});
+test('ungraded result is pending, never an incorrect prediction',async()=>{const {performanceBlock}=await import('../public/siteClarity.js');const html=performanceBlock({status:{completed:true},away:{abbr:'A'},home:{abbr:'H'}},{forecastTimestamp:'2026-10-20',review:{finalWinnerCorrect:null,checkpointCount:0}});assert.match(html,/Pending/);assert.doesNotMatch(html,/Incorrect/);});

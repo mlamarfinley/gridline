@@ -5,10 +5,7 @@
   --font: 'Archivo', system-ui, -apple-system, sans-serif; --mono: 'JetBrains Mono', ui-monospace, monospace;
   color-scheme: dark;
 }
-@media (prefers-color-scheme: light) {
-  :root { --bg: #f5f4ef; --panel: #ffffff; --panel-2: #f0efe9; --rule: #e0ded6; --rule-2: #cfccc2; --ink: #15181d; --muted: #5d6572; --faint: #9aa0a9;
-    --model: #4f6b00; --book: #1f5fbf; --warn: #a15c00; --bad: #c0392b; --good: #1e7f4f; --prev: #c9c6bb; color-scheme: light; }
-}
+
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 14px; line-height: 1.45; }
 body { font-variant-numeric: tabular-nums; }
@@ -427,7 +424,6 @@ details.ratings td.num { text-align: right; font-variant-numeric: tabular-nums; 
 
 /* Matchup reading hierarchy: overview first, supporting evidence on demand. */
 :root { --faint: #929dad; }
-@media (prefers-color-scheme: light) { :root { --faint: #65707e; } }
 [hidden] { display: none !important; }
 main { padding-top: 28px; }
 .topbar { gap: 14px; }
@@ -609,3 +605,10 @@ button:focus-visible, input:focus-visible, summary:focus-visible, .card:focus-vi
 .minute-detail th { text-transform: none; font-size: 12px; }
 .minute-detail td { padding: 9px 10px; }
 .forecast-game:has(details[open]) { grid-column: 1 / -1; }
+.performance-summary { padding: 18px; margin: 18px 0; border: 1px solid var(--rule-2); border-radius: 12px; background: var(--panel); }
+.performance-summary h2 { margin: 0; font-size: 18px; }
+.performance-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; }
+.performance-metrics > div { display: grid; align-content: start; gap: 7px; }
+.performance-metrics span,.performance-metrics small { font-size: 12px; color: var(--muted); }
+.performance-metrics strong { font-size: 18px; }
+@media(max-width:700px) { .performance-metrics { grid-template-columns: 1fr 1fr; } }

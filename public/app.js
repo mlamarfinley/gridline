@@ -1,4 +1,4 @@
-import { forecastCard, teamRatingsBlock, minuteTrackTable } from './siteClarity.js';
+import { forecastCard, teamRatingsBlock, minuteTrackTable, performanceBlock } from './siteClarity.js';
 import { playerTargetBlock, wirePlayerTargets } from './playerTargets.js';
 import {matchupNav,overviewBlock,wireMatchupLayout} from './matchupLayout.js';
 import { deepAnalyticsBlock } from './deepAnalytics.js';
@@ -45,7 +45,7 @@ async function api(path, opts) {
     if (opts?.method && opts.method !== 'GET') throw new Error('This is a read-only public snapshot — recording, settling and backtests run only in the local app.');
     const sp = staticPath(path);
     if (!sp) throw new Error('Not available in the read-only snapshot.');
-    const r = await fetch(sp);
+    const r = await fetch(sp, {cache:'no-cache'});
     if (!r.ok) throw new Error(r.status === 404 ? 'Not included in this read-only snapshot (only the current week and completed NFL weeks are pre-built).' : `HTTP ${r.status}`);
     const j = await r.json();
     return path.startsWith('/api/matchup') ? applyTrackingScope(j) : j;
@@ -131,6 +131,8 @@ async function renderSlate(lg, week) {
   loading(`Loading ${lg === 'nfl' ? 'NFL' : 'college'} slate…`);
   let s;
   try { s = await api(`/api/slate?league=${lg}${week ? `&week=${week}` : ''}`); } catch (e) { if (my === state.routeSeq) fail(e); return; }
+  let originalReview=null;
+  if(m.status.completed){try{const tracker=await api('/api/nfl-minute-tracker');originalReview=tracker.games.find(g=>String(g.id)===String(id))||null;}catch{/* fall back to the saved matchup review */}}
   if (my !== state.routeSeq) return; // user navigated away while loading
   setTitle(`${lg === 'nfl' ? 'NFL' : 'College'} slate · week ${s.week ?? '—'}`);
   state.slate = s;
@@ -180,6 +182,8 @@ async function renderGame(lg, id) {
   const my = state.routeSeq;
   let m;
   try { m = await api(`/api/matchup?league=${lg}&id=${id}`); } catch (e) { if (my === state.routeSeq) fail(e); return; }
+  let originalReview=null;
+  if(m.status.completed){try{const tracker=await api('/api/nfl-minute-tracker');originalReview=tracker.games.find(g=>String(g.id)===String(id))||null;}catch{/* fall back to the saved matchup review */}}
   if (my !== state.routeSeq) return; // user navigated away while loading
   setTitle(`${m.away.abbr} @ ${m.home.abbr} (${lg === 'nfl' ? 'NFL' : 'College'} wk ${m.week ?? '—'})`);
   state.matchup = m;
@@ -210,6 +214,7 @@ async function renderGame(lg, id) {
 
     </section>
     ${m.mode !== 'pregame' ? `<details class="banner"><summary>Retrospective view · rebuilt forecasts${done ? ' and actual results' : ''}</summary><p>Projections are rebuilt using only games completed before kickoff; injury reports, depth charts and weather are <b>not</b> applied because today's versions would leak post-kickoff information.${done ? ' Actual results are shown beside each projection.' : ''}</p></details>` : ''}
+    ${performanceBlock(m,originalReview)}
     ${matchupNav()}
     <section id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" data-matchup-panel="overview" hidden>
       ${overviewBlock(m,{esc,f1})}
