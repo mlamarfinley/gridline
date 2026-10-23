@@ -424,3 +424,129 @@ details.ratings td.num { text-align: right; font-variant-numeric: tabular-nums; 
 .deep-evidence td:first-child{white-space:normal;min-width:140px}.deep-evidence summary{cursor:pointer;font-weight:600;padding:12px 0}
 .deep-evidence details{border-bottom:1px solid var(--line)}.deep-evidence .muted{line-height:1.6;margin-top:12px}
 @media(max-width:1000px){.deep-evidence .deep-teams{grid-template-columns:1fr}}
+
+/* Matchup reading hierarchy: overview first, supporting evidence on demand. */
+:root { --faint: #929dad; }
+@media (prefers-color-scheme: light) { :root { --faint: #65707e; } }
+[hidden] { display: none !important; }
+main { padding-top: 28px; }
+.topbar { gap: 14px; }
+.matchup .mh { padding: 18px; margin-top: 14px; border: 1px solid var(--rule); border-radius: 12px 12px 0 0; background: var(--panel); }
+.matchup .oddsbar { margin-top: 0; border: 1px solid var(--rule); border-top: 0; border-radius: 0 0 12px 12px; padding: 12px 22px; background: var(--panel); grid-template-columns: repeat(4,minmax(0,1fr)); }
+.matchup .oddsbar .k { text-transform: none; letter-spacing: 0; font-size: 12px; }
+.matchup .oddsbar .v { font-size: 20px; }
+.matchup-tabs { display: flex; gap: 6px; padding: 10px 0; margin: 14px 0 20px; border-bottom: 1px solid var(--rule-2); overflow-x: auto; }
+.matchup-tabs button { cursor: pointer; flex-shrink: 0; border: 0; border-radius: 7px; background: transparent; color: var(--muted); padding: 11px 17px; font-weight: 600; min-height: 44px; }
+.matchup-tabs button:hover { background: var(--panel-2); color: var(--ink); }
+.matchup-tabs button[aria-selected="true"] { background: var(--ink); color: var(--bg); }
+button:focus-visible, input:focus-visible, summary:focus-visible, .card:focus-visible { outline: 2px solid var(--book); outline-offset: 4px; }
+.overview-head { display: flex; align-items: center; justify-content: space-between; gap: 30px; margin-bottom: 18px; }
+.overview-head h1 { font-size: clamp(24px,3vw,32px); letter-spacing: -.035em; }
+.overview-head p { color: var(--muted); margin: 8px 0; }
+.overview-head .eyebrow { font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+.score-outlook { flex-shrink: 0; border-left: 3px solid var(--experiment); padding: 5px 0 5px 20px; }
+.score-outlook > span,.score-outlook small { display: block; color: var(--muted); font-size: 12px; }
+.score-outlook strong { display: block; font: 600 23px var(--mono); margin: 8px 0; }
+.score-outlook strong span { color: var(--muted); }
+.section-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 16px; }
+.section-heading h2 { font-size: 20px; letter-spacing: -.02em; }
+.section-heading p { color: var(--muted); margin: 6px 0; font-size: 13px; }
+.quick-players { border: 1px solid var(--rule); border-radius: 12px; background: var(--panel); padding: 22px; margin-bottom: 24px; }
+.player-search { display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
+.player-search input { width: 240px; background: var(--bg); color: var(--ink); border: 1px solid var(--rule-2); border-radius: 6px; padding: 10px 12px; }
+.comparison-key { font-size: 12px; color: var(--muted); margin: 0 0 18px; }
+.experiment-label,.inline-experiment { color: var(--experiment); }
+.quick-table { width: 100%; border-collapse: collapse; }
+.quick-table th { text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 600; background: var(--panel-2); text-align: right; padding: 12px 14px; white-space: nowrap; }
+.quick-table th:first-child,.quick-table th:nth-child(2) { text-align: left; }
+.quick-table td { padding: 13px 14px; text-align: right; border-bottom: 1px solid var(--rule); }
+.quick-table td:first-child,.quick-table td:nth-child(2) { text-align: left; }
+.quick-table td:nth-child(2) { font-size: 13px; color: var(--muted); }
+.quick-table td small { display: block; font-size: 11px; color: var(--muted); margin-top: 3px; }
+.quick-table tbody tr:hover { background: var(--panel-2); }
+.player-link { background: none; border: 0; padding: 0; color: var(--ink); font-weight: 600; text-align: left; cursor: pointer; }
+.player-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+.section-disclosure { margin: 12px 0; border: 1px solid var(--rule); border-radius: 9px; padding: 0 20px; background: var(--panel); }
+.section-disclosure > summary { padding: 17px 0; font-size: 15px; font-weight: 600; cursor: pointer; }
+.section-disclosure[open] { padding-bottom: 20px; }
+.section-disclosure section { margin: 12px 0; }
+.matchup h2.sec { font-size: 18px; text-transform: none; font-stretch: 100%; letter-spacing: -.01em; color: var(--ink); margin-top: 24px; }
+.matchup .script { border-radius: 10px; padding: 22px; }
+.matchup .script p { max-width: 90ch; line-height: 1.65; }
+.matchup .deep-evidence h2 { font-size: 22px; }
+.matchup .deep-evidence h3 { font-size: 17px; margin: 22px 0 12px; }
+.matchup .deep-evidence details { padding: 10px 0; border-bottom: 1px solid var(--rule); }
+.matchup .deep-evidence summary { cursor: pointer; font-weight: 600; padding: 5px 0; }
+.matchup .pair { grid-template-columns: 65px minmax(0,1fr) minmax(0,1fr); gap: 0 22px; padding-bottom: 22px; border-bottom: 0; }
+.matchup .pair.heads { position: static; padding-bottom: 0; }
+.matchup .cell .card { background: var(--panel); border: 1px solid var(--rule); border-top: 3px solid var(--tc); border-radius: 10px; padding: 20px; scroll-margin-top: 180px; }
+.matchup .card .name { font-size: 17px; }
+.matchup .statsel { margin: 16px 0; gap: 4px; flex-wrap: wrap; }
+.matchup .statsel button { min-height: 36px; }
+.matchup .core { grid-template-columns: minmax(0,1fr); gap: 18px; }
+.matchup .proj { position: relative; }
+.matchup .proj .big { font-size: 32px; }
+.inline-experiment { position: absolute; right: 0; top: 0; text-align: right; }
+.inline-experiment span { display: block; font-size: 12px; }
+.inline-experiment strong { font: 600 30px var(--mono); }
+.matchup .proj dl { display: grid; grid-template-columns: 1fr auto; margin: 14px 0 0; }
+.reference-details { margin-top: 12px; padding: 12px 0; border-top: 1px solid var(--rule); }
+.reference-details > summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+.matchup .experimental-forecast { border-color: var(--rule-2); background: var(--panel-2); }
+.matchup .experimental-forecast > div > strong { font-size: 20px; }
+.matchup .notes { line-height: 1.65; }
+.matchup .provline { line-height: 1.7; }
+@media(max-width:850px) {
+ .overview-head { align-items: flex-start; flex-direction: column; gap: 14px; }
+ .score-outlook { width: 100%; }
+ .matchup .pair { grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 14px; }
+ .matchup .pair .slot { grid-column: 1/-1; }
+ .matchup .pair.heads .slot { display: none; }
+ .matchup .cell .card { padding: 16px; }
+ .topbar { gap: 8px; padding: 10px 16px; }
+ .brand span { display: none; }
+}
+@media(max-width:560px) {
+ main { padding: 16px; }
+ .topbar { position: static; }
+ .views { width: 100%; overflow-x: auto; white-space: nowrap; }
+ .views a { font-size: 12px; padding: 7px 9px; }
+ .status { font-size: 11px; }
+ .matchup .mh { padding: 18px 10px; }
+ .matchup .oddsbar { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; padding: 16px; }
+ .matchup-tabs { gap: 2px; margin-bottom: 20px; }
+ .matchup-tabs button { padding: 10px 12px; font-size: 13px; }
+ .section-heading { flex-direction: column; align-items: stretch; gap: 10px; }
+ .player-search input { width: 100%; }
+ .quick-players { padding: 16px; }
+ .quick-table { min-width: 560px; }
+ .matchup .pair { grid-template-columns: minmax(0,1fr); gap: 0; }
+ .matchup .script { padding: 16px; }
+ .section-disclosure { padding-left: 16px; padding-right: 16px; }
+}
+@media print { [data-matchup-panel][hidden] { display: block !important; } .matchup-tabs,.player-search { display:none; } }
+
+.matchup-tabs { position: sticky; top: var(--topbar-h,58px); z-index: 8; background: var(--bg); }
+@media(max-width:560px) { .matchup-tabs { top: 0; } .matchup .cell .card { scroll-margin-top: 80px; } }
+@media(max-width:560px) {
+ .matchup .mh { gap: 12px; }
+ .matchup .mh img { width: 34px; height: 34px; }
+ .matchup .mh .side { gap: 8px; }
+ .matchup .mh .full { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+ .matchup .mh .mid { font-size: 11px; }
+ .matchup .mh .mid .ko { font-size: 13px; }
+ .matchup .oddsbar { gap: 8px 16px; padding: 12px 16px; }
+ .matchup .oddsbar > div { padding: 6px 0; }
+ .matchup .oddsbar .v { font-size: 18px; }
+ .matchup .oddsbar > div + div { border-left: 0; }
+ .overview-head h1 { font-size: 24px; }
+}
+.banner > summary { cursor: pointer; font-weight: 600; }
+.banner > p { margin: 10px 0 0; }
+@media(max-width:560px) {
+ .matchup .mh { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+ .matchup .mh .side { min-width: 0; }
+ .matchup .mh .score { font-size: 23px; }
+ .score-outlook { min-width: 0; }
+ .score-outlook small { overflow-wrap: anywhere; }
+}

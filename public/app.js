@@ -1,3 +1,4 @@
+import {matchupNav,overviewBlock,wireMatchupLayout} from './matchupLayout.js';
 import { deepAnalyticsBlock } from './deepAnalytics.js';
 import { applyTrackingScope } from './trackingPolicy.js';
 // Gridline front end — vanilla ES modules, hash routing, hand-built SVG charts.
@@ -190,7 +191,7 @@ async function renderGame(lg, id) {
   const vars = ['away', 'home'].map((k) => `--${k}:${th[k].accent};--${k}-fill:${th[k].fill};--${k}-ink:${th[k].ink};--${k}-accent-ink:${th[k].accentInk}`).join(';');
   app.innerHTML = `<div class="matchup" style="${vars}">
     <a class="back" href="#/${lg}${m.week ? `?week=${m.week}` : ''}">← ${esc(m.leagueLabel)} week ${m.week ?? ''} slate</a>
-    <div class="modelonly"><label><input type="checkbox" id="moToggle" ${modelOnly() ? 'checked' : ''}> Model only — hide every sportsbook player line</label> <span class="faint" id="moProof">Baseline player forecasts use game context and player history; experimental scripts also use posted player lines.</span></div>
+
     <section class="mh">
       <div class="side away">${A.logo ? `<img src="${esc(A.logo)}" alt="">` : ''}<div><div class="abbr">${esc(A.abbr)}</div><div class="full">${esc(A.name)}${A.record ? ` · ${esc(A.record)}` : ''}</div></div>${A.score != null && m.status.state !== 'pre' ? `<div class="score">${A.score}</div>` : ''}</div>
       <div class="mid"><div class="ko">${esc(ET(m.kickoff, { weekday: 'short', month: 'short', day: 'numeric' }))} · ${etTime(m.kickoff)}</div>
@@ -203,31 +204,44 @@ async function renderGame(lg, id) {
       <div><div class="k">Total</div><div class="v">${o?.total ?? '—'}</div><div class="s">${o?.overOdds != null ? `O ${am(o.overOdds)} / U ${am(o.underOdds)}` : 'price n/a'}</div></div>
       <div><div class="k">Moneyline</div><div class="v">${o?.awayML != null ? `${am(o.awayML)} / ${am(o.homeML)}` : '—'}</div><div class="s">${m.mlNoVig ? `no-vig ${esc(A.abbr)} ${pct(m.mlNoVig.b)} · ${esc(H.abbr)} ${pct(m.mlNoVig.a)}` : ''}</div></div>
       <div><div class="k">Book-implied score</div><div class="v">${m.implied ? `${m.implied.away} – ${m.implied.home}` : '—'}</div><div class="s">(total ∓ spread) ÷ 2</div></div>
-      <div><div class="k">Model version</div><div class="v" style="font-size:14px">${esc(m.modelVersion)}</div><div class="s">${esc(m.sims)} sims · ${m.mode === 'pregame' ? 'pregame' : 'retrospective'}</div></div>
+
     </section>
+    ${m.mode !== 'pregame' ? `<details class="banner"><summary>Retrospective view · rebuilt forecasts${done ? ' and actual results' : ''}</summary><p>Projections are rebuilt using only games completed before kickoff; injury reports, depth charts and weather are <b>not</b> applied because today's versions would leak post-kickoff information.${done ? ' Actual results are shown beside each projection.' : ''}</p></details>` : ''}
+    ${matchupNav()}
+    <section id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" data-matchup-panel="overview">
+      ${overviewBlock(m,{esc,f1})}
+      <details class="section-disclosure"><summary>Model signals &amp; line differences</summary>${outlierBlock(m)}${outliersBlock(m)}</details>
+      <details class="section-disclosure"><summary>Injuries &amp; availability</summary>${injuryBlock(m)}</details>
+      ${m.skeptic?.counts?.high ? skepticBlock(m) : ''}
+    </section>
+    <section id="panel-players" role="tabpanel" aria-labelledby="tab-players" data-matchup-panel="players" hidden>
+      <div class="section-heading"><div><h2>Player forecasts</h2><p>Choose a stat to compare baseline, experimental forecast and recent games.</p></div></div>
+      ${pairedPlayers(m)}
+    </section>
+    <section id="panel-flow" role="tabpanel" aria-labelledby="tab-flow" data-matchup-panel="flow" hidden>
+      ${gameTimelineBlock(m)}
+      <details class="section-disclosure"><summary>Leading, trailing &amp; close-game scenarios</summary>${scriptBlock(A,H)}</details>
+    </section>
+    <section id="panel-tendencies" role="tabpanel" aria-labelledby="tab-tendencies" data-matchup-panel="tendencies" hidden>
+      ${deepAnalyticsBlock(m,{esc,pct,f1,f2,etStamp})}
+      <details class="section-disclosure"><summary>Offensive &amp; defensive line estimates</summary>${gradesBlock(m)}</details>
+      <details class="section-disclosure"><summary>Full team context</summary>${contextBlock(m)}</details>
+    </section>
+    <section id="panel-sources" role="tabpanel" aria-labelledby="tab-sources" data-matchup-panel="sources" hidden>
+    <div class="modelonly"><label><input type="checkbox" id="moToggle" ${modelOnly() ? 'checked' : ''}> Model only — hide every sportsbook player line</label> <span class="faint" id="moProof">Baseline player forecasts use game context and player history; experimental scripts also use posted player lines.</span></div>
     <div class="provline">
+      <span>Model ${esc(m.modelVersion)} · ${esc(m.sims)} simulations · ${esc(m.mode)}</span>
       <span>Lines: ${esc(o?.meta?.source || 'no line')} · retrieved ${etStamp(o?.meta?.retrievedAt)} — ${esc(o?.meta?.note || '')}</span>
       <span>Data cutoff: ${etStamp(m.cutoff)} (kickoff) · latest input ${etStamp(m.latestInput)}</span>
       ${snap ? `<span>${snap.ok ? `Ledger: pregame snapshot run #${snap.runId}${snap.existing ? ' (recorded earlier)' : snap.duplicate ? ' (unchanged)' : ' recorded'} ${etStamp(snap.createdAt)}` : `Ledger: ${esc(snap.reason)}`}</span>` : ''}
       ${m.mode === 'pregame' ? `<button class="btn" id="snapbtn">Record new snapshot</button>` : ''}
     </div>
-    ${m.mode !== 'pregame' ? `<div class="banner">Retrospective view. Projections are rebuilt using only games completed before kickoff; injury reports, depth charts and weather are <b>not</b> applied because today's versions would leak post-kickoff information.${done ? ' Actual results are shown beside each projection.' : ''}</div>` : ''}
-    ${scriptBlock(A, H)}
-    ${gameTimelineBlock(m)}
-    ${deepAnalyticsBlock(m,{esc,pct,f1,f2,etStamp})}
-    ${outlierBlock(m)}
-    ${outliersBlock(m)}
     ${skepticBlock(m)}
-    ${m.rbUpside ? `<div class="callout"><div class="k">RB matchup upside</div>${esc(m.rbUpside.name)} (${esc(m.rbUpside.team)}) — 90th-percentile outcome ${m.rbUpside.p90} rush yds; opponent allows explosive RB runs at ×${f2(m.rbUpside.oppRun10Mult)} (10+) / ×${f2(m.rbUpside.oppRun20Mult)} (20+) the baseline rate after sample shrinkage. Upside, not a prediction of a big play.</div>` : ''}
-    ${injuryBlock(m)}
-    <h2 class="sec">Players — side by side · projection, 10th–90th range, last five</h2>
-    ${pairedPlayers(m)}
-    ${gradesBlock(m)}
-    ${contextBlock(m)}
     <h2 class="sec">Disclosures &amp; unavailable inputs</h2>
     <ul class="disc">${m.disclosures.map((d) => `<li>${esc(d)}</li>`).join('')}<li>League baselines: ${esc(m.baselines.source)}.</li>${m.weatherEffects?.length ? `<li>Weather adjustments applied: ${esc(m.weatherEffects.join('; '))}</li>` : ''}</ul>
     <h2 class="sec">Sources (${m.sources.length})</h2>
-    <div class="scroll"><table class="src"><tbody>${m.sources.map((s) => `<tr><td>${esc(s.label || '')}</td><td>${esc(s.source)}</td><td>${etStamp(s.fetchedAt)}</td><td>${s.error ? `<span class="tag ${s.stale ? 'warn' : 'bad'}">${s.stale ? 'stale cache' : 'error'}: ${esc(s.error)}</span>` : s.fromCache ? 'cache' : 'fresh'}</td><td class="u">${esc(s.url)}</td></tr>`).join('')}</tbody></table></div></div>`;
+    <div class="scroll"><table class="src"><tbody>${m.sources.map((s) => `<tr><td>${esc(s.label || '')}</td><td>${esc(s.source)}</td><td>${etStamp(s.fetchedAt)}</td><td>${s.error ? `<span class="tag ${s.stale ? 'warn' : 'bad'}">${s.stale ? 'stale cache' : 'error'}: ${esc(s.error)}</span>` : s.fromCache ? 'cache' : 'fresh'}</td><td class="u">${esc(s.url)}</td></tr>`).join('')}</tbody></table></div></section></div>`;
+  wireMatchupLayout(app);
   wireCards();
   wireSideToggle();
   wireModelOnly(lg);
@@ -427,6 +441,7 @@ function cardBody(m, c, key) {
     <div class="proj">
       <div class="faint">Baseline projection</div>
       <div class="big">${f1(s.proj)}</div>
+      ${s.experimental ? `<div class="inline-experiment"><span>Experimental</span><strong>${f1(s.experimental.projection)}</strong></div>` : ''}
       <div class="rng">range ${f1(s.p10)}–${f1(s.p90)} · median ${f1(s.p50)}</div>
       <dl>
         <dt>Season avg</dt><dd>${f1(s.seasonAvg)} <span class="faint">(${s.seasonGames}g)</span></dd>
@@ -434,17 +449,18 @@ function cardBody(m, c, key) {
         <dt class="bk">Book price</dt><dd class="book">${bk?.overPrice != null ? `O ${am(bk.overPrice)} / U ${am(bk.underPrice)}` : bk ? '<span class="faint" title="The free ESPN feed publishes lines without prices">n/a</span>' : '—'}</dd>
         ${actual != null ? `<dt>Actual</dt><dd class="actual ${hit}">${f1(actual)}</dd>` : ''}
       </dl>
-      ${s.situational ? `<div class="sitm" title="Learned from 2022–25 games: his baseline times how this kind of situation changed output for players at his position"><span class="faint">Situation model</span> ${esc(sitText(s.situational))}${s.situational.w ? ` <span class="faint">· ${Math.round(s.situational.w * 100)}% blended in</span>` : ' <span class="faint">· reference only</span>'}</div>` : ''}
+      ${s.situational ? `<details class="reference-details"><summary>Situation-model calculation</summary><div class="sitm" title="Learned from 2022–25 games: his baseline times how this kind of situation changed output for players at his position"><span class="faint">Situation model</span> ${esc(sitText(s.situational))}${s.situational.w ? ` <span class="faint">· ${Math.round(s.situational.w * 100)}% blended in</span>` : ' <span class="faint">· reference only</span>'}</div></details>` : ''}
       ${s.probOver != null ? `<div class="prob">Model P(&gt; ${s.threshold}) <span class="p">${pct(s.probOver)}</span> · fair ${am(s.fairOdds?.over)}<br><span class="faint">threshold = ${esc(s.thresholdSource)}</span>${bk?.implied?.noVigOver != null ? `<br>Book no-vig P(over) ${pct(bk.implied.noVigOver)}` : ''}<br><span class="exp">experimental · uncalibrated</span></div>` : ''}
     </div>
-    <div class="chart">${last5Chart(s)}${h2hBlock(s)}${vsPosBlock(s)}</div>
+    <div class="chart">${last5Chart(s)}<details class="reference-details"><summary>Opponent history &amp; position matchup</summary>${h2hBlock(s)}${vsPosBlock(s)}</details></div>
   </div>
   ${s.experimental ? `<section class="experimental-forecast"><div><span>Experimental forecast</span><strong>${f1(s.experimental.projection)}</strong><span>${s.experimental.adjustmentPct > 0 ? '+' : ''}${s.experimental.adjustmentPct}% vs baseline</span></div><p>Context experiment · unvalidated · ${s.experimental.groupsAvailable}/5 evidence groups</p><details><summary>Why the experimental number changed</summary><ul>${s.experimental.signals.map(g => `<li><b>${esc(g.group)}</b> · ${g.score > 0 ? 'upward' : g.score < 0 ? 'downward' : 'neutral'} signal<ul>${g.evidence.map(e => `<li>${esc(e)}</li>`).join('')}</ul></li>`).join('')}</ul>${s.experimental.constraint ? `<p>${esc(s.experimental.constraint)}</p>` : ''}<p>${esc(s.experimental.note)}</p></details></section>` : ''}
   ${s.explain ? `<details class="why"><summary>Why this projection</summary><div class="expl">${esc(s.explain)}</div></details>` : ''}
+  <details class="reference-details"><summary>Player ratings, usage &amp; model notes</summary>
   ${c.playerRating ? `<div class="prating">Player Rating <b>${c.playerRating.rating}</b> <span class="faint">(Madden + production; ${c.playerRating.effPerTouch >= 0 ? '+' : ''}${c.playerRating.effPerTouch} yds/touch vs expected, recent)</span></div>` : ''}
   ${c.monitor?.length ? monitorBlock(c) : ''}
   ${c.ratings ? ratingsBlock(c.ratings) : ''}
-  ${c.notes?.length ? `<ul class="notes">${c.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}`;
+  ${c.notes?.length ? `<ul class="notes">${c.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}</details>`;
 }
 
 function actualOf(a, k) {
