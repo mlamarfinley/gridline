@@ -25,3 +25,8 @@ test('performance summary identifies original snapshot and denominators',async()
  const html=performanceBlock(m,r);assert.match(html,/47 \/ 60/);assert.match(html,/78.3%/);assert.match(html,/3.52/);assert.match(html,/First saved forecast/);assert.equal(performanceBlock({...m,status:{completed:false}},r),'');
 });
 test('ungraded result is pending, never an incorrect prediction',async()=>{const {performanceBlock}=await import('../public/siteClarity.js');const html=performanceBlock({status:{completed:true},away:{abbr:'A'},home:{abbr:'H'}},{forecastTimestamp:'2026-10-20',review:{finalWinnerCorrect:null,checkpointCount:0}});assert.match(html,/Pending/);assert.doesNotMatch(html,/Incorrect/);});
+test('general ratings expose selectable line and defense views with matching selected controls',async()=>{
+ const {teamRatingsBlock}=await import('../public/siteClarity.js');
+ for(const category of ['offense','defense','lines','all']){const html=teamRatingsBlock([{abbr:'A',scores:{olRun:75,dlPass:60}}],category);assert.ok(html.includes(`data-category="${category}"`));assert.ok(html.includes(`<option value="${category}" selected>`));assert.match(html,/OL run/);assert.match(html,/DL pass rush/);}
+ assert.match(teamRatingsBlock([], '<bad>'),/data-category="offense"/);
+});

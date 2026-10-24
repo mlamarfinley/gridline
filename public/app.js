@@ -69,7 +69,7 @@ function parseHash() {
   if (parts[0] === 'nfl' && parts[1] === 'scripts') return {view:'scripts',league:'nfl'};
   if (parts[0] === 'ledger') return { view: 'ledger' };
   if (parts[1] === 'leaders') return { view: 'leaders', league: parts[0] === 'cfb' ? 'cfb' : 'nfl' };
-  if (parts[1] === 'ratings') return { view: 'ratings', league: 'nfl', pos: q.get('pos') || 'RB' };
+  if (parts[1] === 'ratings') return { view: 'ratings', league: 'nfl', pos: q.get('pos'), group: q.get('group') || 'offense' };
   const league = parts[0] === 'cfb' ? 'cfb' : 'nfl';
   if (parts[1] === 'game' && parts[2]) return { view: 'game', league, id: parts[2] };
   return { view: 'slate', league, week: q.get('week') ? Number(q.get('week')) : null };
@@ -106,7 +106,7 @@ async function route() {
   if (r.view === 'scripts') return renderMinuteTracker();
   if (r.view === 'ledger') { if (STATIC) { location.hash='#/nfl'; return; } return renderLedger(); }
   if (r.view === 'leaders') return renderLeaders(r.league);
-  if (r.view === 'ratings') return renderRatings(r.pos);
+  if (r.view === 'ratings') return renderRatings(r.pos, r.group);
   if (r.view === 'game') return renderGame(r.league, r.id);
   return renderSlate(r.league, r.week);
 }
@@ -689,25 +689,26 @@ function wireCards() {
 }
 
 // ---------------- Player skill ratings ----------------
-async function renderRatings(pos) {
+async function renderRatings(pos, group = 'offense') {
+  const isPlayer = ['QB','RB','WR','TE'].includes(pos);
+  group = ['offense','defense','lines','all'].includes(group) ? group : 'offense';
   const my = state.routeSeq;
-  loading('Loading player ratings…');
+  loading('Loading NFL ratings…');
   let d, teamRatings;
-  try { [d,teamRatings] = await Promise.all([api(`/api/ratings?pos=${pos}`),api('/api/team-ratings').catch(()=>({teams:[]}))]); } catch (e) { if (my === state.routeSeq) fail(e); return; }
+  try { [d,teamRatings] = await Promise.all([isPlayer ? api(`/api/ratings?pos=${pos}`) : Promise.resolve({skills:[],players:[]}),api('/api/team-ratings').catch(()=>({teams:[]}))]); } catch (e) { if (my === state.routeSeq) fail(e); return; }
   if (my !== state.routeSeq) return;
   setTitle(`NFL ratings`);
   const cell = (v) => (v == null ? '<td class="faint num">—</td>' : `<td class="num rt" style="--r:${v}">${v}</td>`);
   app.innerHTML = `<section class="leaders ratingspage">
     <div class="lhead"><h1>NFL ratings</h1>
-      <p class="faint">Choose a player position or compare team units. Skill scores: 50 = position average; higher is better.</p>
-      <nav class="ljump" aria-label="Rating category"><button class="btn" id="show-team-ratings">Team units</button>${['QB', 'RB', 'WR', 'TE'].map((p) => `<a href="#/nfl/ratings?pos=${p}" class="${p === pos ? 'on' : ''}">${p}</a>`).join('')}</nav></div>
-    <p class="faint">Player ratings updated ${etStamp(d.playerRatingFreshness?.computedAt)}. Smaller samples are pulled toward average; — means unavailable.</p>
-    <div id="player-rating-table" class="scroll"><table class="rtable"><thead><tr><th>#</th><th>Player</th>${d.combined ? '<th class="num">Madden</th>' : ''}<th class="num" title="Our overall: every production skill below, weighted — shown on a Madden-style scale (position average and spread of Madden OVR), but built with no Madden data">Overall</th><th class="num" title="Madden + Production Monitor, mixed per position by what best predicted real production">Player Rating</th>${d.skills.map((k) => `<th class="num" title="${esc(k.label)} · weight ${Math.round(k.weight * 100)}%${k.higherIsBetter ? '' : ' · lower raw value is better'}">${esc(k.label.split(' (')[0])}</th>`).join('')}</tr></thead>
+      <p class="faint">Compare all 32 teams by offense, defense or line play, or choose a player position.</p>
+      <nav class="ljump" aria-label="Rating category">${[['offense','Team offense'],['defense','Team defense'],['lines','Line ratings'],['all','All team units']].map(([key,label])=>`<a href="#/nfl/ratings?group=${key}" class="${!isPlayer&&group===key?'on':''}" ${!isPlayer&&group===key?'aria-current="page"':''}>${label}</a>`).join('')}${['QB', 'RB', 'WR', 'TE'].map((p) => `<a href="#/nfl/ratings?pos=${p}" class="${p === pos ? 'on' : ''}">${p}</a>`).join('')}</nav></div>
+    <p class="faint" ${isPlayer?'':'hidden'}>Player ratings updated ${etStamp(d.playerRatingFreshness?.computedAt)}. Smaller samples are pulled toward average; — means unavailable.</p>
+    <div id="player-rating-table" class="scroll" ${isPlayer?'':'hidden'}><table class="rtable"><thead><tr><th>#</th><th>Player</th>${d.combined ? '<th class="num">Madden</th>' : ''}<th class="num" title="Our overall: every production skill below, weighted — shown on a Madden-style scale (position average and spread of Madden OVR), but built with no Madden data">Overall</th><th class="num" title="Madden + Production Monitor, mixed per position by what best predicted real production">Player Rating</th>${d.skills.map((k) => `<th class="num" title="${esc(k.label)} · weight ${Math.round(k.weight * 100)}%${k.higherIsBetter ? '' : ' · lower raw value is better'}">${esc(k.label.split(' (')[0])}</th>`).join('')}</tr></thead>
     <tbody>${d.players.map((x, i) => `<tr><td class="faint">${i + 1}</td><td>${esc(x.name)} <span class="faint">${esc(x.team || '')}</span>${x.rookie ? ' <span class="faint" title="no games last season">R</span>' : ''}</td>${d.combined ? `<td class="num faint">${x.madden ?? '—'}</td>` : ''}${cell(x.overall)}${cell(x.playerRating)}${d.skills.map((k) => (x.skills[k.key]?.noData ? '<td class="faint num" title="No measured data">—</td>' : cell(x.skills[k.key]?.rating))).join('')}</tr>`).join('')}</tbody></table></div>
-  <div id="team-rating-panel" hidden>${teamRatingsBlock(teamRatings.teams)}</div>
+  <div id="team-rating-panel" ${isPlayer?'hidden':''}>${teamRatingsBlock(teamRatings.teams, group)}</div>
   </section>`;
-  $('#show-team-ratings').onclick = () => { const panel=$('#team-rating-panel'), show=panel.hidden; panel.hidden=!show; $('#player-rating-table').hidden=show; $('#show-team-ratings').textContent=show?'Show player ratings':'Team units'; };
-  const category=$('#unit-category'); if(category)category.onchange=()=>{category.closest('.team-ratings').dataset.category=category.value;};
+  const category=$('#unit-category'); if(category)category.onchange=()=>{location.hash=`#/nfl/ratings?group=${category.value}`;};
 }
 
 // ---------------- Stat leaders ----------------
