@@ -612,3 +612,24 @@ button:focus-visible, input:focus-visible, summary:focus-visible, .card:focus-vi
 .performance-metrics span,.performance-metrics small { font-size: 12px; color: var(--muted); }
 .performance-metrics strong { font-size: 18px; }
 @media(max-width:700px) { .performance-metrics { grid-template-columns: 1fr 1fr; } }
+
+/* The two sides of this game, with offense matched to the opposing defense. */
+.matchup-units { margin: 22px 0; padding: 20px; border: 1px solid var(--rule-2); border-radius: 14px; background: var(--panel); }
+.matchup-units h2 { margin: 0; color: var(--ink); font-size: 20px; letter-spacing: 0; text-transform: none; border: 0; }
+.unit-duels { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px; }
+.unit-duels article { min-width: 0; }
+.unit-duels h3 { margin: 0; padding: 0 0 12px; border-bottom: 3px solid var(--away); font-size: 15px; }
+.unit-duels article + article h3 { border-color: var(--home); }
+.unit-duel { padding: 12px 0; border-bottom: 1px solid var(--rule); }
+.unit-duel > div { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+.unit-duel > div span { color: var(--model); font-family: var(--mono); font-size: 12px; }
+.unit-duel small { display: block; margin-top: 5px; color: var(--muted); }
+.unit-duel p { margin: 6px 0 0; font-size: 13px; line-height: 1.5; }
+.unit-breakdown { margin-top: 16px; }
+.unit-breakdown summary { cursor: pointer; padding: 10px 0; font-weight: 600; }
+.unit-breakdown table { width: 100%; }
+.unit-breakdown th { text-transform: none; letter-spacing: 0; white-space: normal; }
+.unit-breakdown td { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.unit-breakdown .unit-higher { color: var(--good); font-weight: 700; }
+.unit-comparison-note { margin: 14px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+@media(max-width:650px) { .matchup-units { padding: 14px; } .unit-duels { grid-template-columns: minmax(0,1fr); gap: 20px; } .unit-breakdown td,.unit-breakdown th { padding: 9px 5px; font-size: 12px; } }

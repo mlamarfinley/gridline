@@ -1,3 +1,4 @@
+import { matchupUnitsBlock } from './matchupUnits.js';
 import { forecastCard, teamRatingsBlock, minuteTrackTable, performanceBlock } from './siteClarity.js';
 import { playerTargetBlock, wirePlayerTargets } from './playerTargets.js';
 import {matchupNav,overviewBlock,wireMatchupLayout} from './matchupLayout.js';
@@ -213,6 +214,7 @@ async function renderGame(lg, id) {
     </section>
     ${m.mode !== 'pregame' ? `<details class="banner"><summary>Retrospective view · rebuilt forecasts${done ? ' and actual results' : ''}</summary><p>Projections are rebuilt using only games completed before kickoff; injury reports, depth charts and weather are <b>not</b> applied because today's versions would leak post-kickoff information.${done ? ' Actual results are shown beside each projection.' : ''}</p></details>` : ''}
     ${performanceBlock(m,originalReview)}
+    ${matchupUnitsBlock(m)}
     ${matchupNav()}
     <section id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" data-matchup-panel="overview" hidden>
       ${overviewBlock(m,{esc,f1})}
